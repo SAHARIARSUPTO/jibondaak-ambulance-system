@@ -11,51 +11,51 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white shadow-md fixed w-full z-50">
+    <nav className="shadow-md fixed w-full z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          {/* <div className="flex items-center">
+          <div className="flex items-center">
             <Link href="/" className="shrink-0">
               <Image
-                src="" // Replace with your logo path
+                src="/logo.png" // Replace with your logo path
                 alt="Jibon Daak Logo"
                 width={120}
                 height={40}
               />
             </Link>
-          </div> */}
+          </div>
 
           {/* Desktop Menu */}
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-4">
               <Link
                 href="/"
-                className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                className="text-gray-700 hover:text-red-500 px-3 py-2 rounded-md text-sm font-medium"
               >
                 Home
               </Link>
               <Link
                 href="/about"
-                className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                className="text-gray-700 hover:text-red-500 px-3 py-2 rounded-md text-sm font-medium"
               >
                 About
               </Link>
               <Link
                 href="/services"
-                className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                className="text-gray-700 hover:text-red-500 px-3 py-2 rounded-md text-sm font-medium"
               >
                 Services
               </Link>
               <Link
                 href="/contact"
-                className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium"
+                className="text-gray-700 hover:text-red-500 px-3 py-2 rounded-md text-sm font-medium"
               >
                 Contact
               </Link>
               <Link
                 href="/donate"
-                className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
+                className="bg-red-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-600"
               >
                 Donate
               </Link>
