@@ -58,8 +58,8 @@ export default function HomePage() {
         </div>
       </div>
       <section>
-        <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md my-4">
-          <p class="text-base md:text-lg">
+        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md my-4">
+          <p className="text-base md:text-lg">
             এই সাইটটি স্টেজিং ওয়েবসাইট। এখানে আমরা নতুন ফিচার এবং পরিবর্তনগুলো
             পরীক্ষা করি। এটি পুরোপুরি প্রোডাকশন-ready নয়। স্টেজিং-এর সব পরিবর্তন
             সফলভাবে পরীক্ষা হওয়ার পর, আমরা এগুলো মেইন ব্রাঞ্চে মার্জ করব। এই
