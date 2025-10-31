@@ -1,6 +1,5 @@
 "use client";
 import React, { useState } from "react";
-// Using lucide-react for modern, crisp icons instead of react-icons
 import {
   Ambulance,
   Globe,
@@ -10,14 +9,12 @@ import {
   ChevronDown,
 } from "lucide-react";
 
-// NOTE: The Link component is moved outside the Navbar function to fix the "Cannot create components during render" error.
 const Link = ({ href, children, className, onClick }) => (
   <a href={href} className={className} onClick={onClick}>
     {children}
   </a>
 );
 
-// Define available languages
 const LANGUAGES = [
   { code: "EN", name: "English" },
   { code: "BN", name: "Bangla" },
@@ -26,17 +23,21 @@ const LANGUAGES = [
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedLang, setSelectedLang] = useState(LANGUAGES[0]);
-  const [isLangOpen, setIsLangOpen] = useState(false); // State for the desktop language dropdown
+  const [isLangOpen, setIsLangOpen] = useState(false); // Desktop language dropdown
+  // Track initial render for animation
+  const [hasRendered, setHasRendered] = useState(false);
+
+  React.useEffect(() => {
+    setHasRendered(true);
+  }, []);
 
   const toggleNavbar = () => setIsOpen(!isOpen);
 
-  // Function to handle language selection
   const handleLanguageChange = (lang) => {
     setSelectedLang(lang);
     setIsLangOpen(false);
   };
 
-  // Define menu items for easy mapping
   const navItems = [
     { name: "Home", href: "/" },
     { name: "About", href: "/about" },
@@ -46,12 +47,11 @@ const Navbar = () => {
   ];
 
   return (
-    // Modern: Use backdrop-blur for a "floating" glass effect, subtle border
-    <nav className="fixed w-full z-50 transition-all duration-300 backdrop-blur-sm bg-white/80 border-b border-gray-100 font-inter">
+    // NOT sticky
+    <nav className="w-full z-30 bg-white border-b border-gray-100 font-inter transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Increased height (h-20) for a more substantial, professional feel */}
         <div className="flex items-center justify-between h-20">
-          {/* Logo: Prominent and visually engaging */}
+          {/* Logo */}
           <Link
             href="/"
             className="flex items-center space-x-2 transition-transform hover:scale-[1.02]"
@@ -62,13 +62,12 @@ const Navbar = () => {
             </span>
           </Link>
 
-          {/* Desktop Menu: Cleaner layout, pill-shaped hover/focus states */}
+          {/* Desktop Menu */}
           <div className="hidden md:flex items-center space-x-2 lg:space-x-4">
             {navItems.map((item) => (
               <Link
                 key={item.name}
                 href={item.href}
-                // Pill-shaped, smooth transition hover
                 className="text-gray-700 text-[15px] font-medium px-4 py-2 rounded-full transition-all duration-200 hover:text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500"
               >
                 {item.name}
@@ -76,9 +75,9 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* Utility Buttons (Desktop) */}
+          {/* Utility Buttons Desktop */}
           <div className="hidden md:flex items-center space-x-4">
-            {/* Donate Button: Elevated and dynamic */}
+            {/* Donate Button */}
             <Link
               href="/donate"
               className="group flex items-center bg-red-600 text-white px-5 py-2.5 rounded-full text-sm font-semibold shadow-lg hover:bg-red-700 transition-all duration-300 transform hover:scale-105 active:scale-95 whitespace-nowrap"
@@ -87,7 +86,7 @@ const Navbar = () => {
               Donate Now
             </Link>
 
-            {/* Language Dropdown (Desktop) */}
+            {/* Language Dropdown */}
             <div className="relative">
               <button
                 onClick={() => setIsLangOpen(!isLangOpen)}
@@ -131,15 +130,12 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Mobile Menu Button & Language (Mobile) */}
+          {/* Mobile Language + Menu Button */}
           <div className="md:hidden flex items-center space-x-3">
-            {/* Mobile Language Display (Dropdown inside mobile menu) */}
             <div className="flex items-center text-gray-700">
               <Globe className="w-6 h-6 mr-1" />
               <span className="font-bold text-lg">{selectedLang.code}</span>
             </div>
-
-            {/* Mobile Menu Toggle */}
             <button
               onClick={toggleNavbar}
               aria-label={isOpen ? "Close menu" : "Open menu"}
@@ -155,11 +151,17 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Menu: Uses max-h and opacity for a smooth slide-down effect */}
+      {/* Animated Mobile Menu */}
       <div
-        className={`md:hidden absolute w-full transition-all duration-300 ease-in-out overflow-hidden ${
-          isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-        } bg-white shadow-xl border-t border-gray-200`}
+        className={`md:hidden absolute w-full overflow-hidden
+          transition-all duration-300 
+          ${
+            isOpen
+              ? "animate-navbar-show max-h-96 opacity-100"
+              : "animate-navbar-hide max-h-0 opacity-0"
+          }
+          bg-white shadow-xl border-t border-gray-200`}
+        style={{ zIndex: 40 }}
       >
         <div className="px-4 py-4 space-y-3">
           {navItems.map((item) => (
@@ -173,7 +175,7 @@ const Navbar = () => {
             </Link>
           ))}
 
-          {/* Language Selector in Mobile Menu */}
+          {/* Mobile Language Selector */}
           <div className="pt-3 border-t border-gray-100">
             <div className="text-gray-900 font-bold mb-2 pt-2">
               Select Language:
@@ -198,6 +200,7 @@ const Navbar = () => {
             </div>
           </div>
 
+          {/* Donate Button */}
           <div className="pt-3 border-t border-gray-100 mt-3">
             <Link
               href="/donate"
@@ -210,6 +213,36 @@ const Navbar = () => {
           </div>
         </div>
       </div>
+
+      {/* Custom Animations */}
+      <style jsx>{`
+        @keyframes navbarShow {
+          0% {
+            opacity: 0;
+            transform: translateY(-20px) scaleY(0.95);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0px) scaleY(1);
+          }
+        }
+        @keyframes navbarHide {
+          0% {
+            opacity: 1;
+            transform: translateY(0px) scaleY(1);
+          }
+          100% {
+            opacity: 0;
+            transform: translateY(-20px) scaleY(0.95);
+          }
+        }
+        .animate-navbar-show {
+          animation: navbarShow 0.25s ease-out forwards;
+        }
+        .animate-navbar-hide {
+          animation: navbarHide 0.2s ease-in forwards;
+        }
+      `}</style>
     </nav>
   );
 };
