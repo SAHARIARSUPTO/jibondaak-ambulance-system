@@ -108,7 +108,7 @@ const Navbar = () => {
               {isLangOpen && (
                 <div
                   id="language-menu"
-                  className="absolute right-0 mt-2 w-32 origin-top-right rounded-lg shadow-xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none py-1 transform opacity-100 scale-100 transition-all duration-150 ease-out"
+                  className="absolute right-0 mt-2 w-32 origin-top-right rounded-lg shadow-xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none py-1 transform opacity-100 scale-100 transition-all duration-150 ease-out z-50"
                 >
                   {LANGUAGES.map((langItem) => (
                     <button
