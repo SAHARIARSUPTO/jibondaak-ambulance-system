@@ -46,8 +46,8 @@ export default function Login() {
           localStorage.setItem('user', JSON.stringify(data.user));
         }
         
-        // Redirect to home page
-        router.push('/');
+        // Redirect to dashboard
+        router.push('/dashboard');
       } else {
         setError(data.error || 'Login failed');
       }
