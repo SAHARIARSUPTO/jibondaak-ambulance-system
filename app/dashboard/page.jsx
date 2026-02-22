@@ -5,6 +5,11 @@ import { useRouter } from 'next/navigation';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
 import LiveTrackingMap from '../components/dashboard/LiveTrackingMap';
 import StatusBadge from '../components/dashboard/StatusBadge';
+import QuickActionCards from '../components/dashboard/QuickActionCards';
+import TriageFormModal from '../components/dashboard/TriageFormModal';
+import ETADisplay from '../components/dashboard/ETADisplay';
+import TripShareButton from '../components/dashboard/TripShareButton';
+import BedAvailabilityPanel from '../components/dashboard/BedAvailabilityPanel';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -12,6 +17,9 @@ export default function DashboardPage() {
   const [activeBooking, setActiveBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState(null);
+  const [selectedAmbulanceType, setSelectedAmbulanceType] = useState('non-ac');
+  const [showTriageForm, setShowTriageForm] = useState(false);
+  const [triageSubmitted, setTriageSubmitted] = useState(false);
 
   useEffect(() => {
     // Check if user is logged in
@@ -40,24 +48,39 @@ export default function DashboardPage() {
   }, [user]);
 
   const getUserLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude
-          });
-        },
-        (error) => {
-          console.error('Error getting location:', error);
-          // Default location (Dhaka)
-          setUserLocation({
-            latitude: 23.8103,
-            longitude: 90.4125
-          });
-        }
-      );
+    if (typeof window === 'undefined') return;
+    
+    if (!navigator.geolocation) {
+      console.warn('Geolocation is not supported by your browser');
+      // Set default location (Dhaka)
+      setUserLocation({
+        latitude: 23.8103,
+        longitude: 90.4125
+      });
+      return;
     }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        });
+      },
+      (error) => {
+        console.warn('Location access denied or unavailable:', error.message);
+        // Default location (Dhaka)
+        setUserLocation({
+          latitude: 23.8103,
+          longitude: 90.4125
+        });
+      },
+      {
+        enableHighAccuracy: false,
+        timeout: 5000,
+        maximumAge: 0
+      }
+    );
   };
 
   const fetchActiveBooking = async () => {
@@ -79,7 +102,8 @@ export default function DashboardPage() {
 
   const handleSOSClick = async () => {
     if (!userLocation) {
-      alert('Please enable location services');
+      alert('Getting your location, please wait...');
+      getUserLocation();
       return;
     }
 
@@ -88,6 +112,22 @@ export default function DashboardPage() {
       return;
     }
 
+    if (!selectedAmbulanceType) {
+      alert('Please select an ambulance type');
+      return;
+    }
+
+    // Show triage form first
+    setShowTriageForm(true);
+  };
+
+  const handleTriageSubmit = async (triageData) => {
+    setTriageSubmitted(true);
+    // Now create booking
+    await createBooking();
+  };
+
+  const createBooking = async () => {
     setLoading(true);
 
     try {
@@ -99,7 +139,7 @@ export default function DashboardPage() {
         body: JSON.stringify({
           userId: user._id,
           userLocation,
-          ambulanceType: 'basic'
+          ambulanceType: selectedAmbulanceType
         })
       });
 
@@ -179,6 +219,16 @@ export default function DashboardPage() {
             </div>
           )}
 
+          {/* ETA Display */}
+          {activeBooking && activeBooking.driverLocation && (
+            <div className="mb-6">
+              <ETADisplay
+                userLocation={userLocation || activeBooking.userLocation}
+                driverLocation={activeBooking.driverLocation}
+              />
+            </div>
+          )}
+
           {/* Live Tracking Map */}
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             <LiveTrackingMap
@@ -187,6 +237,27 @@ export default function DashboardPage() {
               status={activeBooking?.status}
             />
           </div>
+
+          {/* Quick Action Cards */}
+          <QuickActionCards
+            userLocation={userLocation}
+            selectedAmbulanceType={selectedAmbulanceType}
+            onAmbulanceTypeSelect={setSelectedAmbulanceType}
+          />
+
+          {/* Additional Features Grid */}
+          {activeBooking && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+              {/* Trip Share */}
+              <TripShareButton
+                bookingId={activeBooking._id}
+                userId={user._id}
+              />
+
+              {/* Bed Availability */}
+              <BedAvailabilityPanel />
+            </div>
+          )}
 
           {/* Instructions */}
           {!activeBooking && (
@@ -198,6 +269,14 @@ export default function DashboardPage() {
           )}
         </div>
       </main>
+
+      {/* Triage Form Modal */}
+      <TriageFormModal
+        isOpen={showTriageForm}
+        onClose={() => setShowTriageForm(false)}
+        onSubmit={handleTriageSubmit}
+        bookingId={activeBooking?._id || 'temp'}
+      />
     </div>
   );
 }
