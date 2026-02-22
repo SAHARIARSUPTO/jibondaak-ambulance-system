@@ -1,28 +1,61 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function Login() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
     if (!email.includes("@")) {
       setError("Please enter a valid email address.");
+      setLoading(false);
       return;
     }
     if (password.length < 6) {
       setError("Password must be at least 6 characters.");
+      setLoading(false);
       return;
     }
 
-    setError("");
-    alert(`✅ Login Success!\nEmail: ${email}\nRemember Me: ${rememberMe}`);
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Store user data in localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('user', JSON.stringify(data.user));
+        }
+        
+        // Redirect to home page
+        router.push('/');
+      } else {
+        setError(data.error || 'Login failed');
+      }
+    } catch (error) {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -105,16 +138,17 @@ export default function Login() {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-[#DC2626] text-white py-2 rounded-lg hover:bg-[#B91C1C] transition font-semibold text-lg shadow-md"
+            disabled={loading}
+            className="w-full bg-[#DC2626] text-white py-2 rounded-lg hover:bg-[#B91C1C] transition font-semibold text-lg shadow-md disabled:bg-red-300 disabled:cursor-not-allowed"
           >
-            Login
+            {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
 
         {/* Signup Link */}
         <div className="mt-6 text-center text-gray-600 text-sm">
           Don’t have an account?{" "}
-          <a href="#" className="text-[#DC2626] font-medium hover:underline">
+          <a href="/register" className="text-[#DC2626] font-medium hover:underline">
             Sign Up
           </a>
         </div>

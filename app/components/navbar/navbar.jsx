@@ -24,12 +24,6 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedLang, setSelectedLang] = useState(LANGUAGES[0]);
   const [isLangOpen, setIsLangOpen] = useState(false); // Desktop language dropdown
-  // Track initial render for animation
-  const [hasRendered, setHasRendered] = useState(false);
-
-  React.useEffect(() => {
-    setHasRendered(true);
-  }, []);
 
   const toggleNavbar = () => setIsOpen(!isOpen);
 
