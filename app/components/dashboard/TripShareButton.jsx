@@ -1,7 +1,7 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
-import { Share2, Copy, Check } from 'lucide-react';
+import { Share2, Copy, Check, Send } from 'lucide-react';
 
 export default function TripShareButton({ bookingId, userId }) {
   const [shareLink, setShareLink] = useState('');
@@ -39,48 +39,54 @@ export default function TripShareButton({ bookingId, userId }) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      <div className="flex items-center gap-2 mb-4">
-        <Share2 className="w-6 h-6 text-green-600" />
-        <h3 className="text-xl font-bold">Share Trip</h3>
+    <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/15">
+          <Share2 className="h-5 w-5 text-emerald-300" />
+        </div>
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Share</p>
+          <h3 className="text-xl font-semibold text-white">Trip Share Link</h3>
+        </div>
       </div>
 
       {!shareLink ? (
         <button
           onClick={generateShareLink}
           disabled={loading}
-          className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg disabled:bg-green-300"
+          className="mt-5 w-full rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:bg-emerald-300"
         >
-          {loading ? 'Generating...' : 'Generate Share Link'}
+          {loading ? 'Generating link...' : 'Generate Share Link'}
         </button>
       ) : (
-        <div className="space-y-3">
+        <div className="mt-5 space-y-3">
           <div className="flex gap-2">
             <input
               type="text"
               value={shareLink}
               readOnly
-              className="flex-1 p-2 border border-gray-300 rounded-lg text-sm"
+              className="flex-1 rounded-2xl border border-white/10 bg-slate-950/70 px-3 py-2 text-xs text-slate-200"
             />
             <button
               onClick={copyToClipboard}
-              className="bg-gray-200 hover:bg-gray-300 p-2 rounded-lg"
+              className="rounded-2xl border border-white/10 bg-white/5 p-2 text-slate-200 transition hover:bg-white/10"
             >
-              {copied ? <Check className="w-5 h-5 text-green-600" /> : <Copy className="w-5 h-5" />}
+              {copied ? <Check className="h-5 w-5 text-emerald-300" /> : <Copy className="h-5 w-5" />}
             </button>
           </div>
 
           <button
             onClick={shareViaWhatsApp}
-            className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded-lg"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500/90 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"
           >
+            <Send className="h-4 w-4" />
             Share via WhatsApp
           </button>
         </div>
       )}
 
-      <p className="text-xs text-gray-600 mt-3">
-        Share this link with family members to let them track your trip in real-time
+      <p className="mt-4 text-xs text-slate-400">
+        Share this link with family members to let them track your trip in real-time.
       </p>
     </div>
   );

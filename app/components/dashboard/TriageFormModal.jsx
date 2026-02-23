@@ -1,7 +1,7 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
-import { X, User, Calendar, AlertCircle } from 'lucide-react';
+import { X, User, Calendar, AlertCircle, Info } from 'lucide-react';
 
 export default function TriageFormModal({ isOpen, onClose, onSubmit, bookingId }) {
   const [step, setStep] = useState(1);
@@ -33,10 +33,10 @@ export default function TriageFormModal({ isOpen, onClose, onSubmit, bookingId }
   };
 
   const handleSymptomToggle = (symptomId) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       selectedSymptoms: prev.selectedSymptoms.includes(symptomId)
-        ? prev.selectedSymptoms.filter(id => id !== symptomId)
+        ? prev.selectedSymptoms.filter((id) => id !== symptomId)
         : [...prev.selectedSymptoms, symptomId]
     }));
   };
@@ -61,7 +61,7 @@ export default function TriageFormModal({ isOpen, onClose, onSubmit, bookingId }
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           bookingId,
-          patientAge: parseInt(formData.patientAge),
+          patientAge: parseInt(formData.patientAge, 10),
           patientGender: formData.patientGender,
           symptoms: formData.selectedSymptoms,
           additionalNotes: formData.additionalNotes
@@ -85,44 +85,56 @@ export default function TriageFormModal({ isOpen, onClose, onSubmit, bookingId }
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+      <div className="w-full max-w-2xl rounded-3xl border border-white/10 bg-slate-950 text-slate-100">
         <div className="p-6">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Patient Information</h2>
-            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-              <X className="w-6 h-6" />
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-semibold text-white">Patient Information</h2>
+            <button
+              onClick={onClose}
+              className="rounded-full border border-white/10 p-2 text-slate-200 hover:bg-white/10"
+            >
+              <X className="h-5 w-5" />
             </button>
           </div>
 
-          {/* Progress Steps */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="mt-6 flex items-center gap-3">
             {[1, 2, 3].map((s) => (
               <div key={s} className="flex items-center flex-1">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-                  step >= s ? 'bg-red-600 text-white' : 'bg-gray-200 text-gray-600'
-                }`}>
+                <div
+                  className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold ${
+                    step >= s
+                      ? 'bg-red-500/80 text-white'
+                      : 'bg-white/10 text-slate-400'
+                  }`}
+                >
                   {s}
                 </div>
-                {s < 3 && <div className={`flex-1 h-1 mx-2 ${step > s ? 'bg-red-600' : 'bg-gray-200'}`} />}
+                {s < 3 && (
+                  <div
+                    className={`mx-2 h-1 flex-1 rounded-full ${
+                      step > s ? 'bg-red-500/70' : 'bg-white/10'
+                    }`}
+                  />
+                )}
               </div>
             ))}
           </div>
 
-          {/* Step 1: Basic Info */}
           {step === 1 && (
-            <div className="space-y-6">
+            <div className="mt-8 space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Calendar className="w-4 h-4 inline mr-2" />
+                <label className="block text-sm font-medium text-slate-200 mb-2">
+                  <Calendar className="inline h-4 w-4 mr-2" />
                   Patient Age
                 </label>
                 <input
                   type="number"
                   value={formData.patientAge}
-                  onChange={(e) => setFormData({ ...formData, patientAge: e.target.value })}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                  onChange={(e) =>
+                    setFormData({ ...formData, patientAge: e.target.value })
+                  }
+                  className="w-full rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3 text-sm text-white focus:border-red-400/60"
                   placeholder="Enter age"
                   min="0"
                   max="150"
@@ -130,19 +142,21 @@ export default function TriageFormModal({ isOpen, onClose, onSubmit, bookingId }
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <User className="w-4 h-4 inline mr-2" />
+                <label className="block text-sm font-medium text-slate-200 mb-2">
+                  <User className="inline h-4 w-4 mr-2" />
                   Patient Gender
                 </label>
                 <div className="grid grid-cols-3 gap-3">
                   {['male', 'female', 'other'].map((gender) => (
                     <button
                       key={gender}
-                      onClick={() => setFormData({ ...formData, patientGender: gender })}
-                      className={`p-3 rounded-lg border-2 font-medium capitalize ${
+                      onClick={() =>
+                        setFormData({ ...formData, patientGender: gender })
+                      }
+                      className={`rounded-2xl border px-3 py-3 text-sm font-semibold capitalize transition ${
                         formData.patientGender === gender
-                          ? 'border-red-500 bg-red-50 text-red-700'
-                          : 'border-gray-300 text-gray-700 hover:border-red-300'
+                          ? 'border-red-400/70 bg-red-500/10 text-red-200'
+                          : 'border-white/10 text-slate-200 hover:border-red-400/40'
                       }`}
                     >
                       {gender}
@@ -153,28 +167,27 @@ export default function TriageFormModal({ isOpen, onClose, onSubmit, bookingId }
             </div>
           )}
 
-          {/* Step 2: Symptoms */}
           {step === 2 && (
-            <div className="space-y-4">
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                <AlertCircle className="w-4 h-4 inline mr-2" />
-                Select Symptoms (Choose all that apply)
+            <div className="mt-8 space-y-4">
+              <label className="block text-sm font-medium text-slate-200">
+                <AlertCircle className="inline h-4 w-4 mr-2" />
+                Select symptoms (choose all that apply)
               </label>
               <div className="grid grid-cols-2 gap-3">
                 {symptoms.map((symptom) => (
                   <button
                     key={symptom.id}
                     onClick={() => handleSymptomToggle(symptom.id)}
-                    className={`p-3 rounded-lg border-2 text-left ${
+                    className={`rounded-2xl border px-3 py-3 text-left text-sm transition ${
                       formData.selectedSymptoms.includes(symptom.id)
-                        ? 'border-red-500 bg-red-50'
-                        : 'border-gray-300 hover:border-red-300'
+                        ? 'border-red-400/70 bg-red-500/10 text-red-100'
+                        : 'border-white/10 text-slate-200 hover:border-red-400/40'
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-medium text-sm">{symptom.name}</span>
+                      <span className="font-medium">{symptom.name}</span>
                       {symptom.priority === 'critical' && (
-                        <span className="text-red-600 text-xs">🚨</span>
+                        <span className="text-xs text-red-300">High</span>
                       )}
                     </div>
                   </button>
@@ -183,34 +196,36 @@ export default function TriageFormModal({ isOpen, onClose, onSubmit, bookingId }
             </div>
           )}
 
-          {/* Step 3: Additional Notes */}
           {step === 3 && (
-            <div className="space-y-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Additional Notes (Optional)
+            <div className="mt-8 space-y-4">
+              <label className="block text-sm font-medium text-slate-200">
+                Additional Notes (optional)
               </label>
               <textarea
                 value={formData.additionalNotes}
-                onChange={(e) => setFormData({ ...formData, additionalNotes: e.target.value })}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                onChange={(e) =>
+                  setFormData({ ...formData, additionalNotes: e.target.value })
+                }
+                className="w-full resize-none rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3 text-sm text-white focus:border-red-400/60"
                 rows="4"
                 placeholder="Any additional information about the patient's condition..."
               />
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-sm text-blue-800">
-                  ℹ️ This information will be automatically shared with the driver and hospital to help them prepare for your arrival.
+              <div className="rounded-2xl border border-cyan-400/30 bg-cyan-500/10 p-4">
+                <p className="flex items-start gap-2 text-sm text-cyan-100">
+                  <Info className="mt-0.5 h-4 w-4" />
+                  This information is shared with the driver and hospital to help
+                  them prepare for your arrival.
                 </p>
               </div>
             </div>
           )}
 
-          {/* Buttons */}
-          <div className="flex gap-3 mt-8">
+          <div className="mt-8 flex gap-3">
             {step > 1 && (
               <button
                 onClick={() => setStep(step - 1)}
-                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 rounded-lg"
+                className="flex-1 rounded-2xl border border-white/10 bg-white/5 py-3 text-sm font-semibold text-slate-200 hover:bg-white/10"
               >
                 Back
               </button>
@@ -218,7 +233,7 @@ export default function TriageFormModal({ isOpen, onClose, onSubmit, bookingId }
             {step < 3 ? (
               <button
                 onClick={handleNext}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg"
+                className="flex-1 rounded-2xl bg-red-600 py-3 text-sm font-semibold text-white hover:bg-red-700"
               >
                 Next
               </button>
@@ -226,9 +241,9 @@ export default function TriageFormModal({ isOpen, onClose, onSubmit, bookingId }
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg disabled:bg-red-300"
+                className="flex-1 rounded-2xl bg-red-600 py-3 text-sm font-semibold text-white hover:bg-red-700 disabled:bg-red-300"
               >
-                {loading ? 'Submitting...' : 'Submit & Request Ambulance'}
+                {loading ? 'Submitting...' : 'Submit and Request Ambulance'}
               </button>
             )}
           </div>

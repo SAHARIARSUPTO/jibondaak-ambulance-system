@@ -1,11 +1,18 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { Ambulance, AlertCircle, User, LogOut, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-export default function DashboardHeader({ user, onSOSClick, hasActiveBooking, loading }) {
+export default function DashboardHeader({
+  user,
+  greeting,
+  statusLabel,
+  onSOSClick,
+  hasActiveBooking,
+  loading
+}) {
   const router = useRouter();
   const [showMenu, setShowMenu] = useState(false);
 
@@ -17,65 +24,76 @@ export default function DashboardHeader({ user, onSOSClick, hasActiveBooking, lo
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 bg-white shadow-md z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo & Brand */}
-          <Link href="/" className="flex items-center space-x-2">
-            <Ambulance className="text-red-600 w-8 h-8" />
-            <span className="text-2xl font-extrabold text-gray-900">
-              Jibon<span className="text-red-600">Daak</span>
+    <header className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-6 shadow-2xl">
+      <div className="absolute inset-0">
+        <div className="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-red-500/10 blur-3xl" />
+        <div className="absolute bottom-0 left-10 h-56 w-56 rounded-full bg-cyan-500/10 blur-3xl" />
+      </div>
+
+      <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+        <div className="space-y-3">
+          <Link href="/" className="flex items-center gap-3">
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500/15">
+              <Ambulance className="h-6 w-6 text-red-400" />
+            </span>
+            <span className="text-2xl font-semibold text-white">
+              Jibon<span className="text-red-400">Daak</span> Command
             </span>
           </Link>
+          <div>
+            <p className="text-sm uppercase tracking-[0.4em] text-red-300">
+              {greeting}
+            </p>
+            <h1 className="mt-2 text-3xl font-semibold text-white">
+              Welcome back, {user?.name}
+            </h1>
+            <p className="mt-2 text-sm text-slate-300">
+              Status: <span className="text-slate-100">{statusLabel}</span>
+            </p>
+          </div>
+        </div>
 
-          {/* Emergency SOS Button */}
+        <div className="flex flex-wrap items-center gap-4">
           <button
             onClick={onSOSClick}
             disabled={hasActiveBooking || loading}
-            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition-all transform hover:scale-105 active:scale-95 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:transform-none"
+            className="group flex items-center gap-2 rounded-full bg-red-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-red-700 disabled:bg-red-300"
           >
-            <AlertCircle className="w-6 h-6 animate-pulse" />
-            <span className="text-lg">Emergency SOS</span>
+            <AlertCircle className="h-5 w-5 transition group-hover:scale-105" />
+            Emergency SOS
           </button>
 
-          {/* Profile & Settings */}
           <div className="relative">
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="flex items-center gap-2 p-2 rounded-full hover:bg-gray-100 transition-colors"
+              className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200 transition hover:bg-white/10"
             >
-              <div className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center">
-                <User className="w-6 h-6 text-white" />
-              </div>
-              <span className="hidden md:block font-medium text-gray-700">
-                {user?.name}
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-red-500/30">
+                <User className="h-5 w-5" />
               </span>
+              <span className="hidden sm:block">{user?.name}</span>
             </button>
 
-            {/* Dropdown Menu */}
             {showMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 py-2">
-                <div className="px-4 py-2 border-b border-gray-200">
-                  <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                  <p className="text-xs text-gray-500">{user?.email}</p>
+              <div className="absolute right-0 mt-2 w-52 rounded-2xl border border-white/10 bg-slate-950 p-2 shadow-2xl">
+                <div className="border-b border-white/10 px-3 py-2">
+                  <p className="text-sm font-medium text-white">{user?.name}</p>
+                  <p className="text-xs text-slate-400">{user?.email}</p>
                 </div>
-                
+
                 <button
-                  onClick={() => {
-                    setShowMenu(false);
-                    // Navigate to settings
-                  }}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                  onClick={() => setShowMenu(false)}
+                  className="mt-2 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-slate-200 transition hover:bg-white/5"
                 >
-                  <Settings className="w-4 h-4" />
+                  <Settings className="h-4 w-4" />
                   Settings
                 </button>
-                
+
                 <button
                   onClick={handleLogout}
-                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                  className="mt-2 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-red-300 transition hover:bg-red-500/10"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="h-4 w-4" />
                   Logout
                 </button>
               </div>

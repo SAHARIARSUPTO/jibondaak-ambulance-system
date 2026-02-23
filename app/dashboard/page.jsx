@@ -1,6 +1,6 @@
-'use client';
+﻿'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
 import LiveTrackingMap from '../components/dashboard/LiveTrackingMap';
@@ -11,6 +11,28 @@ import ETADisplay from '../components/dashboard/ETADisplay';
 import TripShareButton from '../components/dashboard/TripShareButton';
 import BedAvailabilityPanel from '../components/dashboard/BedAvailabilityPanel';
 
+const DEFAULT_LOCATION = { latitude: 23.8103, longitude: 90.4125 };
+
+const formatStatus = (status) => {
+  if (!status) return 'No active booking';
+  return status
+    .split('_')
+    .map((item) => item.charAt(0).toUpperCase() + item.slice(1))
+    .join(' ');
+};
+
+const formatAmbulanceType = (type) => {
+  if (!type) return 'Not selected';
+  return type.replace('-', ' ').toUpperCase();
+};
+
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -19,10 +41,10 @@ export default function DashboardPage() {
   const [userLocation, setUserLocation] = useState(null);
   const [selectedAmbulanceType, setSelectedAmbulanceType] = useState('non-ac');
   const [showTriageForm, setShowTriageForm] = useState(false);
-  const [triageSubmitted, setTriageSubmitted] = useState(false);
+
+  const greeting = useMemo(() => getGreeting(), []);
 
   useEffect(() => {
-    // Check if user is logged in
     if (typeof window !== 'undefined') {
       const userData = localStorage.getItem('user');
       if (!userData) {
@@ -37,8 +59,7 @@ export default function DashboardPage() {
     if (user) {
       fetchActiveBooking();
       getUserLocation();
-      
-      // Poll for booking updates every 5 seconds
+
       const interval = setInterval(() => {
         fetchActiveBooking();
       }, 5000);
@@ -49,14 +70,9 @@ export default function DashboardPage() {
 
   const getUserLocation = () => {
     if (typeof window === 'undefined') return;
-    
+
     if (!navigator.geolocation) {
-      console.warn('Geolocation is not supported by your browser');
-      // Set default location (Dhaka)
-      setUserLocation({
-        latitude: 23.8103,
-        longitude: 90.4125
-      });
+      setUserLocation(DEFAULT_LOCATION);
       return;
     }
 
@@ -67,13 +83,8 @@ export default function DashboardPage() {
           longitude: position.coords.longitude
         });
       },
-      (error) => {
-        console.warn('Location access denied or unavailable:', error.message);
-        // Default location (Dhaka)
-        setUserLocation({
-          latitude: 23.8103,
-          longitude: 90.4125
-        });
+      () => {
+        setUserLocation(DEFAULT_LOCATION);
       },
       {
         enableHighAccuracy: false,
@@ -117,13 +128,10 @@ export default function DashboardPage() {
       return;
     }
 
-    // Show triage form first
     setShowTriageForm(true);
   };
 
-  const handleTriageSubmit = async (triageData) => {
-    setTriageSubmitted(true);
-    // Now create booking
+  const handleTriageSubmit = async () => {
     await createBooking();
   };
 
@@ -191,86 +199,117 @@ export default function DashboardPage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-slate-100">
         <div className="text-center">Loading...</div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <DashboardHeader 
-        user={user} 
-        onSOSClick={handleSOSClick}
-        hasActiveBooking={!!activeBooking}
-        loading={loading}
-      />
+  const bookingStatus = formatStatus(activeBooking?.status);
+  const locationLabel = userLocation
+    ? `${userLocation.latitude.toFixed(4)}, ${userLocation.longitude.toFixed(4)}`
+    : 'Locating...';
 
-      <main className="pt-20 pb-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Status Badge */}
-          {activeBooking && (
-            <div className="mb-6">
-              <StatusBadge 
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 pb-14 pt-8 sm:px-6 lg:px-8">
+        <DashboardHeader
+          user={user}
+          greeting={greeting}
+          statusLabel={bookingStatus}
+          onSOSClick={handleSOSClick}
+          hasActiveBooking={!!activeBooking}
+          loading={loading}
+        />
+
+        <section className="grid gap-4 md:grid-cols-3">
+          {[
+            { label: 'Booking Status', value: bookingStatus },
+            { label: 'Ambulance Type', value: formatAmbulanceType(selectedAmbulanceType) },
+            { label: 'Your Location', value: locationLabel },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4"
+            >
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                {item.label}
+              </p>
+              <p className="mt-2 text-lg font-semibold text-white">
+                {item.value}
+              </p>
+            </div>
+          ))}
+        </section>
+
+        <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+          <div className="space-y-6">
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-4 shadow-2xl">
+              <LiveTrackingMap
+                userLocation={userLocation || activeBooking?.userLocation}
+                driverLocation={activeBooking?.driverLocation}
+                status={activeBooking?.status}
+              />
+            </div>
+
+            <QuickActionCards
+              userLocation={userLocation}
+              selectedAmbulanceType={selectedAmbulanceType}
+              onAmbulanceTypeSelect={setSelectedAmbulanceType}
+            />
+          </div>
+
+          <div className="space-y-6">
+            {activeBooking ? (
+              <StatusBadge
                 status={activeBooking.status}
                 driverInfo={activeBooking.driverInfo}
                 onCancel={handleCancelBooking}
               />
-            </div>
-          )}
+            ) : (
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
+                <p className="text-sm uppercase tracking-[0.3em] text-slate-400">
+                  Dispatch
+                </p>
+                <h3 className="mt-3 text-2xl font-semibold text-white">
+                  No active booking.
+                </h3>
+                <p className="mt-2 text-sm text-slate-300">
+                  Select an ambulance type and press Emergency SOS to start a
+                  request. Your live status and ETA will appear here.
+                </p>
+              </div>
+            )}
 
-          {/* ETA Display */}
-          {activeBooking && activeBooking.driverLocation && (
-            <div className="mb-6">
+            {activeBooking && activeBooking.driverLocation && (
               <ETADisplay
                 userLocation={userLocation || activeBooking.userLocation}
                 driverLocation={activeBooking.driverLocation}
               />
-            </div>
-          )}
+            )}
 
-          {/* Live Tracking Map */}
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            <LiveTrackingMap
-              userLocation={userLocation || activeBooking?.userLocation}
-              driverLocation={activeBooking?.driverLocation}
-              status={activeBooking?.status}
-            />
-          </div>
-
-          {/* Quick Action Cards */}
-          <QuickActionCards
-            userLocation={userLocation}
-            selectedAmbulanceType={selectedAmbulanceType}
-            onAmbulanceTypeSelect={setSelectedAmbulanceType}
-          />
-
-          {/* Additional Features Grid */}
-          {activeBooking && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-              {/* Trip Share */}
+            {activeBooking && (
               <TripShareButton
                 bookingId={activeBooking._id}
                 userId={user._id}
               />
+            )}
 
-              {/* Bed Availability */}
+            {activeBooking && (
               <BedAvailabilityPanel />
-            </div>
-          )}
-
-          {/* Instructions */}
-          {!activeBooking && (
-            <div className="mt-6 bg-blue-50 border-2 border-blue-200 rounded-lg p-6 text-center">
-              <p className="text-blue-800 font-medium">
-                Click the Emergency SOS button to request an ambulance
-              </p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </main>
 
-      {/* Triage Form Modal */}
+        {!activeBooking && (
+          <div className="rounded-3xl border border-cyan-400/30 bg-cyan-500/10 p-6">
+            <p className="text-sm font-semibold text-cyan-100">
+              Need immediate help? Choose an ambulance type and tap Emergency SOS.
+            </p>
+          </div>
+        )}
+      </div>
+
       <TriageFormModal
         isOpen={showTriageForm}
         onClose={() => setShowTriageForm(false)}

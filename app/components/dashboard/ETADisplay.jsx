@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { Clock, MapPin } from 'lucide-react';
@@ -34,29 +34,35 @@ export default function ETADisplay({ userLocation, driverLocation }) {
     }
   };
 
-  if (!eta) return null;
+  if (!eta && !loading) return null;
 
   return (
-    <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl p-6 shadow-lg">
+    <div className="rounded-3xl border border-white/10 bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <MapPin className="w-5 h-5" />
-            <span className="text-sm opacity-90">Distance</span>
+          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.3em] text-slate-400">
+            <MapPin className="h-4 w-4" />
+            Distance
           </div>
-          <p className="text-3xl font-bold">{eta.distance} km</p>
+          <p className="mt-3 text-3xl font-semibold text-white">
+            {loading ? 'Updating...' : `${eta.distance} km`}
+          </p>
         </div>
-        
+
         <div className="text-right">
-          <div className="flex items-center gap-2 mb-2 justify-end">
-            <Clock className="w-5 h-5" />
-            <span className="text-sm opacity-90">ETA</span>
+          <div className="flex items-center justify-end gap-2 text-xs uppercase tracking-[0.3em] text-slate-400">
+            <Clock className="h-4 w-4" />
+            ETA
           </div>
-          <p className="text-3xl font-bold">{eta.eta} mins</p>
+          <p className="mt-3 text-3xl font-semibold text-white">
+            {loading ? '--' : `${eta.eta} mins`}
+          </p>
         </div>
       </div>
-      
-      <p className="text-sm mt-4 opacity-90">{eta.message}</p>
+
+      <p className="mt-4 text-sm text-slate-300">
+        {loading ? 'Refreshing live ETA from dispatch.' : eta.message}
+      </p>
     </div>
   );
 }
