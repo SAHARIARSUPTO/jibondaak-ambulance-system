@@ -5,7 +5,9 @@ class UserModel {
     this.email = data.email;
     this.phone = data.phone;
     this.password = data.password; // Should be hashed
-    this.role = data.role || 'user'; // user, driver, admin
+    this.role = data.role || 'user'; // user, provider, admin
+    this.companyName = data.companyName || null; // For providers
+    this.licenseNumber = data.licenseNumber || null; // For providers
     this.isVerified = data.isVerified || false;
     this.isActive = data.isActive !== undefined ? data.isActive : true;
     this.createdAt = data.createdAt || new Date();
