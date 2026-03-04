@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { User, Ambulance, ChevronDown } from 'lucide-react';
 
 export default function Login() {
   const router = useRouter();
@@ -12,6 +13,8 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [userType, setUserType] = useState("user"); // user or provider
+  const [showDropdown, setShowDropdown] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,7 +38,7 @@ export default function Login() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password, userType })
       });
 
       const data = await response.json();
@@ -59,16 +62,88 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#FFF5F5] p-6">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 via-white to-orange-50 p-6">
       <div className="w-full max-w-md p-8 bg-white shadow-2xl rounded-2xl border border-red-200">
-       <h2 className="text-3xl font-bold mb-4 text-center">
-     <span className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">
-         <h1>welcome to</h1>Jibon<span className="text-red-600">Daak</span> 
-         </span>
-       </h2>
+        <h2 className="text-3xl font-bold mb-2 text-center">
+          <span className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight">
+            Welcome to<br />Jibon<span className="text-red-600">Daak</span> 
+          </span>
+        </h2>
         <p className="text-center text-gray-600 mb-6 text-sm">
           Please log in to your account
         </p>
+
+        {/* User Type Selector Dropdown */}
+        <div className="mb-6">
+          <label className="block mb-2 font-medium text-gray-700">
+            Login As
+          </label>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="w-full px-4 py-3 bg-[#FFF0F0] text-gray-800 border-2 border-red-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#DC2626] transition flex items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                {userType === "user" ? (
+                  <>
+                    <User className="w-5 h-5 text-red-600" />
+                    <span className="font-medium">User / Patient</span>
+                  </>
+                ) : (
+                  <>
+                    <Ambulance className="w-5 h-5 text-red-600" />
+                    <span className="font-medium">Ambulance Service Provider</span>
+                  </>
+                )}
+              </div>
+              <ChevronDown className={`w-5 h-5 text-gray-600 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+            </button>
+
+            {/* Dropdown Menu */}
+            {showDropdown && (
+              <div className="absolute z-10 w-full mt-2 bg-white border-2 border-red-200 rounded-lg shadow-xl overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUserType("user");
+                    setShowDropdown(false);
+                  }}
+                  className={`w-full px-4 py-3 text-left flex items-center gap-3 transition-colors ${
+                    userType === "user" 
+                      ? "bg-red-50 text-red-700 font-semibold" 
+                      : "hover:bg-gray-50 text-gray-700"
+                  }`}
+                >
+                  <User className="w-5 h-5" />
+                  <div>
+                    <p className="font-medium">User / Patient</p>
+                    <p className="text-xs text-gray-500">Book ambulance services</p>
+                  </div>
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUserType("provider");
+                    setShowDropdown(false);
+                  }}
+                  className={`w-full px-4 py-3 text-left flex items-center gap-3 transition-colors border-t border-gray-200 ${
+                    userType === "provider" 
+                      ? "bg-red-50 text-red-700 font-semibold" 
+                      : "hover:bg-gray-50 text-gray-700"
+                  }`}
+                >
+                  <Ambulance className="w-5 h-5" />
+                  <div>
+                    <p className="font-medium">Ambulance Service Provider</p>
+                    <p className="text-xs text-gray-500">Manage ambulance services</p>
+                  </div>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
 
         {error && (
           <div className="mb-4 text-red-600 font-medium text-center bg-red-50 py-2 rounded-lg border border-red-200">
@@ -148,9 +223,12 @@ export default function Login() {
         {/* Signup Link */}
         <div className="mt-6 text-center text-gray-600 text-sm">
           Don’t have an account?{" "}
-          <a href="/register" className="text-[#DC2626] font-medium hover:underline">
-            Sign Up
-          </a>
+          <Link 
+            href={userType === "user" ? "/register" : "/register?type=provider"} 
+            className="text-[#DC2626] font-medium hover:underline"
+          >
+            Sign Up as {userType === "user" ? "User" : "Provider"}
+          </Link>
         </div>
       </div>
     </div>

@@ -8,7 +8,7 @@ export async function POST(request) {
     const db = client.db('jibondaak');
 
     const body = await request.json();
-    const { email, password } = body;
+    const { email, password, userType } = body;
 
     // Validate input
     if (!email || !password) {
@@ -25,6 +25,14 @@ export async function POST(request) {
       return NextResponse.json({ 
         success: false, 
         error: 'Invalid email or password' 
+      }, { status: 401 });
+    }
+
+    // Check user type matches
+    if (userType && user.role !== userType) {
+      return NextResponse.json({ 
+        success: false, 
+        error: `This account is not registered as ${userType === 'user' ? 'User' : 'Provider'}` 
       }, { status: 401 });
     }
 
