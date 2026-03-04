@@ -1,0 +1,7 @@
+# Notification Sound
+# You can add a real notification.mp3 file here
+# For now, the browser will handle the missing file gracefully
+# Download a free notification sound from:
+# - https://mixkit.co/free-sound-effects/notification/
+# - https://freesound.org/
+# And save it as public/notification.mp3
