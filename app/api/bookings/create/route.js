@@ -36,24 +36,8 @@ export async function POST(request) {
       status: 'searching'
     });
 
-    // Simulate driver assignment after 3 seconds (in production, this would be real-time)
-    setTimeout(async () => {
-      try {
-        const client = await clientPromise;
-        const db = client.db('jibondaak');
-        
-        await BookingModel.assignDriver(db, booking._id, {
-          name: 'Driver Name',
-          phone: '01712345678',
-          vehicleNumber: 'DHA-1234'
-        }, {
-          latitude: userLocation.latitude + 0.01,
-          longitude: userLocation.longitude + 0.01
-        });
-      } catch (error) {
-        console.error('Error assigning driver:', error);
-      }
-    }, 3000);
+    // Don't auto-assign driver - let provider accept the request
+    console.log('✅ Booking created:', booking._id, 'Status:', booking.status);
 
     return NextResponse.json({ 
       success: true, 
