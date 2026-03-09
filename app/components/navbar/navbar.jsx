@@ -24,12 +24,6 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedLang, setSelectedLang] = useState(LANGUAGES[0]);
   const [isLangOpen, setIsLangOpen] = useState(false); // Desktop language dropdown
-  // Track initial render for animation
-  const [hasRendered, setHasRendered] = useState(false);
-
-  React.useEffect(() => {
-    setHasRendered(true);
-  }, []);
 
   const toggleNavbar = () => setIsOpen(!isOpen);
 
@@ -48,8 +42,8 @@ const Navbar = () => {
   ];
 
   return (
-    // NOT sticky
-    <nav className="w-full z-30 bg-white border-b border-gray-100 font-inter transition-all duration-300">
+    // Fixed navbar
+    <nav className="fixed top-0 left-0 right-0 w-full z-50 bg-slate-950/90 backdrop-blur border-b border-white/10 transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
@@ -57,9 +51,9 @@ const Navbar = () => {
             href="/"
             className="flex items-center space-x-2 transition-transform hover:scale-[1.02]"
           >
-            <Ambulance className="text-red-600 w-8 h-8 md:w-7 md:h-7 shrink-0" />
-            <span className="text-2xl md:text-xl font-extrabold text-gray-900 tracking-tight">
-              Jibon<span className="text-red-600">Daak</span>
+            <Ambulance className="text-red-400 w-8 h-8 md:w-7 md:h-7 shrink-0" />
+            <span className="text-2xl md:text-xl font-extrabold text-white tracking-tight">
+              Jibon<span className="text-red-400">Daak</span>
             </span>
           </Link>
 
@@ -69,7 +63,7 @@ const Navbar = () => {
               <Link
                 key={item.name}
                 href={item.href}
-                className="text-gray-700 text-[15px] font-medium px-4 py-2 rounded-full transition-all duration-200 hover:text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="text-slate-200 text-[15px] font-medium px-4 py-2 rounded-full transition-all duration-200 hover:text-red-300 hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-red-500"
               >
                 {item.name}
               </Link>
@@ -93,7 +87,7 @@ const Navbar = () => {
                 onClick={() => setIsLangOpen(!isLangOpen)}
                 aria-expanded={isLangOpen}
                 aria-controls="language-menu"
-                className="flex items-center text-gray-700 hover:text-red-600 font-medium text-sm p-3 rounded-full transition-colors hover:bg-gray-100"
+                className="flex items-center text-slate-200 hover:text-red-300 font-medium text-sm p-3 rounded-full transition-colors hover:bg-white/5"
               >
                 <Globe className="w-5 h-5 mr-1" />
                 <span className="font-bold">{selectedLang.code}</span>
@@ -108,7 +102,7 @@ const Navbar = () => {
               {isLangOpen && (
                 <div
                   id="language-menu"
-                  className="absolute right-0 mt-2 w-32 origin-top-right rounded-lg shadow-xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none py-1 transform opacity-100 scale-100 transition-all duration-150 ease-out z-50"
+                  className="absolute right-0 mt-2 w-32 origin-top-right rounded-lg shadow-xl bg-slate-950 ring-1 ring-white/10 focus:outline-none py-1 transform opacity-100 scale-100 transition-all duration-150 ease-out z-50"
                 >
                   {LANGUAGES.map((langItem) => (
                     <button
@@ -116,8 +110,8 @@ const Navbar = () => {
                       onClick={() => handleLanguageChange(langItem)}
                       className={`block w-full text-left px-4 py-2 text-sm transition-colors rounded-lg mx-auto ${
                         selectedLang.code === langItem.code
-                          ? "bg-red-50 text-red-600 font-semibold"
-                          : "text-gray-700 hover:bg-gray-100"
+                          ? "bg-red-500/15 text-red-200 font-semibold"
+                          : "text-slate-200 hover:bg-white/5"
                       }`}
                       aria-current={
                         selectedLang.code === langItem.code ? "page" : undefined
@@ -133,14 +127,14 @@ const Navbar = () => {
 
           {/* Mobile Language + Menu Button */}
           <div className="md:hidden flex items-center space-x-3">
-            <div className="flex items-center text-gray-700">
+            <div className="flex items-center text-slate-200">
               <Globe className="w-6 h-6 mr-1" />
               <span className="font-bold text-lg">{selectedLang.code}</span>
             </div>
             <button
               onClick={toggleNavbar}
               aria-label={isOpen ? "Close menu" : "Open menu"}
-              className="text-gray-700 hover:text-red-600 focus:outline-none p-2 rounded-full hover:bg-gray-100 transition-colors"
+              className="text-slate-200 hover:text-red-300 focus:outline-none p-2 rounded-full hover:bg-white/5 transition-colors"
             >
               {isOpen ? (
                 <X className="w-7 h-7" />
@@ -154,14 +148,14 @@ const Navbar = () => {
 
       {/* Animated Mobile Menu */}
       <div
-        className={`md:hidden absolute w-full overflow-hidden
+        className={`md:hidden fixed top-20 left-0 right-0 w-full overflow-hidden
           transition-all duration-300 
           ${
             isOpen
               ? "animate-navbar-show max-h-96 opacity-100"
               : "animate-navbar-hide max-h-0 opacity-0"
           }
-          bg-white shadow-xl border-t border-gray-200`}
+          bg-slate-950 shadow-xl border-t border-white/10`}
         style={{ zIndex: 40 }}
       >
         <div className="px-4 py-4 space-y-3">
@@ -169,7 +163,7 @@ const Navbar = () => {
             <Link
               key={`mobile-${item.name}`}
               href={item.href}
-              className="block text-gray-700 hover:text-red-600 font-semibold py-2 px-3 rounded-lg transition-colors hover:bg-red-50"
+              className="block text-slate-200 hover:text-red-300 font-semibold py-2 px-3 rounded-lg transition-colors hover:bg-white/5"
               onClick={() => setIsOpen(false)}
             >
               {item.name}
@@ -177,8 +171,8 @@ const Navbar = () => {
           ))}
 
           {/* Mobile Language Selector */}
-          <div className="pt-3 border-t border-gray-100">
-            <div className="text-gray-900 font-bold mb-2 pt-2">
+          <div className="pt-3 border-t border-white/10">
+            <div className="text-slate-200 font-bold mb-2 pt-2">
               Select Language:
             </div>
             <div className="flex space-x-3">
@@ -192,7 +186,7 @@ const Navbar = () => {
                   className={`text-sm font-semibold px-4 py-2 rounded-full transition-all ${
                     selectedLang.code === langItem.code
                       ? "bg-red-600 text-white shadow-md"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      : "bg-white/10 text-slate-200 hover:bg-white/20"
                   }`}
                 >
                   {langItem.name}
@@ -202,7 +196,7 @@ const Navbar = () => {
           </div>
 
           {/* Donate Button */}
-          <div className="pt-3 border-t border-gray-100 mt-3">
+          <div className="pt-3 border-t border-white/10 mt-3">
             <Link
               href="/donate"
               className="flex items-center justify-center bg-red-600 text-white w-full py-3 rounded-lg font-bold shadow-md hover:bg-red-700 transition-colors text-base mt-2"

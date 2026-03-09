@@ -13,7 +13,8 @@ const HomePage = () => {
   };
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-linear-to-br from-slate-900 via-gray-900 to-black">
+    <main className="bg-slate-950 text-slate-100">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-linear-to-br from-slate-900 via-gray-900 to-black">
       {/* Animated Background Gradient Orbs */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-red-500/10 rounded-full blur-3xl animate-pulse-slow"></div>
@@ -137,7 +138,7 @@ const HomePage = () => {
             </div>
             <div className="hidden sm:block w-px h-10 bg-white/10"></div>
             <p className="text-sm text-gray-300">
-              🚨 Critical care available nationwide
+              Critical care available nationwide
             </p>
           </div>
         </div>
@@ -288,7 +289,91 @@ const HomePage = () => {
           animation-delay: 4s;
         }
       `}</style>
-    </section>
+      </section>
+
+      <section className="relative overflow-hidden bg-slate-950 py-16 sm:py-20 lg:py-24">
+        <div className="absolute inset-0">
+          <div className="absolute left-1/4 top-0 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl" />
+          <div className="absolute bottom-0 right-1/4 h-72 w-72 rounded-full bg-red-500/10 blur-3xl" />
+        </div>
+        <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 lg:flex-row lg:items-center lg:gap-16 lg:px-8">
+          <div className="flex-1 space-y-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.4em] text-red-300">
+              Live Coverage
+            </p>
+            <h2 className="font-display text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
+              OpenStreetMap visibility for every dispatch zone.
+            </h2>
+            <p className="text-base text-slate-300 sm:text-lg">
+              Track the nearest response units, identify clear routes, and share
+              the fastest pickup point with our operators. The live map panel
+              gives you confidence before the ambulance arrives.
+            </p>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {[
+                { label: "Median Response", value: "9 min" },
+                { label: "Coverage Points", value: "1,200+" },
+                { label: "Active Units", value: "320" },
+              ].map((stat) => (
+                <div
+                  key={stat.label}
+                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4"
+                >
+                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                    {stat.label}
+                  </p>
+                  <p className="mt-2 text-2xl font-semibold text-white">
+                    {stat.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-3 text-sm text-slate-300">
+              {["Geo-verified drivers", "Smart rerouting", "Village coverage"].map(
+                (item) => (
+                  <span
+                    key={item}
+                    className="rounded-full border border-red-400/30 bg-red-500/10 px-4 py-2"
+                  >
+                    {item}
+                  </span>
+                )
+              )}
+            </div>
+          </div>
+
+          <div className="flex-1">
+            <div className="rounded-3xl border border-white/10 bg-white/5 p-4 shadow-2xl">
+              <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3 text-xs text-slate-300">
+                <span className="uppercase tracking-[0.3em]">Dhaka Live Grid</span>
+                <span className="rounded-full bg-red-500/20 px-3 py-1 text-[10px] font-semibold text-red-200">
+                  Active
+                </span>
+              </div>
+              <div className="mt-4 overflow-hidden rounded-2xl border border-white/10">
+                <iframe
+                  title="OpenStreetMap live coverage"
+                  src="https://www.openstreetmap.org/export/embed.html?bbox=90.320%2C23.690%2C90.470%2C23.800&amp;layer=mapnik"
+                  className="h-80 w-full border-0 sm:h-96"
+                  loading="lazy"
+                />
+              </div>
+              <div className="mt-4 flex items-center justify-between text-xs text-slate-400">
+                <span>Powered by OpenStreetMap contributors</span>
+                <a
+                  href="https://www.openstreetmap.org"
+                  className="text-red-300 hover:text-red-200"
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  Open full map
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
   );
 };
 
