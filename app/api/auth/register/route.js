@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import clientPromise from '@/lib/mongodb';
+import bcrypt from 'bcryptjs';
 const UserModel = require('@/models/User');
 
 export async function POST(request) {
@@ -9,6 +10,8 @@ export async function POST(request) {
 
     const body = await request.json();
     const { name, email, phone, password, userType, companyName, licenseNumber } = body;
+
+    console.log('📝 Registration attempt:', { email, userType });
 
     // Validate input
     if (!name || !email || !phone || !password) {
@@ -28,16 +31,23 @@ export async function POST(request) {
       }
     }
 
+    // Hash password before storing
+    console.log('🔐 Hashing password...');
+    const hashedPassword = await bcrypt.hash(password, 10);
+    console.log('✅ Password hashed');
+
     // Create user using model
     const user = await UserModel.create(db, {
       name,
-      email,
+      email: email.trim().toLowerCase(), // Normalize email
       phone,
-      password, // In production, hash this password before storing
+      password: hashedPassword, // Store hashed password
       role: userType || 'user',
       companyName: userType === 'provider' ? companyName : undefined,
       licenseNumber: userType === 'provider' ? licenseNumber : undefined
     });
+
+    console.log('✅ User created successfully:', user.email);
 
     return NextResponse.json({ 
       success: true, 
@@ -46,6 +56,7 @@ export async function POST(request) {
     }, { status: 201 });
 
   } catch (error) {
+    console.error('❌ Registration error:', error);
     return NextResponse.json({ 
       success: false, 
       error: error.message 
