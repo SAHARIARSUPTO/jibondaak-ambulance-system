@@ -10,6 +10,8 @@ import TriageFormModal from '../components/dashboard/TriageFormModal';
 import ETADisplay from '../components/dashboard/ETADisplay';
 import TripShareButton from '../components/dashboard/TripShareButton';
 import BedAvailabilityPanel from '../components/dashboard/BedAvailabilityPanel';
+import DriverAcceptedNotification from '../components/dashboard/DriverAcceptedNotification';
+import UserSidebar from '../components/dashboard/UserSidebar';
 
 const DEFAULT_LOCATION = { latitude: 23.8103, longitude: 90.4125 };
 
@@ -41,6 +43,8 @@ export default function DashboardPage() {
   const [userLocation, setUserLocation] = useState(null);
   const [selectedAmbulanceType, setSelectedAmbulanceType] = useState('non-ac');
   const [showTriageForm, setShowTriageForm] = useState(false);
+  const [showDriverNotification, setShowDriverNotification] = useState(false);
+  const [previousStatus, setPreviousStatus] = useState(null);
 
   const greeting = useMemo(() => getGreeting(), []);
 
@@ -99,10 +103,36 @@ export default function DashboardPage() {
 
     try {
       const response = await fetch(`/api/bookings/active?userId=${user._id}`);
-      const data = await response.json();
+      
+      // Check if response is ok
+      if (!response.ok) {
+        console.error('Failed to fetch booking:', response.status);
+        return;
+      }
 
-      if (data.success) {
-        setActiveBooking(data.booking);
+      // Check if response has content
+      const text = await response.text();
+      if (!text) {
+        console.log('No active booking');
+        return;
+      }
+
+      const data = JSON.parse(text);
+
+      if (data.success && data.booking) {
+        const newBooking = data.booking;
+        
+        // Check if status changed from 'searching' to 'driver_assigned' or 'en_route'
+        if (previousStatus === 'searching' && 
+            (newBooking.status === 'driver_assigned' || newBooking.status === 'en_route') &&
+            newBooking.driverInfo) {
+          // Show driver notification
+          setShowDriverNotification(true);
+        }
+        
+        // Update previous status
+        setPreviousStatus(newBooking.status);
+        setActiveBooking(newBooking);
       }
     } catch (error) {
       console.error('Error fetching active booking:', error);
@@ -147,11 +177,24 @@ export default function DashboardPage() {
         body: JSON.stringify({
           userId: user._id,
           userLocation,
-          ambulanceType: selectedAmbulanceType
+          ambulanceType: selectedAmbulanceType,
+          userName: user.name,
+          userPhone: user.phone
         })
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        alert('Failed to create booking');
+        return;
+      }
+
+      const text = await response.text();
+      if (!text) {
+        alert('Empty response from server');
+        return;
+      }
+
+      const data = JSON.parse(text);
 
       if (data.success) {
         setActiveBooking(data.booking);
@@ -182,7 +225,18 @@ export default function DashboardPage() {
         })
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        alert('Failed to cancel booking');
+        return;
+      }
+
+      const text = await response.text();
+      if (!text) {
+        alert('Empty response from server');
+        return;
+      }
+
+      const data = JSON.parse(text);
 
       if (data.success) {
         setActiveBooking(null);
@@ -212,7 +266,12 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 pb-14 pt-8 sm:px-6 lg:px-8">
+      {/* Sidebar */}
+      <UserSidebar user={user} />
+
+      {/* Main Content with left margin for sidebar */}
+      <div className="lg:ml-72">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 pb-14 pt-8 sm:px-6 lg:px-8">
         <DashboardHeader
           user={user}
           greeting={greeting}
@@ -316,6 +375,15 @@ export default function DashboardPage() {
         onSubmit={handleTriageSubmit}
         bookingId={activeBooking?._id || 'temp'}
       />
+
+      {/* Driver Accepted Notification */}
+      {showDriverNotification && activeBooking?.driverInfo && (
+        <DriverAcceptedNotification
+          driverInfo={activeBooking.driverInfo}
+          onClose={() => setShowDriverNotification(false)}
+        />
+      )}
+      </div>
     </div>
   );
 }

@@ -1,77 +1,230 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 🚑 JibonDaak - Emergency Ambulance Service System
 
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-# jibondaak-ambulance-system
-Jibondaak is a digital ambulance service system designed to connect users with nearby emergency vehicles quickly and efficiently through a modern web platform.
-# 🚑 Jibondaak - Ambulance Service System
-
-**Jibondaak** is a web-based ambulance service platform built to provide fast and reliable emergency assistance.  
-It allows users to request nearby ambulances, track locations in real time, and communicate directly with service providers.
+**JibonDaak** is a real-time ambulance booking and tracking system that connects patients with ambulance service providers instantly. Built with Next.js and MongoDB, it provides a seamless emergency response platform.
 
 ---
 
-## 🌍 Overview
-Jibondaak aims to bridge the gap between patients and ambulance providers using location-based technology and an intuitive interface.
+## 🚀 Quick Start
+
+### 1. Install Dependencies
+```bash
+npm install
+```
+
+### 2. Setup Environment Variables
+Create a `.env.local` file in the root directory:
+```env
+MONGODB_URI=your_mongodb_atlas_connection_string
+```
+
+### 3. Create Demo Accounts (Optional)
+Run this script to create demo user and provider accounts for testing:
+```bash
+node scripts/create-demo-accounts.js
+```
+
+This will create:
+- **User Account:** `user@demo.com` / `demo123`
+- **Provider Account:** `provider@demo.com` / `demo123`
+
+### 4. Run Development Server
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### 5. Build for Production
+```bash
+npm run build
+npm start
+```
+
+---
+
+## 🧪 Demo Credentials
+
+### 👤 User/Patient Login
+```
+Email: user@demo.com
+Password: demo123
+Dashboard: /dashboard
+```
+
+**Features:**
+- Emergency SOS button
+- Ambulance type selection (Non-AC, AC, ICU, Freezer)
+- Digital triage form (3-step patient information)
+- Live tracking map with driver location
+- ETA display and distance calculation
+- Trip sharing via WhatsApp/SMS
+
+### 🚨 Ambulance Provider Login
+```
+Email: provider@demo.com
+Password: demo123
+Dashboard: /provider-dashboard
+```
+
+**Features:**
+- Add ambulance registration
+- Online/Offline toggle
+- Real-time request notifications with sound
+- Accept/Reject incoming requests
+- Active bookings tracking
+- Live location updates
+
+📖 See `DEMO_CREDENTIALS.md` for detailed testing instructions.
 
 ---
 
 ## ⚙️ Features
-- 🚨 Emergency ambulance request system  
-- 📍 Real-time ambulance tracking  
-- 👤 User registration and authentication  
-- 📊 Admin dashboard for managing requests  
-- 📱 Responsive design for all devices  
+
+### For Users/Patients:
+- 🚨 **Emergency SOS Button** - One-click ambulance request
+- 📍 **Live Tracking** - Real-time ambulance location on map
+- 🏥 **Ambulance Types** - Non-AC, AC, ICU, Freezer ambulances
+- 📋 **Digital Triage Form** - 3-step patient information collection
+- ⏱️ **ETA Display** - Estimated time of arrival with distance
+- 💬 **Live Chat** - Direct communication with driver
+- 📤 **Trip Sharing** - Share trip details via WhatsApp/SMS
+- 🔔 **Toast Notifications** - Non-intrusive status updates
+
+### For Ambulance Providers:
+- 🚑 **Ambulance Management** - Register and manage fleet
+- 🟢 **Online/Offline Toggle** - Control availability status
+- 🔔 **Real-time Notifications** - Popup alerts with sound for new requests
+- ✅ **Accept/Reject System** - Manual request approval
+- 📊 **Dashboard Stats** - Total ambulances, pending requests, active bookings
+- 📍 **Live Tracking** - Track user location after accepting request
+- 🎨 **Dark Navy Theme** - Professional provider interface
 
 ---
 
-## 🧩 Tech Stack (Planned)
-- **Frontend:** Next.js, Tailwind CSS  
-- **Backend:** Node.js  
-- **Database:** MongoDB  
-- **Hosting:** Vercel  
+## 🧩 Tech Stack
+
+- **Frontend:** Next.js 16.0.1, React, Tailwind CSS
+- **Backend:** Next.js API Routes
+- **Database:** MongoDB Atlas
+- **Maps:** Leaflet.js with OpenStreetMap
+- **Icons:** Lucide React
+- **Authentication:** bcryptjs
+- **Deployment:** Vercel
+
+---
+
+## 📁 Project Structure
+
+```
+jibondaak-ambulance-system/
+├── app/
+│   ├── api/                    # API routes
+│   │   ├── auth/              # Login & registration
+│   │   ├── bookings/          # Booking management
+│   │   ├── provider/          # Provider endpoints
+│   │   └── ...
+│   ├── components/            # React components
+│   │   ├── dashboard/         # User dashboard components
+│   │   ├── provider/          # Provider components
+│   │   └── Toast.jsx          # Toast notification system
+│   ├── dashboard/             # User dashboard page
+│   ├── provider-dashboard/    # Provider dashboard page
+│   ├── login/                 # Login page
+│   ├── register/              # Registration page
+│   └── ...
+├── lib/
+│   └── mongodb.js             # MongoDB connection
+├── models/                    # Mongoose models
+│   ├── User.js
+│   ├── Booking.js
+│   ├── AmbulanceType.js
+│   └── ...
+├── scripts/
+│   └── create-demo-accounts.js # Demo account creation script
+├── .env.local                 # Environment variables
+└── package.json
+```
+
+---
+
+## 🗄️ Database Collections
+
+- **users** - User and provider accounts
+- **bookings** - Ambulance booking records
+- **ambulances** - Registered ambulance vehicles
+- **hospitals** - Hospital information
+- **firstAidGuides** - First aid instructions
+- **ambulanceTypes** - Available ambulance types
+- **triageForms** - Patient triage data
+- **tripShares** - Shared trip tokens
+
+---
+
+## 🔄 Booking Flow
+
+1. **User clicks SOS** → Status: `searching`
+2. **Provider sees request** → Real-time polling (3 seconds)
+3. **Provider accepts** → Status: `driver_assigned` → `en_route`
+4. **Driver arrives** → Status: `arrived`
+5. **Trip completes** → Status: `completed`
+
+---
+
+## 🎨 UI Themes
+
+- **User Dashboard:** Blue gradient theme with cyan accents
+- **Provider Dashboard:** Dark navy theme (slate-900 + blue-900)
+- **Login/Register:** Blue-950 gradient background
+- **Loading Screens:** Animated ambulance icon with gradient
+
+---
+
+## 📍 Default Location
+
+When GPS permission is denied, the system uses:
+- **Location:** Dhaka, Bangladesh
+- **Coordinates:** 23.8103°N, 90.4125°E
+
+---
+
+## ⚡ Real-time Features
+
+- **User Dashboard Polling:** Every 5 seconds
+- **Provider Dashboard Polling:** Every 3 seconds
+- **Toast Auto-dismiss:** 3 seconds
+- **Notification Popup:** 30 seconds auto-close
 
 ---
 
 ## 👥 Team Members
-- **Supto** – Frontend Developer  
-- **Shuvo** – Backend Developer  
-- **Sabbir** – Project Coordinator / Designer  
+
+- **Supto** – Frontend Developer
+- **Shuvo** – Backend Developer
+- **Sabbir** – Project Coordinator / Designer
 
 ---
 
 ## 📄 License
-MIT License © 2025 Jibondaak Team
+
+MIT License © 2025 JibonDaak Team
+
+---
+
+## 🆘 Support
+
+For issues or questions:
+1. Check `DEMO_CREDENTIALS.md` for testing guide
+2. Review `developre-guide.md` for development guidelines
+3. Contact the development team
+
+---
+
+## 🔗 Links
+
+- **Repository:** [GitHub](https://github.com/SAHARIARSUPTO/jibondaak-ambulance-system)
+- **Documentation:** See markdown files in root directory
+- **Next.js Docs:** [nextjs.org/docs](https://nextjs.org/docs)
+
+---
+
+**Built with ❤️ by the JibonDaak Team**

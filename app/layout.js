@@ -1,7 +1,6 @@
 import "./globals.css";
 import { Space_Grotesk, Cormorant_Garamond } from "next/font/google";
-import Navbar from "./components/navbar/navbar";
-import Footer from "./components/footer/footer";
+import ConditionalLayout from "./components/ConditionalLayout";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -28,11 +27,9 @@ export default function RootLayout({ children }) {
         className={`${spaceGrotesk.variable} ${cormorant.variable} antialiased`}
         suppressHydrationWarning
       >
-        <Navbar />
-        <main className="pt-20">
+        <ConditionalLayout>
           {children}
-        </main>
-        <Footer />
+        </ConditionalLayout>
       </body>
     </html>
   );

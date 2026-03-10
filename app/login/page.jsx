@@ -21,29 +21,73 @@ export default function Login() {
     setError("");
     setLoading(true);
 
-    if (!email.includes("@")) {
+    // Trim whitespace from email and password
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedPassword = password.trim();
+
+    console.log('🔐 Login attempt:', { email: trimmedEmail, userType });
+
+    if (!trimmedEmail.includes("@")) {
       setError("Please enter a valid email address.");
       setLoading(false);
       return;
     }
-    if (password.length < 6) {
+    if (trimmedPassword.length < 6) {
       setError("Password must be at least 6 characters.");
       setLoading(false);
       return;
     }
 
     try {
+      console.log('📡 Sending login request...');
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password, userType })
+        body: JSON.stringify({ 
+          email: trimmedEmail, 
+          password: trimmedPassword, 
+          userType 
+        })
       });
 
-      const data = await response.json();
+      console.log('📥 Response status:', response.status);
+      
+      // Check if response is ok
+      if (!response.ok && response.status !== 401 && response.status !== 400) {
+        setError('Server error. Please try again later.');
+        setLoading(false);
+        return;
+      }
+
+      // Get response text first
+      const text = await response.text();
+      console.log('� Response text length:', text.length);
+
+      // Check if response is empty
+      if (!text || text.trim() === '') {
+        console.error('❌ Empty response from server');
+        setError('Server returned empty response. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      // Try to parse JSON
+      let data;
+      try {
+        data = JSON.parse(text);
+        console.log('📦 Response data:', data);
+      } catch (parseError) {
+        console.error('❌ JSON parse error:', parseError);
+        console.error('Response text:', text);
+        setError('Invalid response from server. Please try again.');
+        setLoading(false);
+        return;
+      }
 
       if (data.success) {
+        console.log('✅ Login successful, redirecting...');
         // Store user data in localStorage
         if (typeof window !== 'undefined') {
           localStorage.setItem('user', JSON.stringify(data.user));
@@ -51,15 +95,19 @@ export default function Login() {
         
         // Redirect based on user type
         if (data.user.role === 'provider') {
+          console.log('🚑 Redirecting to provider dashboard');
           router.push('/provider-dashboard');
         } else {
+          console.log('👤 Redirecting to user dashboard');
           router.push('/dashboard');
         }
       } else {
+        console.error('❌ Login failed:', data.error);
         setError(data.error || 'Login failed');
       }
     } catch (error) {
-      setError('Something went wrong. Please try again.');
+      console.error('💥 Login error:', error);
+      setError('Network error. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -147,6 +195,22 @@ export default function Login() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Demo Credentials Hint */}
+        <div className="mb-4 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg">
+          <p className="text-xs text-blue-300 font-semibold mb-2">🧪 Demo Credentials:</p>
+          {userType === "user" ? (
+            <div className="text-xs text-blue-200 space-y-1">
+              <p>Email: <span className="font-mono text-blue-400">user@demo.com</span></p>
+              <p>Password: <span className="font-mono text-blue-400">demo123</span></p>
+            </div>
+          ) : (
+            <div className="text-xs text-blue-200 space-y-1">
+              <p>Email: <span className="font-mono text-blue-400">provider@demo.com</span></p>
+              <p>Password: <span className="font-mono text-blue-400">demo123</span></p>
+            </div>
+          )}
         </div>
 
         {error && (
