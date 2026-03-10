@@ -6,6 +6,7 @@ import { Ambulance, Plus, Power, Bell, MapPin, User as UserIcon, Phone, Clock } 
 import Toast from '../components/Toast';
 import AddAmbulanceModal from '../components/provider/AddAmbulanceModal';
 import RequestNotification from '../components/provider/RequestNotification';
+import ProviderSidebar from '../components/provider/ProviderSidebar';
 
 export default function ProviderDashboard() {
   const router = useRouter();
@@ -18,7 +19,8 @@ export default function ProviderDashboard() {
   const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showNotification, setShowNotification] = useState(false);
-  const [currentRequest, setCurrentRequest] = useState(null);
+  const [previousRequestCount, setPreviousRequestCount] = useState(0);
+  const [processingRequests, setProcessingRequests] = useState(new Set());
 
   useEffect(() => {
     // Check if provider is logged in
@@ -103,24 +105,20 @@ export default function ProviderDashboard() {
       if (data.success) {
         const newRequests = data.requests || [];
         
-        // Check if there's a new request (not already in the list)
-        const hasNewRequest = newRequests.some(newReq => 
-          !incomingRequests.some(oldReq => oldReq._id === newReq._id)
+        // Filter out requests that are currently being processed
+        const filteredRequests = newRequests.filter(req => 
+          !processingRequests.has(req._id)
         );
         
-        if (hasNewRequest && newRequests.length > 0) {
-          // New request arrived - show notification popup for the first new one
-          const firstNewRequest = newRequests.find(newReq => 
-            !incomingRequests.some(oldReq => oldReq._id === newReq._id)
-          );
-          
-          if (firstNewRequest) {
-            setCurrentRequest(firstNewRequest);
-            setShowNotification(true);
-          }
+        console.log('📋 Fetched requests:', newRequests.length, 'After filtering:', filteredRequests.length);
+        
+        // Check if request count increased (new request arrived)
+        if (filteredRequests.length > previousRequestCount && filteredRequests.length > 0) {
+          setShowNotification(true);
         }
         
-        setIncomingRequests(newRequests);
+        setPreviousRequestCount(filteredRequests.length);
+        setIncomingRequests(filteredRequests);
       } else {
         console.error('❌ API returned error:', data.error);
       }
@@ -132,7 +130,19 @@ export default function ProviderDashboard() {
   const fetchActiveBookings = async (providerId) => {
     try {
       const response = await fetch(`/api/provider/active-bookings?providerId=${providerId}`);
-      const data = await response.json();
+      
+      if (!response.ok) {
+        console.error('Failed to fetch active bookings:', response.status);
+        return;
+      }
+
+      const text = await response.text();
+      if (!text) {
+        console.log('No active bookings');
+        return;
+      }
+
+      const data = JSON.parse(text);
 
       if (data.success) {
         setActiveBookings(data.bookings);
@@ -142,7 +152,7 @@ export default function ProviderDashboard() {
     }
   };
 
-  const toggleOnlineStatus = async () => {
+  const handleToggleStatus = async () => {
     if (ambulances.length === 0) {
       showToast('Please add at least one ambulance before going online', 'warning');
       return;
@@ -160,7 +170,18 @@ export default function ProviderDashboard() {
         })
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        showToast('Failed to update status', 'error');
+        return;
+      }
+
+      const text = await response.text();
+      if (!text) {
+        showToast('Empty response from server', 'error');
+        return;
+      }
+
+      const data = JSON.parse(text);
 
       if (data.success) {
         setIsOnline(!isOnline);
@@ -175,30 +196,44 @@ export default function ProviderDashboard() {
   };
 
   const handleAcceptRequest = async (requestId) => {
-    // Close popup if open
-    setShowNotification(false);
-    setCurrentRequest(null);
-    
     console.log('🔵 Accept clicked:', { 
       requestId, 
       providerId: provider?._id,
-      providerExists: !!provider 
+      alreadyProcessing: processingRequests.has(requestId)
     });
+    
+    // CRITICAL: Check if already processing - prevent duplicate
+    if (processingRequests.has(requestId)) {
+      console.log('⚠️ Already processing this request, BLOCKING duplicate accept');
+      return;
+    }
     
     if (!provider || !provider._id) {
       showToast('Provider information missing. Please refresh the page.', 'error');
       return;
     }
     
+    // IMMEDIATELY mark as processing BEFORE any async operations
+    setProcessingRequests(prev => {
+      const newSet = new Set(prev);
+      newSet.add(requestId);
+      console.log('🔒 Locked request:', requestId, 'Total locked:', newSet.size);
+      return newSet;
+    });
+    
+    // Close popup if open
+    setShowNotification(false);
+    setCurrentRequest(null);
+    
     // Immediately remove from UI for instant feedback
     setIncomingRequests(prev => {
       const filtered = prev.filter(req => req._id !== requestId);
-      console.log('Removing request:', requestId, 'Remaining:', filtered.length);
+      console.log('🗑️ Removed from UI:', requestId, 'Remaining:', filtered.length);
       return filtered;
     });
     
     try {
-      console.log('🔵 Sending accept request to API...');
+      console.log('📡 Sending accept request to API...');
       
       const response = await fetch('/api/provider/accept-request', {
         method: 'POST',
@@ -211,9 +246,22 @@ export default function ProviderDashboard() {
         })
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        showToast('Failed to accept request', 'error');
+        fetchIncomingRequests();
+        return;
+      }
+
+      const text = await response.text();
+      if (!text) {
+        showToast('Empty response from server', 'error');
+        fetchIncomingRequests();
+        return;
+      }
+
+      const data = JSON.parse(text);
       
-      console.log('🔵 API Response:', { status: response.status, data });
+      console.log('📥 API Response:', { status: response.status, success: data.success });
 
       if (data.success) {
         showToast('Request accepted successfully!', 'success');
@@ -224,21 +272,30 @@ export default function ProviderDashboard() {
         // Refresh active bookings
         await fetchActiveBookings(provider._id);
         
-        // Force refresh requests after 2 seconds to ensure sync
-        setTimeout(() => {
-          fetchIncomingRequests();
-        }, 2000);
+        console.log('✅ Accept complete');
       } else {
         console.error('❌ Accept failed:', data.error);
         showToast(data.error || 'Failed to accept request', 'error');
-        // Restore request if failed
-        fetchIncomingRequests();
+        
+        // Only restore if it was a real failure (not "already accepted")
+        if (!data.error?.includes('already accepted')) {
+          fetchIncomingRequests();
+        }
       }
     } catch (error) {
       console.error('❌ Accept error:', error);
       showToast('Something went wrong', 'error');
-      // Restore request if failed
       fetchIncomingRequests();
+    } finally {
+      // Keep in processing set for 10 seconds to prevent any duplicate
+      setTimeout(() => {
+        setProcessingRequests(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(requestId);
+          console.log('🔓 Unlocked request:', requestId);
+          return newSet;
+        });
+      }, 10000);
     }
   };
 
@@ -266,7 +323,20 @@ export default function ProviderDashboard() {
         })
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        showToast('Failed to reject request', 'error');
+        fetchIncomingRequests();
+        return;
+      }
+
+      const text = await response.text();
+      if (!text) {
+        showToast('Empty response from server', 'error');
+        fetchIncomingRequests();
+        return;
+      }
+
+      const data = JSON.parse(text);
 
       if (data.success) {
         showToast('Request rejected', 'success');
@@ -354,47 +424,51 @@ export default function ProviderDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-950 via-slate-900 to-blue-950">
-      {/* Header */}
-      <header className="bg-slate-900/80 backdrop-blur-lg border-b border-blue-800/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
-            {/* Logo & Brand */}
-            <div className="flex items-center gap-4">
-              <div className="bg-gradient-to-br from-blue-600 to-cyan-600 p-3 rounded-xl shadow-lg border border-blue-400/30">
-                <Ambulance className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-white">Provider Dashboard</h1>
-                <p className="text-sm text-blue-300">{provider?.companyName}</p>
-              </div>
-            </div>
+      {/* Sidebar */}
+      <ProviderSidebar 
+        provider={provider} 
+        isOnline={isOnline} 
+        onToggleStatus={handleToggleStatus}
+      />
 
-            <div className="flex items-center gap-4">
-              {/* Online/Offline Toggle */}
-              <button
-                onClick={toggleOnlineStatus}
-                className={`flex items-center gap-3 px-6 py-3 rounded-xl font-bold transition-all transform hover:scale-105 shadow-lg border-2 ${
-                  isOnline
-                    ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white border-green-400/30'
-                    : 'bg-slate-800 hover:bg-slate-700 text-slate-400 border-slate-700'
-                }`}
-              >
-                <Power className="w-5 h-5" />
-                {isOnline ? 'Online' : 'Offline'}
-              </button>
+      {/* Main Content with left margin for sidebar */}
+      <div className="lg:ml-72">
+        {/* Header */}
+        <header className="bg-slate-900/80 backdrop-blur-lg border-b border-blue-800/30">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-20">
+              {/* Logo & Brand - Hidden on large screens (sidebar shows it) */}
+              <div className="flex items-center gap-4 lg:hidden">
+                <div className="bg-gradient-to-br from-blue-600 to-cyan-600 p-3 rounded-xl shadow-lg border border-blue-400/30">
+                  <Ambulance className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-white">Provider Dashboard</h1>
+                  <p className="text-sm text-blue-300">{provider?.companyName}</p>
+                </div>
+              </div>
 
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 bg-red-600/80 hover:bg-red-700 text-white rounded-lg font-medium transition-colors border border-red-500/30"
-              >
-                Logout
-              </button>
+              {/* Page Title for large screens */}
+              <div className="hidden lg:block">
+                <h1 className="text-2xl font-bold text-white">Dashboard Overview</h1>
+                <p className="text-sm text-blue-300">Manage your ambulance services</p>
+              </div>
+
+              <div className="flex items-center gap-4">
+                {/* Add Ambulance Button */}
+                <button
+                  onClick={() => setShowAddAmbulance(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-lg font-medium transition-all border border-blue-400/30"
+                >
+                  <Plus className="w-5 h-5" />
+                  <span className="hidden sm:inline">Add Ambulance</span>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-slate-800/50 backdrop-blur-lg rounded-xl shadow-xl p-6 border border-blue-500/20">
@@ -440,70 +514,27 @@ export default function ProviderDashboard() {
           </div>
         </div>
 
-        {/* Incoming Requests */}
+        {/* Emergency Requests Alert - Redirects to dedicated page */}
         {incomingRequests.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-              <Bell className="w-6 h-6 text-yellow-400 animate-pulse" />
-              Incoming Requests ({incomingRequests.length})
-            </h2>
-            <div className="grid grid-cols-1 gap-4">
-              {incomingRequests.map((request) => (
-                <div key={request._id} className="bg-slate-800/50 backdrop-blur-lg rounded-xl shadow-xl p-6 border-2 border-yellow-500/50">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="bg-yellow-500/20 p-2 rounded-lg border border-yellow-500/30">
-                          <UserIcon className="w-6 h-6 text-yellow-400" />
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-lg text-white">Emergency Request</h3>
-                          <p className="text-sm text-yellow-300">Ambulance Type: {request.ambulanceType}</p>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4 mb-4">
-                        <div className="flex items-center gap-2 text-blue-200">
-                          <MapPin className="w-4 h-4 text-red-400" />
-                          <span className="text-sm">
-                            {request.userLocation?.latitude.toFixed(4)}, {request.userLocation?.longitude.toFixed(4)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-blue-200">
-                          <Clock className="w-4 h-4 text-cyan-400" />
-                          <span className="text-sm">{new Date(request.createdAt).toLocaleTimeString()}</span>
-                        </div>
-                      </div>
-
-                      {request.triageInfo && (
-                        <div className="bg-blue-900/30 p-4 rounded-lg mb-4 border border-blue-500/30">
-                          <p className="font-semibold text-blue-300 mb-2">Patient Information:</p>
-                          <div className="grid grid-cols-2 gap-2 text-sm">
-                            <p className="text-blue-200"><span className="font-medium text-blue-300">Age:</span> {request.triageInfo.age}</p>
-                            <p className="text-blue-200"><span className="font-medium text-blue-300">Gender:</span> {request.triageInfo.gender}</p>
-                            <p className="col-span-2 text-blue-200"><span className="font-medium text-blue-300">Condition:</span> {request.triageInfo.condition}</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col gap-3 ml-4">
-                      <button
-                        onClick={() => handleAcceptRequest(request._id)}
-                        className="px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg font-bold transition-all transform hover:scale-105 shadow-lg border border-green-400/30"
-                      >
-                        Accept
-                      </button>
-                      <button
-                        onClick={() => handleRejectRequest(request._id)}
-                        className="px-6 py-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white rounded-lg font-bold transition-all transform hover:scale-105 shadow-lg border border-red-400/30"
-                      >
-                        Reject
-                      </button>
-                    </div>
+            <div 
+              onClick={() => router.push('/provider-dashboard/emergency')}
+              className="bg-gradient-to-r from-yellow-900/50 to-orange-900/50 backdrop-blur-lg rounded-xl shadow-xl p-6 border-2 border-yellow-500/50 cursor-pointer hover:border-yellow-400 transition-all transform hover:scale-[1.02]"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="bg-yellow-500/20 p-3 rounded-lg border border-yellow-500/30">
+                    <Bell className="w-8 h-8 text-yellow-400 animate-pulse" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-white mb-1">
+                      {incomingRequests.length} New Emergency {incomingRequests.length === 1 ? 'Request' : 'Requests'}
+                    </h3>
+                    <p className="text-yellow-300">Click here to view and accept requests</p>
                   </div>
                 </div>
-              ))}
+                <div className="text-yellow-400 text-4xl">→</div>
+              </div>
             </div>
           </div>
         )}
@@ -581,18 +612,14 @@ export default function ProviderDashboard() {
         providerId={provider?._id}
       />
 
-      {/* Request Notification Popup */}
-      {showNotification && currentRequest && (
+      {/* Request Notification Toast */}
+      {showNotification && incomingRequests.length > 0 && (
         <RequestNotification
-          request={currentRequest}
-          onAccept={handleAcceptRequest}
-          onReject={handleRejectRequest}
-          onClose={() => {
-            setShowNotification(false);
-            setCurrentRequest(null);
-          }}
+          requestCount={incomingRequests.length}
+          onClose={() => setShowNotification(false)}
         />
       )}
+      </div>
     </div>
   );
 }

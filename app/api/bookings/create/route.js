@@ -8,7 +8,7 @@ export async function POST(request) {
     const db = client.db('jibondaak');
 
     const body = await request.json();
-    const { userId, userLocation, ambulanceType } = body;
+    const { userId, userLocation, ambulanceType, userName, userPhone } = body;
 
     // Validate input
     if (!userId || !userLocation) {
@@ -28,12 +28,14 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    // Create new booking
+    // Create new booking with user details
     const booking = await BookingModel.create(db, {
       userId,
       userLocation,
       ambulanceType: ambulanceType || 'basic',
-      status: 'searching'
+      status: 'searching',
+      userName: userName || 'Unknown',
+      userPhone: userPhone || 'N/A'
     });
 
     // Don't auto-assign driver - let provider accept the request
