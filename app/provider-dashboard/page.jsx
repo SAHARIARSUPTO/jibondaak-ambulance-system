@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Ambulance, Plus, Power, Bell, MapPin, User as UserIcon, Phone, Clock } from 'lucide-react';
+import { Ambulance, Plus, Power, Bell, MapPin, User, Phone, Clock } from 'lucide-react';
 import Toast from '../components/Toast';
 import AddAmbulanceModal from '../components/provider/AddAmbulanceModal';
 import RequestNotification from '../components/provider/RequestNotification';
