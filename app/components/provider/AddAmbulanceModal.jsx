@@ -9,7 +9,10 @@ export default function AddAmbulanceModal({ isOpen, onClose, onSuccess, provider
     vehicleNumber: '',
     licenseNumber: '',
     driverName: '',
-    driverPhone: ''
+    driverPhone: '',
+    latitude: '',
+    longitude: '',
+    locationName: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -33,23 +36,33 @@ export default function AddAmbulanceModal({ isOpen, onClose, onSuccess, provider
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          providerId,
-          ...formData
-        })
-      });
+      body: JSON.stringify({
+        providerId,
+        type: formData.type,
+        vehicleNumber: formData.vehicleNumber,
+        licenseNumber: formData.licenseNumber,
+        driverName: formData.driverName,
+        driverPhone: formData.driverPhone,
+        latitude: formData.latitude ? parseFloat(formData.latitude) : undefined,
+        longitude: formData.longitude ? parseFloat(formData.longitude) : undefined,
+        locationLabel: formData.locationName || undefined
+      })
+    });
 
       const data = await response.json();
 
       if (data.success) {
         onSuccess(data.ambulance);
         setFormData({
-          type: 'non-ac',
-          vehicleNumber: '',
-          licenseNumber: '',
-          driverName: '',
-          driverPhone: ''
-        });
+        type: 'non-ac',
+        vehicleNumber: '',
+        licenseNumber: '',
+        driverName: '',
+        driverPhone: '',
+        latitude: '',
+        longitude: '',
+        locationName: ''
+      });
         onClose();
       } else {
         setError(data.error || 'Failed to add ambulance');
@@ -191,6 +204,55 @@ export default function AddAmbulanceModal({ isOpen, onClose, onSuccess, provider
                 className="w-full pl-10 pr-4 py-3 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-slate-500 bg-slate-800"
               />
             </div>
+          </div>
+
+          {/* Optional Location Coordinates */}
+          <div className="grid gap-3 md:grid-cols-2">
+            <div>
+              <label className="block text-sm font-bold text-blue-300 mb-2">
+                Base Latitude
+              </label>
+              <input
+                type="number"
+                name="latitude"
+                step="0.000001"
+                value={formData.latitude}
+                onChange={handleChange}
+                placeholder="23.8103"
+                className="w-full px-4 py-3 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-slate-500 bg-slate-800"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-blue-300 mb-2">
+                Base Longitude
+              </label>
+              <input
+                type="number"
+                name="longitude"
+                step="0.000001"
+                value={formData.longitude}
+                onChange={handleChange}
+                placeholder="90.4125"
+                className="w-full px-4 py-3 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-slate-500 bg-slate-800"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-blue-300 mb-2">
+              Location Label (area, hospital, or base)
+            </label>
+            <input
+              type="text"
+              name="locationName"
+              value={formData.locationName}
+              onChange={handleChange}
+              placeholder="Dhanmondi / Narayanganj Base"
+              className="w-full px-4 py-3 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-slate-500 bg-slate-800"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Optional, but helps users understand where the ambulance is deployed.
+            </p>
           </div>
 
           {/* Buttons */}

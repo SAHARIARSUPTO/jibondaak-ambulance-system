@@ -1,9 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { User, Ambulance, ChevronDown } from 'lucide-react';
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { User, Ambulance, Shield, ChevronDown } from "lucide-react";
+
+const userTypeOptions = [
+  {
+    id: "user",
+    label: "User / Patient",
+    description: "Book ambulance services",
+    icon: User,
+  },
+  {
+    id: "provider",
+    label: "Ambulance Service Provider",
+    description: "Manage ambulance services",
+    icon: Ambulance,
+  },
+  {
+    id: "admin",
+    label: "Administrator",
+    description: "Control & dispatch operations",
+    icon: Shield,
+  },
+];
 
 export default function Login() {
   const router = useRouter();
@@ -13,8 +34,11 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [userType, setUserType] = useState("user"); // user or provider
+  const [userType, setUserType] = useState("user"); // user, provider or admin
   const [showDropdown, setShowDropdown] = useState(false);
+  const selectedUserType =
+    userTypeOptions.find((option) => option.id === userType) ?? userTypeOptions[0];
+  const SelectedIcon = selectedUserType.icon;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -93,10 +117,13 @@ export default function Login() {
           localStorage.setItem('user', JSON.stringify(data.user));
         }
         
-        // Redirect based on user type
+        // Redirect based on user role
         if (data.user.role === 'provider') {
           console.log('🚑 Redirecting to provider dashboard');
           router.push('/provider-dashboard');
+        } else if (data.user.role === 'admin') {
+          console.log('🛡️ Redirecting to admin console');
+          router.push('/admin');
         } else {
           console.log('👤 Redirecting to user dashboard');
           router.push('/dashboard');
@@ -127,9 +154,7 @@ export default function Login() {
 
         {/* User Type Selector Dropdown */}
         <div className="mb-6">
-          <label className="block mb-2 font-medium text-blue-300">
-            Login As
-          </label>
+          <label className="block mb-2 font-medium text-blue-300">Login As</label>
           <div className="relative">
             <button
               type="button"
@@ -137,61 +162,40 @@ export default function Login() {
               className="w-full px-4 py-3 bg-slate-800 text-white border-2 border-blue-500/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition flex items-center justify-between hover:bg-slate-700"
             >
               <div className="flex items-center gap-3">
-                {userType === "user" ? (
-                  <>
-                    <User className="w-5 h-5 text-blue-400" />
-                    <span className="font-medium">User / Patient</span>
-                  </>
-                ) : (
-                  <>
-                    <Ambulance className="w-5 h-5 text-blue-400" />
-                    <span className="font-medium">Ambulance Service Provider</span>
-                  </>
-                )}
+                <SelectedIcon className="w-5 h-5 text-blue-400" />
+                <span className="font-medium">{selectedUserType.label}</span>
               </div>
-              <ChevronDown className={`w-5 h-5 text-blue-300 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                className={`w-5 h-5 text-blue-300 transition-transform ${showDropdown ? "rotate-180" : ""}`}
+              />
             </button>
 
-            {/* Dropdown Menu */}
             {showDropdown && (
               <div className="absolute z-10 w-full mt-2 bg-slate-800 border-2 border-blue-500/30 rounded-lg shadow-xl overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setUserType("user");
-                    setShowDropdown(false);
-                  }}
-                  className={`w-full px-4 py-3 text-left flex items-center gap-3 transition-colors ${
-                    userType === "user" 
-                      ? "bg-blue-900/50 text-blue-300 font-semibold" 
-                      : "hover:bg-slate-700 text-white"
-                  }`}
-                >
-                  <User className="w-5 h-5" />
-                  <div>
-                    <p className="font-medium">User / Patient</p>
-                    <p className="text-xs text-blue-200">Book ambulance services</p>
-                  </div>
-                </button>
-                
-                <button
-                  type="button"
-                  onClick={() => {
-                    setUserType("provider");
-                    setShowDropdown(false);
-                  }}
-                  className={`w-full px-4 py-3 text-left flex items-center gap-3 transition-colors border-t border-slate-700 ${
-                    userType === "provider" 
-                      ? "bg-blue-900/50 text-blue-300 font-semibold" 
-                      : "hover:bg-slate-700 text-white"
-                  }`}
-                >
-                  <Ambulance className="w-5 h-5" />
-                  <div>
-                    <p className="font-medium">Ambulance Service Provider</p>
-                    <p className="text-xs text-blue-200">Manage ambulance services</p>
-                  </div>
-                </button>
+                {userTypeOptions.map((option, index) => {
+                  const OptionIcon = option.icon;
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => {
+                        setUserType(option.id);
+                        setShowDropdown(false);
+                      }}
+                      className={`w-full px-4 py-3 text-left flex items-center gap-3 transition-colors ${
+                        option.id === userType
+                          ? "bg-blue-900/50 text-blue-300 font-semibold"
+                          : "hover:bg-slate-700 text-white"
+                      } ${index > 0 ? "border-t border-slate-700" : ""}`}
+                    >
+                      <OptionIcon className="w-5 h-5" />
+                      <div>
+                        <p className="font-medium">{option.label}</p>
+                        <p className="text-xs text-blue-200">{option.description}</p>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -202,13 +206,25 @@ export default function Login() {
           <p className="text-xs text-blue-300 font-semibold mb-2">🧪 Demo Credentials:</p>
           {userType === "user" ? (
             <div className="text-xs text-blue-200 space-y-1">
-              <p>Email: <span className="font-mono text-blue-400">user@demo.com</span></p>
-              <p>Password: <span className="font-mono text-blue-400">demo123</span></p>
+              <p>
+                Email: <span className="font-mono text-blue-400">user@demo.com</span>
+              </p>
+              <p>
+                Password: <span className="font-mono text-blue-400">demo123</span>
+              </p>
+            </div>
+          ) : userType === "provider" ? (
+            <div className="text-xs text-blue-200 space-y-1">
+              <p>
+                Email: <span className="font-mono text-blue-400">provider@demo.com</span>
+              </p>
+              <p>
+                Password: <span className="font-mono text-blue-400">demo123</span>
+              </p>
             </div>
           ) : (
-            <div className="text-xs text-blue-200 space-y-1">
-              <p>Email: <span className="font-mono text-blue-400">provider@demo.com</span></p>
-              <p>Password: <span className="font-mono text-blue-400">demo123</span></p>
+            <div className="text-xs text-blue-200">
+              Admin accounts are provisioned via the operations database. Contact your team lead for credentials.
             </div>
           )}
         </div>

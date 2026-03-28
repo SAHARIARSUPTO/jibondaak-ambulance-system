@@ -47,7 +47,10 @@ export async function POST(request) {
       vehicleNumber, 
       licenseNumber, 
       driverName, 
-      driverPhone 
+      driverPhone,
+      latitude,
+      longitude,
+      locationLabel
     } = body;
 
     // Validate input
@@ -72,6 +75,7 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
+    const hasCoords = typeof latitude === 'number' && typeof longitude === 'number';
     const ambulance = {
       providerId,
       type,
@@ -80,7 +84,14 @@ export async function POST(request) {
       driverName,
       driverPhone,
       isAvailable: true,
-      currentLocation: null,
+      currentLocation: hasCoords
+        ? {
+            latitude,
+            longitude,
+            label: locationLabel || null,
+            updatedAt: new Date()
+          }
+        : null,
       createdAt: new Date(),
       updatedAt: new Date()
     };

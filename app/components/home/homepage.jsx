@@ -1,17 +1,8 @@
 "use client";
 import Image from "next/image";
-import React, { useState } from "react";
+import AmbulanceFinder from "../AmbulanceFinder";
 
 const HomePage = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isFocused, setIsFocused] = useState(false);
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    console.log("Searching for ambulances near:", searchTerm);
-    // Integrate with your backend/API here
-  };
-
   return (
     <main className="bg-slate-950 text-slate-100">
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-linear-to-br from-slate-900 via-gray-900 to-black">
@@ -69,54 +60,7 @@ const HomePage = () => {
             Bangladesh.
           </p>
 
-          {/* Search Form with Glow Effect */}
-          <form
-            onSubmit={handleSearch}
-            className="max-w-2xl mx-auto mb-12 md:mb-16 animate-fade-in-up-delayed-more"
-          >
-            <div
-              className={`relative flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-0 bg-white/10 backdrop-blur-md p-1.5 sm:p-2 rounded-2xl border transition-all duration-300 ${
-                isFocused
-                  ? "border-red-500 shadow-[0_0_40px_rgba(239,68,68,0.4)]"
-                  : "border-white/10 shadow-2xl"
-              }`}
-            >
-              {/* Glow Effect */}
-              <div className="absolute -inset-1 bg-linear-to-r from-red-600 to-orange-600 rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition duration-300"></div>
-
-              <input
-                type="text"
-                placeholder="Enter your location or village name..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                className="relative flex-1 px-5 sm:px-7 py-4 sm:py-5 rounded-xl sm:rounded-l-xl sm:rounded-r-none border-none outline-none text-white text-sm sm:text-base placeholder-gray-400 focus:placeholder-gray-500 transition-all duration-200 bg-white/5 backdrop-blur-sm"
-                aria-label="Search for ambulances"
-                required
-              />
-              <button
-                type="submit"
-                className="relative bg-linear-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 active:scale-95 text-white font-bold py-4 sm:py-5 px-7 sm:px-10 rounded-xl sm:rounded-r-xl sm:rounded-l-none shadow-lg shadow-red-500/30 hover:shadow-red-500/50 transition-all duration-300 flex items-center justify-center gap-2.5 whitespace-nowrap text-sm sm:text-base group"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 sm:h-5 sm:w-5 group-hover:rotate-90 transition-transform duration-300"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-                <span>Find Ambulance</span>
-              </button>
-            </div>
-          </form>
+          <AmbulanceFinder className="max-w-2xl mx-auto mb-12 md:mb-16 animate-fade-in-up-delayed-more" />
 
           {/* Emergency Contact */}
           <div className="inline-flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl px-6 py-4 animate-fade-in-delayed">

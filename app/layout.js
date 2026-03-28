@@ -1,14 +1,15 @@
 import "./globals.css";
-import { Space_Grotesk, Cormorant_Garamond } from "next/font/google";
+import { Inter, Playfair_Display } from "next/font/google";
 import ConditionalLayout from "./components/ConditionalLayout";
 
-const spaceGrotesk = Space_Grotesk({
+const inter = Inter({
   subsets: ["latin"],
   variable: "--font-sans",
+  weight: ["300", "400", "500", "600", "700"],
   display: "swap",
 });
 
-const cormorant = Cormorant_Garamond({
+const playfair = Playfair_Display({
   subsets: ["latin"],
   variable: "--font-serif",
   weight: ["400", "600", "700"],
@@ -24,7 +25,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${spaceGrotesk.variable} ${cormorant.variable} antialiased`}
+        className={`${inter.variable} ${playfair.variable} antialiased`}
         suppressHydrationWarning
       >
         <ConditionalLayout>

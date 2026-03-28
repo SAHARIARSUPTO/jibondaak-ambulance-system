@@ -8,7 +8,7 @@ export default function ConditionalLayout({ children }) {
   const pathname = usePathname();
   
   // Hide navbar and footer for dashboard pages
-  const isDashboard = pathname?.startsWith('/dashboard') || pathname?.startsWith('/provider-dashboard');
+  const isDashboard = pathname?.startsWith('/dashboard') || pathname?.startsWith('/provider-dashboard') || pathname?.startsWith('/admin');
   
   if (isDashboard) {
     return <main>{children}</main>;
