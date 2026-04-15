@@ -52,8 +52,13 @@ const Navbar = () => {
   ];
 
   return (
+<<<<<<< HEAD
     // NOT sticky
     <nav className="w-full z-30 bg-white/80 backdrop-blur-md border-b border-gray-100 transition-all duration-300 sticky top-0">
+=======
+    // Fixed navbar
+    <nav className="fixed top-0 left-0 right-0 w-full z-50 bg-slate-950/90 backdrop-blur border-b border-white/10 transition-all duration-300">
+>>>>>>> e9cc16eb67c9e06185c7d4d4f6025de1aa2f0b54
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
@@ -166,7 +171,7 @@ const Navbar = () => {
 
       {/* Animated Mobile Menu */}
       <div
-        className={`md:hidden absolute w-full overflow-hidden
+        className={`md:hidden fixed top-20 left-0 right-0 w-full overflow-hidden
           transition-all duration-300 
           ${
             isOpen

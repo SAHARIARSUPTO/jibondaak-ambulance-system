@@ -1,11 +1,14 @@
 "use client";
 import Image from "next/image";
-import React, { useState } from "react";
+import AmbulanceFinder from "../AmbulanceFinder";
 
 const HomePage = () => {
+<<<<<<< HEAD
   const [searchTerm, setSearchTerm] = useState("");
   const [isFocused, setIsFocused] = useState(false);
 
+=======
+>>>>>>> e9cc16eb67c9e06185c7d4d4f6025de1aa2f0b54
   return (
     <main className="bg-white text-slate-900 font-sans selection:bg-red-100">
       {/* 1. HERO SECTION */}
@@ -39,6 +42,7 @@ const HomePage = () => {
             খুঁজে পেতে আমরা আছি সবসময় আপনার পাশে।
           </p>
 
+<<<<<<< HEAD
           <form className="max-w-2xl mx-auto mb-8">
             <div
               className={`flex flex-col sm:flex-row shadow-2xl rounded-2xl overflow-hidden border-2 transition-all ${isFocused ? "border-red-600 ring-4 ring-red-50" : "border-slate-200"}`}
@@ -56,6 +60,9 @@ const HomePage = () => {
               </button>
             </div>
           </form>
+=======
+          <AmbulanceFinder className="max-w-2xl mx-auto mb-12 md:mb-16 animate-fade-in-up-delayed-more" />
+>>>>>>> e9cc16eb67c9e06185c7d4d4f6025de1aa2f0b54
 
           <div className="flex items-center justify-center gap-2 text-slate-500 font-medium">
             <svg

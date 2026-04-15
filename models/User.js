@@ -5,7 +5,13 @@ class UserModel {
     this.email = data.email;
     this.phone = data.phone;
     this.password = data.password; // Should be hashed
+<<<<<<< HEAD
     this.role = data.role || 'seeker'; // seeker, provider, admin
+=======
+    this.role = data.role || 'user'; // user, provider, admin
+    this.companyName = data.companyName || null; // For providers
+    this.licenseNumber = data.licenseNumber || null; // For providers
+>>>>>>> e9cc16eb67c9e06185c7d4d4f6025de1aa2f0b54
     this.isVerified = data.isVerified || false;
     this.isActive = data.isActive !== undefined ? data.isActive : true;
     this.createdAt = data.createdAt || new Date();
