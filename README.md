@@ -7,7 +7,7 @@
 ## 🚀 Quick Start
 
 ### 1. Install Dependencies
-```bash
+```bashh
 npm install
 ```
 
