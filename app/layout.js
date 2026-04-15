@@ -18,14 +18,15 @@ const cormorant = Cormorant_Garamond({
 
 export const metadata = {
   title: "JibonDaak - Emergency Ambulance Service",
-  description: "24/7 Emergency ambulance service across Bangladesh. Quick response, professional care.",
+  description:
+    "24/7 Emergency ambulance service across Bangladesh. Quick response, professional care.",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${spaceGrotesk.variable} ${cormorant.variable} antialiased`}
+        className={`${spaceGrotesk.variable} ${cormorant.variable} antialiased bg-white text-gray-900`}
         suppressHydrationWarning
       >
         <Navbar />

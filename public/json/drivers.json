@@ -1,0 +1,52 @@
+{
+  "drivers": [
+    {
+      "id": "DRV001",
+      "name": "আব্দুর রহমান",
+      "phone": "01712-345678",
+      "ambulanceType": "ac",
+      "division_id": "5",
+      "district_id": "49",
+      "upazila_id": "389",
+      "status": "available",
+      "lat": 24.371,
+      "lng": 88.582
+    },
+    {
+      "id": "DRV002",
+      "name": "মোঃ করিম উদ্দিন",
+      "phone": "01822-998877",
+      "ambulanceType": "non-ac",
+      "division_id": "5",
+      "district_id": "49",
+      "upazila_id": "389",
+      "status": "available",
+      "lat": 24.372,
+      "lng": 88.583
+    },
+    {
+      "id": "DRV003",
+      "name": "জসিম উদ্দিন",
+      "phone": "01933-112233",
+      "ambulanceType": "icu",
+      "division_id": "5",
+      "district_id": "49",
+      "upazila_id": "390",
+      "status": "available",
+      "lat": 24.406,
+      "lng": 88.608
+    },
+    {
+      "id": "DRV004",
+      "name": "রফিকুল ইসলাম",
+      "phone": "01544-556677",
+      "ambulanceType": "non-ac",
+      "division_id": "5",
+      "district_id": "49",
+      "upazila_id": "391",
+      "status": "available",
+      "lat": 24.359,
+      "lng": 88.623
+    }
+  ]
+}

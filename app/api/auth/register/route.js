@@ -8,7 +8,16 @@ export async function POST(request) {
     const db = client.db('jibondaak');
 
     const body = await request.json();
-    const { name, email, phone, password } = body;
+    const { name, email, phone, password, role } = body;
+    const allowedRoles = new Set(['seeker', 'provider']);
+    const resolvedRole = role && allowedRoles.has(role) ? role : 'seeker';
+
+    if (role && !allowedRoles.has(role)) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Invalid role provided' 
+      }, { status: 400 });
+    }
 
     // Validate input
     if (!name || !email || !phone || !password) {
@@ -24,7 +33,7 @@ export async function POST(request) {
       email,
       phone,
       password, // In production, hash this password before storing
-      role: 'user'
+      role: resolvedRole
     });
 
     return NextResponse.json({ 

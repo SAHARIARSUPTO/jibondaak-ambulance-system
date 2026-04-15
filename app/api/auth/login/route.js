@@ -8,7 +8,7 @@ export async function POST(request) {
     const db = client.db('jibondaak');
 
     const body = await request.json();
-    const { email, password } = body;
+    const { email, password, role } = body;
 
     // Validate input
     if (!email || !password) {
@@ -34,6 +34,15 @@ export async function POST(request) {
         success: false, 
         error: 'Invalid email or password' 
       }, { status: 401 });
+    }
+
+    const userRole = user.role || 'seeker';
+
+    if (role && role !== userRole) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Account role does not match this login portal' 
+      }, { status: 403 });
     }
 
     // Remove password from response

@@ -1,0 +1,79 @@
+{
+  "Rajshahi": [
+    {
+      "id": 1,
+      "name_en": "Rajshahi Medical College Hospital (RMCH)",
+      "name_bn": "রাজশাহী মেডিকেল কলেজ হাসপাতাল",
+      "type": "Government/Public",
+      "address": "Laxmipur, Rajshahi",
+      "phone": "0247-812101",
+      "location": {
+        "latitude": 24.3712,
+        "longitude": 88.5822
+      },
+      "specialties": ["General", "Surgery", "ICU", "Emergency"],
+      "availableBeds": 15,
+      "availableIcu": 2
+    },
+    {
+      "id": 2,
+      "name_en": "Islami Bank Medical College Hospital",
+      "name_bn": "ইসলামী ব্যাংক মেডিকেল কলেজ হাসপাতাল",
+      "type": "Private",
+      "address": "Nowdapara, Rajshahi",
+      "phone": "01711-403425",
+      "location": {
+        "latitude": 24.4065,
+        "longitude": 88.6085
+      },
+      "specialties": ["General", "Maternity", "Pediatrics"],
+      "availableBeds": 8,
+      "availableIcu": 0
+    },
+    {
+      "id": 3,
+      "name_en": "Popular Diagnostic Centre Ltd.",
+      "name_bn": "পপুলার ডায়াগনস্টিক সেন্টার লিঃ",
+      "type": "Diagnostic & Consultation",
+      "address": "Laxmipur, Rajshahi",
+      "phone": "09613-787811",
+      "location": {
+        "latitude": 24.3705,
+        "longitude": 88.5835
+      },
+      "specialties": ["Diagnostics", "Specialist Consultation"],
+      "availableBeds": 0,
+      "availableIcu": 0
+    },
+    {
+      "id": 4,
+      "name_en": "Labaid Diagnostic",
+      "name_bn": "ল্যাব এইড ডায়াগনস্টিক",
+      "type": "Diagnostic & Clinic",
+      "address": "Laxmipur, Rajshahi",
+      "phone": "01766-662606",
+      "location": {
+        "latitude": 24.3698,
+        "longitude": 88.5842
+      },
+      "specialties": ["Cardiology", "Pathology", "Radiology"],
+      "availableBeds": 0,
+      "availableIcu": 0
+    },
+    {
+      "id": 5,
+      "name_en": "Royal Hospital",
+      "name_bn": "রয়েল হাসপাতাল",
+      "type": "Private",
+      "address": "Laxmipur, Rajshahi",
+      "phone": "01716-444111",
+      "location": {
+        "latitude": 24.3725,
+        "longitude": 88.581
+      },
+      "specialties": ["General Medicine", "Surgery"],
+      "availableBeds": 5,
+      "availableIcu": 1
+    }
+  ]
+}

@@ -6,10 +6,25 @@
 
 body {
   font-family: var(--font-sans);
-  background-color: #0b0f1a;
-  color: #e2e8f0;
+  background-color: #ffffff;
+  color: #0f172a;
 }
 
 .font-display {
   font-family: var(--font-serif);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-text-reveal {
+  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
