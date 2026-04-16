@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import AmbulanceFinder from "@/app/components/AmbulanceFinder";
 import {
   Activity,
   MapPin,

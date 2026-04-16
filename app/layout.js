@@ -26,16 +26,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-<<<<<<< HEAD
-        className={`${spaceGrotesk.variable} ${cormorant.variable} antialiased bg-white text-gray-900`}
-=======
-        className={`${inter.variable} ${playfair.variable} antialiased`}
->>>>>>> e9cc16eb67c9e06185c7d4d4f6025de1aa2f0b54
+        className={`${inter.variable} ${playfair.variable} antialiased bg-white text-gray-900`}
         suppressHydrationWarning
       >
-        <ConditionalLayout>
-          {children}
-        </ConditionalLayout>
+        <ConditionalLayout>{children}</ConditionalLayout>
       </body>
     </html>
   );
