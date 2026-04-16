@@ -1,6 +1,5 @@
 ﻿﻿"use client";
 
-<<<<<<< HEAD
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -29,20 +28,8 @@ import {
   BedSingle,
   Send,
 } from "lucide-react";
-=======
-import { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import DashboardHeader from '../components/dashboard/DashboardHeader';
-import LiveTrackingMap from '../components/dashboard/LiveTrackingMap';
-import StatusBadge from '../components/dashboard/StatusBadge';
-import QuickActionCards from '../components/dashboard/QuickActionCards';
-import TriageFormModal from '../components/dashboard/TriageFormModal';
-import ETADisplay from '../components/dashboard/ETADisplay';
-import TripShareButton from '../components/dashboard/TripShareButton';
-import BedAvailabilityPanel from '../components/dashboard/BedAvailabilityPanel';
-import DriverAcceptedNotification from '../components/dashboard/DriverAcceptedNotification';
-import UserSidebar from '../components/dashboard/UserSidebar';
->>>>>>> e9cc16eb67c9e06185c7d4d4f6025de1aa2f0b54
+import Footer from "../components/footer/footer";
+import Navbar from "../components/navbar/navbar";
 
 const DEFAULT_LOCATION = { latitude: 23.8103, longitude: 90.4125 };
 
@@ -89,7 +76,6 @@ export default function DashboardPage() {
   const [activeBooking, setActiveBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState(null);
-<<<<<<< HEAD
   const [selectedAmbulanceType, setSelectedAmbulanceType] = useState("non-ac");
   const [needsAmbulance, setNeedsAmbulance] = useState(false);
   const [isEditingArea, setIsEditingArea] = useState(false);
@@ -110,12 +96,6 @@ export default function DashboardPage() {
   const [divisions, setDivisions] = useState([]);
   const [districts, setDistricts] = useState([]);
   const [upazilas, setUpazilas] = useState([]);
-=======
-  const [selectedAmbulanceType, setSelectedAmbulanceType] = useState('non-ac');
-  const [showTriageForm, setShowTriageForm] = useState(false);
-  const [showDriverNotification, setShowDriverNotification] = useState(false);
-  const [previousStatus, setPreviousStatus] = useState(null);
->>>>>>> e9cc16eb67c9e06185c7d4d4f6025de1aa2f0b54
 
   const greeting = useMemo(() => getGreeting(), []);
 
@@ -260,7 +240,6 @@ export default function DashboardPage() {
   const fetchActiveBooking = async (targetHospitalId = null, eta = null) => {
     if (!user) return;
     try {
-<<<<<<< HEAD
       const res = await fetch(`/api/bookings/active?userId=${user._id}`);
       if (!res.ok) return;
       const contentType = res.headers.get("content-type");
@@ -268,40 +247,6 @@ export default function DashboardPage() {
 
       const data = await res.json();
       if (data.success) setActiveBooking(data.booking);
-=======
-      const response = await fetch(`/api/bookings/active?userId=${user._id}`);
-      
-      // Check if response is ok
-      if (!response.ok) {
-        console.error('Failed to fetch booking:', response.status);
-        return;
-      }
-
-      // Check if response has content
-      const text = await response.text();
-      if (!text) {
-        console.log('No active booking');
-        return;
-      }
-
-      const data = JSON.parse(text);
-
-      if (data.success && data.booking) {
-        const newBooking = data.booking;
-        
-        // Check if status changed from 'searching' to 'driver_assigned' or 'en_route'
-        if (previousStatus === 'searching' && 
-            (newBooking.status === 'driver_assigned' || newBooking.status === 'en_route') &&
-            newBooking.driverInfo) {
-          // Show driver notification
-          setShowDriverNotification(true);
-        }
-        
-        // Update previous status
-        setPreviousStatus(newBooking.status);
-        setActiveBooking(newBooking);
-      }
->>>>>>> e9cc16eb67c9e06185c7d4d4f6025de1aa2f0b54
     } catch (error) {
       console.error("Booking fetch error:", error);
     } finally {
@@ -367,7 +312,6 @@ export default function DashboardPage() {
           userId: user._id,
           userLocation,
           ambulanceType: selectedAmbulanceType,
-<<<<<<< HEAD
           targetHospitalId: directHospitalId || targetHospitalId,
           estimatedArrival: eta,
           driverId: driver.id,
@@ -386,34 +330,6 @@ export default function DashboardPage() {
       if (data.success) setActiveBooking(data.booking);
     } catch (e) {
       alert("বুকিং করতে সমস্যা হয়েছে।");
-=======
-          userName: user.name,
-          userPhone: user.phone
-        })
-      });
-
-      if (!response.ok) {
-        alert('Failed to create booking');
-        return;
-      }
-
-      const text = await response.text();
-      if (!text) {
-        alert('Empty response from server');
-        return;
-      }
-
-      const data = JSON.parse(text);
-
-      if (data.success) {
-        setActiveBooking(data.booking);
-      } else {
-        alert(data.error || 'Failed to create booking');
-      }
-    } catch (error) {
-      console.error('Error creating booking:', error);
-      alert('Something went wrong. Please try again.');
->>>>>>> e9cc16eb67c9e06185c7d4d4f6025de1aa2f0b54
     } finally {
       setIsSubmitting(false);
     }
@@ -432,37 +348,10 @@ export default function DashboardPage() {
       await fetch(`/api/bookings/cancel/${activeBooking._id}`, {
         method: "POST",
       });
-<<<<<<< HEAD
       setActiveBooking(null);
       alert("বুকিং বাতিল করা হয়েছে।");
     } catch (e) {
       alert("বাতিল করতে সমস্যা হয়েছে।");
-=======
-
-      if (!response.ok) {
-        alert('Failed to cancel booking');
-        return;
-      }
-
-      const text = await response.text();
-      if (!text) {
-        alert('Empty response from server');
-        return;
-      }
-
-      const data = JSON.parse(text);
-
-      if (data.success) {
-        setActiveBooking(null);
-      } else {
-        alert(data.error || 'Failed to cancel booking');
-      }
-    } catch (error) {
-      console.error('Error cancelling booking:', error);
-      alert('Something went wrong. Please try again.');
-    } finally {
-      setLoading(false);
->>>>>>> e9cc16eb67c9e06185c7d4d4f6025de1aa2f0b54
     }
   };
 
@@ -478,460 +367,431 @@ export default function DashboardPage() {
     : -1;
 
   return (
-<<<<<<< HEAD
-    <div className="min-h-screen bg-slate-50 text-slate-900 pb-10">
-      {/* --- RE-DESIGNED HEADER --- */}
-      <header className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-md border-b border-slate-200">
-        <div className="mx-auto max-w-7xl px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3 bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
-            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-              <User className="h-4 w-4 text-blue-600" />
+    <>
+      <Navbar></Navbar>
+      <div className="min-h-screen bg-slate-50 text-slate-900 pb-10">
+        {/* --- RE-DESIGNED HEADER --- */}
+        <header className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-md border-b border-slate-200">
+          <div className="mx-auto max-w-7xl px-4 h-16 flex items-center justify-between">
+            <div className="flex items-center gap-3 bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
+              <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                <User className="h-4 w-4 text-blue-600" />
+              </div>
+              <span className="text-xs font-bold pr-2">{user.name}</span>
             </div>
-            <span className="text-xs font-bold pr-2">{user.name}</span>
           </div>
-        </div>
-      </header>
-=======
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      {/* Sidebar */}
-      <UserSidebar user={user} />
+        </header>
 
-      {/* Main Content with left margin for sidebar */}
-      <div className="lg:ml-72">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 pb-14 pt-8 sm:px-6 lg:px-8">
-        <DashboardHeader
-          user={user}
-          greeting={greeting}
-          statusLabel={bookingStatus}
-          onSOSClick={handleSOSClick}
-          hasActiveBooking={!!activeBooking}
-          loading={loading}
-        />
->>>>>>> e9cc16eb67c9e06185c7d4d4f6025de1aa2f0b54
-
-      <main className="mx-auto max-w-7xl px-4 mt-8 space-y-6">
-        {/* Active Trip Banner */}
-        {activeBooking && (
-          <div className="bg-blue-600 rounded-3xl p-6 text-white flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl shadow-blue-100 animate-in fade-in slide-in-from-top-4 duration-500">
-            <div className="flex items-center gap-4">
-              <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-md">
-                <Activity className="h-6 w-6 animate-pulse" />
-              </div>
-              <div>
-                <p className="text-xs font-bold opacity-80 uppercase tracking-widest">
-                  একটি ট্রিপ সচল আছে
-                </p>
-                <h2 className="text-xl font-black">
-                  {activeBooking.driverInfo
-                    ? `${activeBooking.driverInfo.name} ${formatStatus(activeBooking.status)}`
-                    : formatStatus(activeBooking.status)}
-                </h2>
-                {activeBooking.driverInfo && (
-                  <p className="text-sm font-bold mt-1">
-                    ফোন: {activeBooking.driverInfo.phone}
-                  </p>
-                )}
-              </div>
-            </div>
-            <button
-              onClick={handleCancelBooking}
-              className="bg-white/10 hover:bg-white/20 px-6 py-3 rounded-xl font-bold text-sm backdrop-blur-md transition-all"
-            >
-              বাতিল করুন
-            </button>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* --- MAIN ACTION COLUMN --- */}
-          <div className="lg:col-span-2 bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100">
-            <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-              <div>
-                <h2 className="text-2xl font-black tracking-tight">
-                  অ্যাম্বুলেন্স রিকোয়েস্ট
-                </h2>
-                <p className="text-sm text-slate-400 font-medium">
-                  নিচের তথ্যগুলো সঠিক ভাবে পূরণ করুন
-                </p>
-              </div>
-              <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
-                <button
-                  onClick={() => setNeedsAmbulance(!needsAmbulance)}
-                  className={`text-xs font-bold px-4 py-2 rounded-lg transition-all ${needsAmbulance ? "bg-red-600 text-white" : "text-slate-500"}`}
-                >
-                  জরুরি প্রয়োজন
-                </button>
-                <button
-                  onClick={() => setNeedsAmbulance(false)}
-                  className={`text-xs font-bold px-4 py-2 rounded-lg transition-all ${!needsAmbulance ? "bg-emerald-600 text-white" : "text-slate-500"}`}
-                >
-                  ঠিক আছি
-                </button>
-              </div>
-            </div>
-
-            <div
-              className={`space-y-6 transition-opacity ${activeBooking ? "opacity-50 pointer-events-none" : "opacity-100"}`}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
-                    <User className="h-3 w-3" /> রোগীর বয়স
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="যেমন: ২৫"
-                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 outline-none focus:ring-2 ring-red-100"
-                    value={patientAge}
-                    onChange={(e) => setPatientAge(e.target.value)}
-                  />
+        <main className="mx-auto max-w-7xl px-4 mt-8 space-y-6">
+          {/* Active Trip Banner */}
+          {activeBooking && (
+            <div className="bg-blue-600 rounded-3xl p-6 text-white flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl shadow-blue-100 animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="flex items-center gap-4">
+                <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-md">
+                  <Activity className="h-6 w-6 animate-pulse" />
                 </div>
+                <div>
+                  <p className="text-xs font-bold opacity-80 uppercase tracking-widest">
+                    একটি ট্রিপ সচল আছে
+                  </p>
+                  <h2 className="text-xl font-black">
+                    {activeBooking.driverInfo
+                      ? `${activeBooking.driverInfo.name} ${formatStatus(activeBooking.status)}`
+                      : formatStatus(activeBooking.status)}
+                  </h2>
+                  {activeBooking.driverInfo && (
+                    <p className="text-sm font-bold mt-1">
+                      ফোন: {activeBooking.driverInfo.phone}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={handleCancelBooking}
+                className="bg-white/10 hover:bg-white/20 px-6 py-3 rounded-xl font-bold text-sm backdrop-blur-md transition-all"
+              >
+                বাতিল করুন
+              </button>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* --- MAIN ACTION COLUMN --- */}
+            <div className="lg:col-span-2 bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100">
+              <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+                <div>
+                  <h2 className="text-2xl font-black tracking-tight">
+                    অ্যাম্বুলেন্স রিকোয়েস্ট
+                  </h2>
+                  <p className="text-sm text-slate-400 font-medium">
+                    নিচের তথ্যগুলো সঠিক ভাবে পূরণ করুন
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
+                  <button
+                    onClick={() => setNeedsAmbulance(!needsAmbulance)}
+                    className={`text-xs font-bold px-4 py-2 rounded-lg transition-all ${needsAmbulance ? "bg-red-600 text-white" : "text-slate-500"}`}
+                  >
+                    জরুরি প্রয়োজন
+                  </button>
+                  <button
+                    onClick={() => setNeedsAmbulance(false)}
+                    className={`text-xs font-bold px-4 py-2 rounded-lg transition-all ${!needsAmbulance ? "bg-emerald-600 text-white" : "text-slate-500"}`}
+                  >
+                    ঠিক আছি
+                  </button>
+                </div>
+              </div>
+
+              <div
+                className={`space-y-6 transition-opacity ${activeBooking ? "opacity-50 pointer-events-none" : "opacity-100"}`}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
+                      <User className="h-3 w-3" /> রোগীর বয়স
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="যেমন: ২৫"
+                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 outline-none focus:ring-2 ring-red-100"
+                      value={patientAge}
+                      onChange={(e) => setPatientAge(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
+                      <Stethoscope className="h-3 w-3" /> রোগীর অবস্থা
+                    </label>
+                    <select
+                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 outline-none appearance-none"
+                      value={severity}
+                      onChange={(e) => setSeverity(e.target.value)}
+                    >
+                      <option value="stable">স্থিতিশীল (Stable)</option>
+                      <option value="urgent">জরুরি (Urgent)</option>
+                      <option value="critical">সংকটাপন্ন (Critical)</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
-                    <Stethoscope className="h-3 w-3" /> রোগীর অবস্থা
+                    <Hospital className="h-3 w-3" /> পছন্দের হাসপাতাল (ঐচ্ছিক)
                   </label>
                   <select
                     className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 outline-none appearance-none"
-                    value={severity}
-                    onChange={(e) => setSeverity(e.target.value)}
+                    value={targetHospitalId}
+                    onChange={(e) => setTargetHospitalId(e.target.value)}
                   >
-                    <option value="stable">স্থিতিশীল (Stable)</option>
-                    <option value="urgent">জরুরি (Urgent)</option>
-                    <option value="critical">সংকটাপন্ন (Critical)</option>
+                    <option value="">নিকটস্থ যেকোনো হাসপাতাল</option>
+                    {filteredHospitals.map((h) => (
+                      <option key={h.id} value={h.id}>
+                        {h.name_bn}
+                      </option>
+                    ))}
                   </select>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
-                  <Hospital className="h-3 w-3" /> পছন্দের হাসপাতাল (ঐচ্ছিক)
-                </label>
-                <select
-                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 outline-none appearance-none"
-                  value={targetHospitalId}
-                  onChange={(e) => setTargetHospitalId(e.target.value)}
-                >
-                  <option value="">নিকটস্থ যেকোনো হাসপাতাল</option>
-                  {filteredHospitals.map((h) => (
-                    <option key={h.id} value={h.id}>
-                      {h.name_bn}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
-                  <FileText className="h-3 w-3" /> প্রধান সমস্যা/লক্ষণসমূহ
-                </label>
-                <textarea
-                  placeholder="রোগীর সমস্যা বিস্তারিত লিখুন (যেমন: শ্বাসকষ্ট, বুকে ব্যথা...)"
-                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 outline-none min-h-[100px] focus:ring-2 ring-red-100"
-                  value={symptoms}
-                  onChange={(e) => setSymptoms(e.target.value)}
-                />
-              </div>
-
-              <div className="pt-4 flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <p className="text-xs font-bold text-slate-400 mb-2">
-                    অ্যাম্বুলেন্সের ধরন নির্বাচন করুন
-                  </p>
-                  <div className="flex gap-2">
-                    {["non-ac", "ac", "icu"].map((type) => (
-                      <button
-                        key={type}
-                        onClick={() => setSelectedAmbulanceType(type)}
-                        className={`flex-1 py-3 rounded-xl border text-xs font-bold transition-all ${selectedAmbulanceType === type ? "bg-slate-900 text-white border-slate-900" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"}`}
-                      >
-                        {type.toUpperCase()}
-                      </button>
-                    ))}
-                  </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
+                    <FileText className="h-3 w-3" /> প্রধান সমস্যা/লক্ষণসমূহ
+                  </label>
+                  <textarea
+                    placeholder="রোগীর সমস্যা বিস্তারিত লিখুন (যেমন: শ্বাসকষ্ট, বুকে ব্যথা...)"
+                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 outline-none min-h-[100px] focus:ring-2 ring-red-100"
+                    value={symptoms}
+                    onChange={(e) => setSymptoms(e.target.value)}
+                  />
                 </div>
-                <button
-                  onClick={handleSOSClick}
-                  disabled={isSubmitting || !!activeBooking || !needsAmbulance}
-                  className="md:w-64 bg-red-600 text-white rounded-2xl font-black flex items-center justify-center gap-3 hover:bg-red-700 transition-all shadow-xl shadow-red-100 active:scale-95 disabled:bg-slate-200 disabled:shadow-none h-16 md:mt-6"
-                >
-                  <ShieldAlert className="h-6 w-6" />
-                  {isSubmitting
-                    ? "পাঠানো হচ্ছে..."
-                    : activeBooking
-                      ? "বুকিং সচল"
-                      : "অ্যাম্বুলেন্স ডাকুন"}
-                </button>
-              </div>
-            </div>
-          </div>
 
-          <div className="space-y-6">
-            {/* First Aid Suggestions */}
-            <section
-              className={`rounded-3xl p-6 border-2 shadow-sm ${severity === "critical" ? "bg-red-50 border-red-100" : severity === "urgent" ? "bg-amber-50 border-amber-100" : "bg-emerald-50 border-emerald-100"}`}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <HeartPulse
-                  className={
-                    severity === "critical"
-                      ? "text-red-600"
-                      : severity === "urgent"
-                        ? "text-amber-600"
-                        : "text-emerald-600"
-                  }
-                />
-                <h3 className="font-black text-sm uppercase tracking-wider">
-                  ফার্স্ট এইড টিপস
-                </h3>
-              </div>
-              <p className="text-slate-700 text-sm font-bold leading-relaxed">
-                {FIRST_AID_TIPS[severity]}
-              </p>
-            </section>
-
-            {/* Hospital List */}
-            <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
-              <h3 className="font-black text-lg mb-4 flex items-center gap-2">
-                <Hospital className="h-5 w-5 text-blue-600" /> নিকটস্থ
-                হাসপাতালসমূহ
-              </h3>
-              <p className="text-[10px] font-bold text-slate-400 mb-4 uppercase tracking-wider">
-                আপনি চাইলে নির্দিষ্ট হাসপাতালে সরাসরি রিকোয়েস্ট পাঠাতে পারেন
-              </p>
-              <div className="space-y-3">
-                {filteredHospitals.map((h) => (
-                  <div
-                    key={h.id}
-                    className="p-3 rounded-2xl bg-slate-50 border border-slate-100"
-                  >
-                    <div className="flex justify-between items-center mb-1">
-                      <p className="text-xs font-black">{h.name_bn}</p>
-                      <a href={`tel:${h.phone}`} className="text-blue-600">
-                        <Phone className="h-3 w-3" />
-                      </a>
-                    </div>
-                    <p className="text-[10px] text-slate-500 mb-2">
-                      {h.address}
+                <div className="pt-4 flex flex-col md:flex-row gap-4">
+                  <div className="flex-1">
+                    <p className="text-xs font-bold text-slate-400 mb-2">
+                      অ্যাম্বুলেন্সের ধরন নির্বাচন করুন
                     </p>
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      {h.specialties.map((f) => (
-                        <span
-                          key={f}
-                          className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded border border-slate-100 text-[8px] font-bold text-slate-500 uppercase"
+                    <div className="flex gap-2">
+                      {["non-ac", "ac", "icu"].map((type) => (
+                        <button
+                          key={type}
+                          onClick={() => setSelectedAmbulanceType(type)}
+                          className={`flex-1 py-3 rounded-xl border text-xs font-bold transition-all ${selectedAmbulanceType === type ? "bg-slate-900 text-white border-slate-900" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"}`}
                         >
-                          {f.toLowerCase().includes("icu") && (
-                            <>
-                              <Activity className="h-2 w-2 text-red-500" /> ICU
-                            </>
-                          )}
-                          {f.toLowerCase().includes("emergency") && (
-                            <>
-                              <Zap className="h-2 w-2 text-amber-500" />{" "}
-                              Emergency
-                            </>
-                          )}
-                          {f.toLowerCase().includes("nicu") && (
-                            <>
-                              <Baby className="h-2 w-2 text-blue-500" /> NICU
-                            </>
-                          )}
-                          {f.toLowerCase().includes("ventilator") && (
-                            <>
-                              <Wind className="h-2 w-2 text-slate-500" />{" "}
-                              Ventilator
-                            </>
-                          )}
-                          {f.toLowerCase().includes("general") && (
-                            <>
-                              <BedSingle className="h-2 w-2 text-emerald-500" />{" "}
-                              General
-                            </>
-                          )}
-                        </span>
+                          {type.toUpperCase()}
+                        </button>
                       ))}
                     </div>
-                    <div className="flex items-center justify-between mt-3">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="flex items-center gap-1 text-[9px] font-bold text-slate-500">
-                            <BedSingle className="h-3 w-3 text-emerald-500" />{" "}
-                            বেড: {h.availableBeds || 0}
-                          </span>
-                          <span className="flex items-center gap-1 text-[9px] font-bold text-slate-500">
-                            <Activity className="h-3 w-3 text-red-500" /> ICU:{" "}
-                            {h.availableIcu || 0}
-                          </span>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleSOSClick(h.id)}
-                        disabled={
-                          isSubmitting || !!activeBooking || !needsAmbulance
-                        }
-                        className="bg-blue-600 text-white p-2.5 rounded-xl hover:bg-blue-700 transition-colors disabled:bg-slate-200"
-                        title="এই হাসপাতালে রিকোয়েস্ট পাঠান"
-                      >
-                        <Send className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
                   </div>
-                ))}
+                  <button
+                    onClick={handleSOSClick}
+                    disabled={
+                      isSubmitting || !!activeBooking || !needsAmbulance
+                    }
+                    className="md:w-64 bg-red-600 text-white rounded-2xl font-black flex items-center justify-center gap-3 hover:bg-red-700 transition-all shadow-xl shadow-red-100 active:scale-95 disabled:bg-slate-200 disabled:shadow-none h-16 md:mt-6"
+                  >
+                    <ShieldAlert className="h-6 w-6" />
+                    {isSubmitting
+                      ? "পাঠানো হচ্ছে..."
+                      : activeBooking
+                        ? "বুকিং সচল"
+                        : "অ্যাম্বুলেন্স ডাকুন"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              {/* First Aid Suggestions */}
+              <section
+                className={`rounded-3xl p-6 border-2 shadow-sm ${severity === "critical" ? "bg-red-50 border-red-100" : severity === "urgent" ? "bg-amber-50 border-amber-100" : "bg-emerald-50 border-emerald-100"}`}
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <HeartPulse
+                    className={
+                      severity === "critical"
+                        ? "text-red-600"
+                        : severity === "urgent"
+                          ? "text-amber-600"
+                          : "text-emerald-600"
+                    }
+                  />
+                  <h3 className="font-black text-sm uppercase tracking-wider">
+                    ফার্স্ট এইড টিপস
+                  </h3>
+                </div>
+                <p className="text-slate-700 text-sm font-bold leading-relaxed">
+                  {FIRST_AID_TIPS[severity]}
+                </p>
+              </section>
+
+              {/* Hospital List */}
+              <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                <h3 className="font-black text-lg mb-4 flex items-center gap-2">
+                  <Hospital className="h-5 w-5 text-blue-600" /> নিকটস্থ
+                  হাসপাতালসমূহ
+                </h3>
+                <p className="text-[10px] font-bold text-slate-400 mb-4 uppercase tracking-wider">
+                  আপনি চাইলে নির্দিষ্ট হাসপাতালে সরাসরি রিকোয়েস্ট পাঠাতে পারেন
+                </p>
+                <div className="space-y-3">
+                  {filteredHospitals.map((h) => (
+                    <div
+                      key={h.id}
+                      className="p-3 rounded-2xl bg-slate-50 border border-slate-100"
+                    >
+                      <div className="flex justify-between items-center mb-1">
+                        <p className="text-xs font-black">{h.name_bn}</p>
+                        <a href={`tel:${h.phone}`} className="text-blue-600">
+                          <Phone className="h-3 w-3" />
+                        </a>
+                      </div>
+                      <p className="text-[10px] text-slate-500 mb-2">
+                        {h.address}
+                      </p>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {h.specialties.map((f) => (
+                          <span
+                            key={f}
+                            className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded border border-slate-100 text-[8px] font-bold text-slate-500 uppercase"
+                          >
+                            {f.toLowerCase().includes("icu") && (
+                              <>
+                                <Activity className="h-2 w-2 text-red-500" />{" "}
+                                ICU
+                              </>
+                            )}
+                            {f.toLowerCase().includes("emergency") && (
+                              <>
+                                <Zap className="h-2 w-2 text-amber-500" />{" "}
+                                Emergency
+                              </>
+                            )}
+                            {f.toLowerCase().includes("nicu") && (
+                              <>
+                                <Baby className="h-2 w-2 text-blue-500" /> NICU
+                              </>
+                            )}
+                            {f.toLowerCase().includes("ventilator") && (
+                              <>
+                                <Wind className="h-2 w-2 text-slate-500" />{" "}
+                                Ventilator
+                              </>
+                            )}
+                            {f.toLowerCase().includes("general") && (
+                              <>
+                                <BedSingle className="h-2 w-2 text-emerald-500" />{" "}
+                                General
+                              </>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="flex items-center justify-between mt-3">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="flex items-center gap-1 text-[9px] font-bold text-slate-500">
+                              <BedSingle className="h-3 w-3 text-emerald-500" />{" "}
+                              বেড: {h.availableBeds || 0}
+                            </span>
+                            <span className="flex items-center gap-1 text-[9px] font-bold text-slate-500">
+                              <Activity className="h-3 w-3 text-red-500" /> ICU:{" "}
+                              {h.availableIcu || 0}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleSOSClick(h.id)}
+                          disabled={
+                            isSubmitting || !!activeBooking || !needsAmbulance
+                          }
+                          className="bg-blue-600 text-white p-2.5 rounded-xl hover:bg-blue-700 transition-colors disabled:bg-slate-200"
+                          title="এই হাসপাতালে রিকোয়েস্ট পাঠান"
+                        >
+                          <Send className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </div>
+          </div>
+
+          {/* Profile Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-10">
+            {/* User Profile */}
+            <section className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-black text-lg">প্রোফাইল তথ্য</h3>
+                {!isEditingArea ? (
+                  <button
+                    onClick={() => setIsEditingArea(true)}
+                    className="p-2 hover:bg-slate-50 rounded-full transition-colors"
+                  >
+                    <Edit3 className="h-4 w-4 text-slate-400" />
+                  </button>
+                ) : (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={saveAreaDetails}
+                      className="bg-emerald-600 text-white p-2 rounded-lg"
+                    >
+                      <Save className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => setIsEditingArea(false)}
+                      className="bg-slate-100 text-slate-500 p-2 rounded-lg"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-slate-100 p-2 rounded-lg text-slate-500">
+                    <User className="h-4 w-4" />
+                  </div>
+                  <span className="text-sm font-bold">{user.name}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="bg-slate-100 p-2 rounded-lg text-slate-500">
+                    <Phone className="h-4 w-4" />
+                  </div>
+                  <span className="text-sm font-bold">
+                    {user.phone || "ফোন নম্বর নেই"}
+                  </span>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="bg-slate-100 p-2 rounded-lg text-slate-500 mt-1">
+                    <MapPin className="h-4 w-4" />
+                  </div>
+                  <span className="text-sm font-bold leading-relaxed">
+                    {userUpazilaName && userDistrictName && userDivisionName
+                      ? `${userUpazilaName}, ${userDistrictName}, ${userDivisionName}`
+                      : "ঠিকানা সেট করা নেই"}
+                  </span>
+                </div>
+              </div>
+
+              {isEditingArea && (
+                <div className="mt-6 space-y-3 p-4 bg-slate-50 rounded-2xl">
+                  <select
+                    className="w-full bg-white border border-slate-200 rounded-xl p-2 text-sm outline-none"
+                    value={user.division || ""}
+                    onChange={(e) =>
+                      setUser({ ...user, division: e.target.value })
+                    }
+                  >
+                    <option value="">বিভাগ সিলেক্ট করুন</option>
+                    {divisions.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.bn_name}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    disabled={!user.division}
+                    className="w-full bg-white border border-slate-200 rounded-xl p-2 text-sm outline-none disabled:opacity-50"
+                    value={user.district || ""}
+                    onChange={(e) =>
+                      setUser({ ...user, district: e.target.value })
+                    }
+                  >
+                    <option value="">জেলা সিলেক্ট করুন</option>
+                    {districts.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.bn_name}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    disabled={!user.district}
+                    className="w-full bg-white border border-slate-200 rounded-xl p-2 text-sm outline-none disabled:opacity-50"
+                    value={user.upazila || ""}
+                    onChange={(e) =>
+                      setUser({ ...user, upazila: e.target.value })
+                    }
+                  >
+                    <option value="">উপজেলা সিলেক্ট করুন</option>
+                    {upazilas.map((u) => (
+                      <option key={u.id} value={u.id}>
+                        {u.bn_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </section>
+
+            {/* Medical Info */}
+            <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-black text-lg">মেডিকেল তথ্য</h3>
+                <HeartPulse className="text-red-500 h-5 w-5" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-red-50 p-4 rounded-2xl">
+                  <p className="text-[10px] font-bold text-red-400 uppercase">
+                    রক্তের গ্রুপ
+                  </p>
+                  <p className="text-xl font-black text-red-700">
+                    {user.bloodGroup || "O+"}
+                  </p>
+                </div>
+                <div className="bg-slate-50 p-4 rounded-2xl">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">
+                    অ্যালার্জি
+                  </p>
+                  <p className="text-sm font-bold text-slate-700">নেই</p>
+                </div>
               </div>
             </section>
           </div>
-        </div>
-
-        {/* Profile Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-10">
-          {/* User Profile */}
-          <section className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="font-black text-lg">প্রোফাইল তথ্য</h3>
-              {!isEditingArea ? (
-                <button
-                  onClick={() => setIsEditingArea(true)}
-                  className="p-2 hover:bg-slate-50 rounded-full transition-colors"
-                >
-                  <Edit3 className="h-4 w-4 text-slate-400" />
-                </button>
-              ) : (
-                <div className="flex gap-2">
-                  <button
-                    onClick={saveAreaDetails}
-                    className="bg-emerald-600 text-white p-2 rounded-lg"
-                  >
-                    <Save className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => setIsEditingArea(false)}
-                    className="bg-slate-100 text-slate-500 p-2 rounded-lg"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              )}
-            </div>
-
-<<<<<<< HEAD
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="bg-slate-100 p-2 rounded-lg text-slate-500">
-                  <User className="h-4 w-4" />
-                </div>
-                <span className="text-sm font-bold">{user.name}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="bg-slate-100 p-2 rounded-lg text-slate-500">
-                  <Phone className="h-4 w-4" />
-                </div>
-                <span className="text-sm font-bold">
-                  {user.phone || "ফোন নম্বর নেই"}
-                </span>
-              </div>
-              <div className="flex items-start gap-3">
-                <div className="bg-slate-100 p-2 rounded-lg text-slate-500 mt-1">
-                  <MapPin className="h-4 w-4" />
-                </div>
-                <span className="text-sm font-bold leading-relaxed">
-                  {userUpazilaName && userDistrictName && userDivisionName
-                    ? `${userUpazilaName}, ${userDistrictName}, ${userDivisionName}`
-                    : "ঠিকানা সেট করা নেই"}
-                </span>
-              </div>
-            </div>
-
-            {isEditingArea && (
-              <div className="mt-6 space-y-3 p-4 bg-slate-50 rounded-2xl">
-                <select
-                  className="w-full bg-white border border-slate-200 rounded-xl p-2 text-sm outline-none"
-                  value={user.division || ""}
-                  onChange={(e) =>
-                    setUser({ ...user, division: e.target.value })
-                  }
-                >
-                  <option value="">বিভাগ সিলেক্ট করুন</option>
-                  {divisions.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.bn_name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  disabled={!user.division}
-                  className="w-full bg-white border border-slate-200 rounded-xl p-2 text-sm outline-none disabled:opacity-50"
-                  value={user.district || ""}
-                  onChange={(e) =>
-                    setUser({ ...user, district: e.target.value })
-                  }
-                >
-                  <option value="">জেলা সিলেক্ট করুন</option>
-                  {districts.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.bn_name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  disabled={!user.district}
-                  className="w-full bg-white border border-slate-200 rounded-xl p-2 text-sm outline-none disabled:opacity-50"
-                  value={user.upazila || ""}
-                  onChange={(e) =>
-                    setUser({ ...user, upazila: e.target.value })
-                  }
-                >
-                  <option value="">উপজেলা সিলেক্ট করুন</option>
-                  {upazilas.map((u) => (
-                    <option key={u.id} value={u.id}>
-                      {u.bn_name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </section>
-
-          {/* Medical Info */}
-          <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-black text-lg">মেডিকেল তথ্য</h3>
-              <HeartPulse className="text-red-500 h-5 w-5" />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-red-50 p-4 rounded-2xl">
-                <p className="text-[10px] font-bold text-red-400 uppercase">
-                  রক্তের গ্রুপ
-                </p>
-                <p className="text-xl font-black text-red-700">
-                  {user.bloodGroup || "O+"}
-                </p>
-              </div>
-              <div className="bg-slate-50 p-4 rounded-2xl">
-                <p className="text-[10px] font-bold text-slate-400 uppercase">
-                  অ্যালার্জি
-                </p>
-                <p className="text-sm font-bold text-slate-700">নেই</p>
-              </div>
-            </div>
-          </section>
-        </div>
-      </main>
-=======
-      <TriageFormModal
-        isOpen={showTriageForm}
-        onClose={() => setShowTriageForm(false)}
-        onSubmit={handleTriageSubmit}
-        bookingId={activeBooking?._id || 'temp'}
-      />
-
-      {/* Driver Accepted Notification */}
-      {showDriverNotification && activeBooking?.driverInfo && (
-        <DriverAcceptedNotification
-          driverInfo={activeBooking.driverInfo}
-          onClose={() => setShowDriverNotification(false)}
-        />
-      )}
+        </main>
       </div>
->>>>>>> e9cc16eb67c9e06185c7d4d4f6025de1aa2f0b54
-    </div>
+      <Footer></Footer>
+    </>
   );
 }
