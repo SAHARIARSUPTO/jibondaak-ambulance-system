@@ -10,9 +10,11 @@ export async function POST(request) {
     const body = await request.json();
     const { name, email, phone, password, role, companyName, licenseNumber } =
       body;
+
     const allowedRoles = new Set(["seeker", "provider"]);
     const resolvedRole = role && allowedRoles.has(role) ? role : "seeker";
 
+    // Invalid role check
     if (role && !allowedRoles.has(role)) {
       return NextResponse.json(
         {
@@ -23,7 +25,7 @@ export async function POST(request) {
       );
     }
 
-    // Validate input
+    // Basic validation
     if (!name || !email || !phone || !password) {
       return NextResponse.json(
         {
@@ -34,7 +36,7 @@ export async function POST(request) {
       );
     }
 
-    // Additional validation for providers
+    // Provider validation
     if (resolvedRole === "provider") {
       if (!companyName || !licenseNumber) {
         return NextResponse.json(
@@ -47,40 +49,73 @@ export async function POST(request) {
       }
     }
 
-    // Hash password before storing
-    console.log("🔐 Hashing password...");
-    const hashedPassword = await bcrypt.hash(password, 10);
-    console.log("✅ Password hashed");
-
-    // Create user
     const usersCollection = db.collection("users");
-    const result = await usersCollection.insertOne({
+
+    // Normalize email
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Check duplicate email
+    const existingUser = await usersCollection.findOne({
+      email: normalizedEmail,
+    });
+
+    if (existingUser) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Email already exists",
+        },
+        { status: 400 },
+      );
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Prepare user data
+    const userData = {
       name,
-      email: email.trim().toLowerCase(), // Normalize email
+      email: normalizedEmail,
       phone,
       password: hashedPassword,
       role: resolvedRole,
       createdAt: new Date(),
-    });
+    };
 
-    console.log("✅ User created successfully:", email);
+    // Add provider-specific fields
+    if (resolvedRole === "provider") {
+      userData.companyName = companyName;
+      userData.licenseNumber = licenseNumber;
+    }
+
+    const result = await usersCollection.insertOne(userData);
+
+    // Safe response (no password)
+    const newUser = {
+      _id: result.insertedId,
+      name: userData.name,
+      email: userData.email,
+      phone: userData.phone,
+      role: userData.role,
+      companyName: userData.companyName || "",
+      licenseNumber: userData.licenseNumber || "",
+    };
 
     return NextResponse.json(
       {
         success: true,
         message: "Registration successful",
-        user,
+        user: newUser,
       },
       { status: 201 },
     );
   } catch (error) {
-    console.error("❌ Registration error:", error);
     return NextResponse.json(
       {
         success: false,
-        error: error.message,
+        error: "Something went wrong",
       },
-      { status: 400 },
+      { status: 500 },
     );
   }
 }

@@ -8,7 +8,7 @@ export default function RequestsPage() {
 
   useEffect(() => {
     // Redirect to emergency page (this is the actual requests page)
-    router.push('/provider-dashboard/emergency');
+    router.push('/driver-dashboard/emergency');
   }, [router]);
 
   return (

@@ -1,0 +1,28 @@
+{
+  "routes": [
+    {
+      "id": "route_city_short",
+      "name": "City Short (0-5 km)",
+      "distanceKm": 5,
+      "baseFare": 700
+    },
+    {
+      "id": "route_city_mid",
+      "name": "City Medium (5-12 km)",
+      "distanceKm": 12,
+      "baseFare": 1100
+    },
+    {
+      "id": "route_city_long",
+      "name": "City Long (12-25 km)",
+      "distanceKm": 25,
+      "baseFare": 1800
+    },
+    {
+      "id": "route_inter_district",
+      "name": "Inter-District (25-60 km)",
+      "distanceKm": 60,
+      "baseFare": 3200
+    }
+  ]
+}

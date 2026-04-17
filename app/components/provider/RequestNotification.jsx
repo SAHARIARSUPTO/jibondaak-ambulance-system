@@ -17,7 +17,7 @@ export default function RequestNotification({ requestCount, onClose }) {
   }, [onClose]);
 
   const handleViewRequests = () => {
-    router.push('/provider-dashboard/emergency');
+    router.push('/driver-dashboard/emergency');
     onClose();
   };
 

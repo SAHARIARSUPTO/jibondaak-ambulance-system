@@ -10,10 +10,8 @@ import {
   X,
   Building,
   Bell,
-  Activity,
-  BarChart3,
-  FileText,
-  Users
+  BadgeDollarSign,
+  MessageCircle
 } from 'lucide-react';
 
 export default function ProviderSidebar({ provider, isOnline, onToggleStatus }) {
@@ -29,8 +27,10 @@ export default function ProviderSidebar({ provider, isOnline, onToggleStatus }) 
   };
 
   const menuItems = [
-    { icon: Home, label: 'Dashboard', path: '/provider-dashboard' },
-    { icon: Bell, label: 'Emergency Requests', path: '/provider-dashboard/emergency' },
+    { icon: Home, label: 'Dashboard', path: '/driver-dashboard' },
+    { icon: Bell, label: 'Emergency Requests', path: '/driver-dashboard/emergency' },
+    { icon: BadgeDollarSign, label: 'Route Fares', path: '/driver-dashboard/fares' },
+    { icon: MessageCircle, label: 'Trip Chat', path: '/driver-dashboard/chat' },
   ];
 
   return (
@@ -38,7 +38,7 @@ export default function ProviderSidebar({ provider, isOnline, onToggleStatus }) 
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-slate-900 rounded-xl border border-blue-500/30 text-white hover:bg-slate-800 transition"
+        className="lg:hidden fixed top-4 left-4 z-50 p-3 bg-white rounded-xl border border-red-200 text-red-600 hover:bg-red-50 transition"
       >
         {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
       </button>
@@ -47,14 +47,14 @@ export default function ProviderSidebar({ provider, isOnline, onToggleStatus }) 
       {isOpen && (
         <div
           onClick={() => setIsOpen(false)}
-          className="lg:hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+          className="lg:hidden fixed inset-0 bg-red-950/20 backdrop-blur-sm z-40"
         />
       )}
 
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 h-full bg-slate-900 border-r border-blue-500/30 z-40
+          fixed top-0 left-0 h-full bg-white border-r border-red-100 z-40
           transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
           w-72
@@ -62,29 +62,29 @@ export default function ProviderSidebar({ provider, isOnline, onToggleStatus }) 
       >
         <div className="flex flex-col h-full">
           {/* Logo/Header */}
-          <div className="p-6 border-b border-blue-500/30">
+          <div className="p-6 border-b border-red-100">
             <div className="flex items-center gap-3">
-              <div className="bg-gradient-to-r from-blue-600 to-cyan-600 p-2 rounded-lg">
+              <div className="bg-red-600 p-2 rounded-lg">
                 <Ambulance className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">
-                  Jibon<span className="text-blue-400">Daak</span>
+                <h1 className="text-xl font-bold text-slate-900">
+                  Jibon<span className="text-red-600">Daak</span>
                 </h1>
-                <p className="text-xs text-blue-300">Provider Portal</p>
+                <p className="text-xs text-red-500">Driver Portal</p>
               </div>
             </div>
           </div>
 
           {/* Provider Info */}
-          <div className="p-6 border-b border-blue-500/30">
+          <div className="p-6 border-b border-red-100">
             <div className="flex items-center gap-3 mb-4">
-              <div className="bg-blue-500/20 p-3 rounded-full border border-blue-500/30">
-                <Building className="w-6 h-6 text-blue-400" />
+              <div className="bg-red-50 p-3 rounded-full border border-red-200">
+                <Building className="w-6 h-6 text-red-500" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-white truncate">{provider?.companyName || 'Provider'}</p>
-                <p className="text-xs text-blue-300 truncate">{provider?.email || ''}</p>
+                <p className="text-sm font-bold text-slate-900 truncate">{provider?.companyName || 'Driver'}</p>
+                <p className="text-xs text-slate-500 truncate">{provider?.email || ''}</p>
               </div>
             </div>
 
@@ -94,13 +94,13 @@ export default function ProviderSidebar({ provider, isOnline, onToggleStatus }) 
               className={`
                 w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all font-medium
                 ${isOnline 
-                  ? 'bg-green-500/20 text-green-300 border border-green-500/30 hover:bg-green-500/30' 
-                  : 'bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700'
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100' 
+                  : 'bg-slate-50 text-slate-500 border border-slate-200 hover:bg-slate-100'
                 }
               `}
             >
               <span className="flex items-center gap-2">
-                <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-400 animate-pulse' : 'bg-slate-500'}`} />
+                <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
                 {isOnline ? 'Online' : 'Offline'}
               </span>
               <span className="text-xs">Click to toggle</span>
@@ -122,8 +122,8 @@ export default function ProviderSidebar({ provider, isOnline, onToggleStatus }) 
                       className={`
                         w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all
                         ${isActive 
-                          ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg' 
-                          : 'text-blue-200 hover:bg-slate-800 hover:text-white'
+                          ? 'bg-red-600 text-white shadow-lg' 
+                          : 'text-slate-700 hover:bg-red-50 hover:text-red-700'
                         }
                       `}
                     >
@@ -137,10 +137,10 @@ export default function ProviderSidebar({ provider, isOnline, onToggleStatus }) 
           </nav>
 
           {/* Logout Button */}
-          <div className="p-4 border-t border-blue-500/30">
+          <div className="p-4 border-t border-red-100">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-300 hover:bg-red-900/30 hover:text-red-200 transition-all border border-red-500/30"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-all border border-red-200"
             >
               <LogOut className="w-5 h-5" />
               <span className="font-medium">Logout</span>
