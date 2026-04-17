@@ -45,7 +45,7 @@ export default function ProviderLogin() {
         if (typeof window !== "undefined") {
           localStorage.setItem("user", JSON.stringify(data.user));
         }
-        router.push("/dashboard");
+        router.push("/driver-dashboard");
       } else {
         setError(data.error || "লগইন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।");
       }

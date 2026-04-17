@@ -2,11 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Ambulance, Plus, Power, Bell, MapPin, User, Phone, Clock } from 'lucide-react';
+import { Ambulance, Plus, Power, Bell, MapPin, User, Phone, Clock, MessageCircle, BadgeDollarSign, Save, Edit3 } from 'lucide-react';
 import Toast from '../components/Toast';
 import AddAmbulanceModal from '../components/provider/AddAmbulanceModal';
 import RequestNotification from '../components/provider/RequestNotification';
-import ProviderSidebar from '../components/provider/ProviderSidebar';
 
 export default function ProviderDashboard() {
   const router = useRouter();
@@ -15,12 +14,31 @@ export default function ProviderDashboard() {
   const [isOnline, setIsOnline] = useState(false);
   const [incomingRequests, setIncomingRequests] = useState([]);
   const [activeBookings, setActiveBookings] = useState([]);
+  const [allBookings, setAllBookings] = useState([]);
+  const [totalEarnings, setTotalEarnings] = useState(0);
   const [showAddAmbulance, setShowAddAmbulance] = useState(false);
   const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showNotification, setShowNotification] = useState(false);
   const [previousRequestCount, setPreviousRequestCount] = useState(0);
   const [processingRequests, setProcessingRequests] = useState(new Set());
+  const [autoProvisioning, setAutoProvisioning] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState('');
+  const [messages, setMessages] = useState([]);
+  const [chatText, setChatText] = useState('');
+  const [routeList, setRouteList] = useState([]);
+  const [fareMap, setFareMap] = useState({});
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    type: 'non-ac',
+    vehicleNumber: '',
+    licenseNumber: '',
+    driverName: '',
+    driverPhone: '',
+    locationLabel: '',
+    divisionId: '',
+    upazilaId: '',
+  });
 
   useEffect(() => {
     // Check if provider is logged in
@@ -31,9 +49,10 @@ export default function ProviderDashboard() {
         return;
       }
       const parsedUser = JSON.parse(userData);
+      const normalizedRole = String(parsedUser?.role || '').toLowerCase();
       
       // Check if user is provider
-      if (parsedUser.role !== 'provider') {
+      if (normalizedRole !== 'provider') {
         router.push('/dashboard');
         return;
       }
@@ -54,6 +73,78 @@ export default function ProviderDashboard() {
     }
   }, [provider, isOnline]);
 
+  useEffect(() => {
+    if (!isOnline || activeBookings.length === 0) return;
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    // Acquire continuous GPS from phone and sync while trips are ongoing.
+    const watchId = navigator.geolocation.watchPosition(
+      async (pos) => {
+        const latitude = pos.coords.latitude;
+        const longitude = pos.coords.longitude;
+        try {
+          await Promise.all(
+            activeBookings.map((booking) =>
+              fetch('/api/provider/update-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  bookingId: booking._id,
+                  status: booking.status === 'driver_assigned' ? 'en_route' : booking.status,
+                  latitude,
+                  longitude,
+                }),
+              }),
+            ),
+          );
+        } catch (error) {}
+      },
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 },
+    );
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [isOnline, activeBookings]);
+
+  useEffect(() => {
+    const loadRoutes = async () => {
+      try {
+        const res = await fetch('/json/routes.json');
+        if (!res.ok) return;
+        const data = await res.json();
+        setRouteList(data?.routes || []);
+      } catch (error) {}
+    };
+    loadRoutes();
+  }, []);
+
+  useEffect(() => {
+    if (!provider?._id) return;
+    const driverId = `provider_${provider._id}`;
+    fetch(`/api/provider/route-fares?driverId=${driverId}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success) setFareMap(d.fares || {});
+      })
+      .catch(() => {});
+  }, [provider?._id]);
+
+  useEffect(() => {
+    if (!selectedBookingId) {
+      setMessages([]);
+      return;
+    }
+    const loadMessages = async () => {
+      try {
+        const res = await fetch(`/api/bookings/chat?bookingId=${selectedBookingId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.success) setMessages(data.messages || []);
+      } catch (error) {}
+    };
+    loadMessages();
+    const interval = setInterval(loadMessages, 3000);
+    return () => clearInterval(interval);
+  }, [selectedBookingId]);
+
   const fetchProviderData = async (providerId) => {
     try {
       // Fetch ambulances
@@ -62,6 +153,9 @@ export default function ProviderDashboard() {
       
       if (ambulanceData.success) {
         setAmbulances(ambulanceData.ambulances);
+        if ((ambulanceData.ambulances || []).length === 0) {
+          autoProvisionDriverProfile(providerId);
+        }
       }
 
       // Fetch provider status
@@ -74,10 +168,54 @@ export default function ProviderDashboard() {
 
       // Fetch active bookings
       fetchActiveBookings(providerId);
+      fetchProviderBookings(providerId);
     } catch (error) {
       console.error('Error fetching provider data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchProviderBookings = async (providerId) => {
+    try {
+      const response = await fetch(`/api/provider/bookings?providerId=${providerId}`);
+      if (!response.ok) return;
+      const data = await response.json();
+      if (data.success) {
+        setAllBookings(data.bookings || []);
+        setTotalEarnings(Number(data.earnings || 0));
+      }
+    } catch (error) {}
+  };
+
+  const autoProvisionDriverProfile = async (providerId) => {
+    if (autoProvisioning) return;
+    setAutoProvisioning(true);
+    try {
+      const response = await fetch('/api/provider/ambulances', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          providerId,
+          type: 'non-ac',
+          vehicleNumber: `DRV-${String(providerId).slice(-6).toUpperCase()}`,
+          licenseNumber: provider?.licenseNumber || `LIC-${String(providerId).slice(-6).toUpperCase()}`,
+          driverName: provider?.name || 'Driver',
+          driverPhone: provider?.phone || '',
+          locationLabel: 'Registration area',
+          divisionId: provider?.division || undefined,
+          upazilaId: provider?.upazila || undefined,
+        }),
+      });
+      const data = await response.json();
+      if (response.ok && data?.success) {
+        setAmbulances([data.ambulance]);
+        showToast('Driver profile auto-created from registration.', 'success');
+      }
+    } catch (error) {
+      console.error('Auto provision failed:', error);
+    } finally {
+      setAutoProvisioning(false);
     }
   };
 
@@ -223,7 +361,6 @@ export default function ProviderDashboard() {
     
     // Close popup if open
     setShowNotification(false);
-    setCurrentRequest(null);
     
     // Immediately remove from UI for instant feedback
     setIncomingRequests(prev => {
@@ -302,7 +439,6 @@ export default function ProviderDashboard() {
   const handleRejectRequest = async (requestId) => {
     // Close popup if open
     setShowNotification(false);
-    setCurrentRequest(null);
     
     // Immediately remove from UI
     setIncomingRequests(prev => {
@@ -377,21 +513,103 @@ export default function ProviderDashboard() {
     setToast({ message, type });
   };
 
-  const handleLogout = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('user');
-      router.push('/login');
+  const handleAmbulanceAdded = (newAmbulance) => {
+    setAmbulances(prev => [...prev, newAmbulance]);
+    setProfileForm({
+      type: newAmbulance.type || 'non-ac',
+      vehicleNumber: newAmbulance.vehicleNumber || '',
+      licenseNumber: newAmbulance.licenseNumber || '',
+      driverName: newAmbulance.driverName || '',
+      driverPhone: newAmbulance.driverPhone || '',
+      locationLabel: newAmbulance.locationLabel || '',
+      divisionId: provider?.division || '',
+      upazilaId: provider?.upazila || '',
+    });
+    showToast('Ambulance added successfully!', 'success');
+  };
+
+  const sendMessage = async () => {
+    if (!selectedBookingId || !chatText.trim() || !provider?._id) return;
+    try {
+      const res = await fetch('/api/bookings/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookingId: selectedBookingId,
+          senderId: provider._id,
+          senderRole: 'provider',
+          text: chatText.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setChatText('');
+        setMessages((prev) => [...prev, data.message]);
+      }
+    } catch (error) {}
+  };
+
+  const handleFareChange = async (routeId, amount) => {
+    if (!provider?._id) return;
+    const value = Number(amount);
+    if (!Number.isFinite(value)) return;
+    const driverId = `provider_${provider._id}`;
+    try {
+      const res = await fetch('/api/provider/route-fares', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ driverId, routeId, amount: value }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error();
+      setFareMap((prev) => ({ ...prev, [routeId]: value }));
+      showToast('Fare updated', 'success');
+    } catch (error) {
+      showToast('Failed to update fare', 'error');
     }
   };
 
-  const handleAmbulanceAdded = (newAmbulance) => {
-    setAmbulances(prev => [...prev, newAmbulance]);
-    showToast('Ambulance added successfully!', 'success');
+  useEffect(() => {
+    if (!ambulances.length) return;
+    const a = ambulances[0];
+    setProfileForm({
+      type: a.type || 'non-ac',
+      vehicleNumber: a.vehicleNumber || '',
+      licenseNumber: a.licenseNumber || '',
+      driverName: a.driverName || '',
+      driverPhone: a.driverPhone || '',
+      locationLabel: a.locationLabel || '',
+      divisionId: provider?.division || '',
+      upazilaId: provider?.upazila || '',
+    });
+  }, [ambulances, provider?.division, provider?.upazila]);
+
+  const saveDriverProfile = async () => {
+    if (!provider?._id) return;
+    try {
+      const response = await fetch('/api/provider/ambulances', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          providerId: provider._id,
+          ...profileForm,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || 'Failed to save profile');
+      }
+      setAmbulances([data.ambulance]);
+      setEditingProfile(false);
+      showToast('Driver profile updated.', 'success');
+    } catch (error) {
+      showToast(error.message || 'Failed to save profile', 'error');
+    }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-950 via-slate-900 to-blue-950 flex items-center justify-center">
+      <div className="min-h-screen bg-[#fff7f7] flex items-center justify-center">
         <div className="text-center">
           <div className="relative">
             {/* Animated background circle */}
@@ -401,14 +619,14 @@ export default function ProviderDashboard() {
             </div>
             
             {/* Ambulance icon */}
-            <div className="relative bg-gradient-to-br from-blue-600 to-cyan-600 p-6 rounded-3xl shadow-2xl mx-auto w-32 h-32 flex items-center justify-center border-2 border-blue-400/30">
-              <Ambulance className="w-16 h-16 text-white animate-bounce" />
+            <div className="relative bg-gradient-to-br from-red-600 to-red-500 p-6 rounded-3xl shadow-2xl mx-auto w-32 h-32 flex items-center justify-center border-2 border-blue-400/30">
+              <Ambulance className="w-16 h-16 text-slate-900 animate-bounce" />
             </div>
           </div>
           
           <div className="mt-8">
-            <h2 className="text-2xl font-bold text-white mb-2">Loading Dashboard</h2>
-            <p className="text-blue-200 text-lg">Please wait...</p>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">Loading Dashboard</h2>
+            <p className="text-slate-600 text-lg">Please wait...</p>
             
             {/* Loading dots */}
             <div className="flex items-center justify-center gap-2 mt-4">
@@ -423,88 +641,117 @@ export default function ProviderDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-950 via-slate-900 to-blue-950">
-      {/* Sidebar */}
-      <ProviderSidebar 
-        provider={provider} 
-        isOnline={isOnline} 
-        onToggleStatus={handleToggleStatus}
-      />
-
-      {/* Main Content with left margin for sidebar */}
-      <div className="lg:ml-72">
+    <div className="min-h-screen bg-[#fff7f7]">
+      <div>
         {/* Header */}
-        <header className="bg-slate-900/80 backdrop-blur-lg border-b border-blue-800/30">
+        <header className="bg-white border-b border-red-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-20">
-              {/* Logo & Brand - Hidden on large screens (sidebar shows it) */}
-              <div className="flex items-center gap-4 lg:hidden">
-                <div className="bg-gradient-to-br from-blue-600 to-cyan-600 p-3 rounded-xl shadow-lg border border-blue-400/30">
-                  <Ambulance className="w-8 h-8 text-white" />
+              <div className="flex items-center gap-4">
+                <div className="bg-gradient-to-br from-red-600 to-red-500 p-3 rounded-xl shadow-lg border border-blue-400/30">
+                  <Ambulance className="w-8 h-8 text-slate-900" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-white">Provider Dashboard</h1>
-                  <p className="text-sm text-blue-300">{provider?.companyName}</p>
+                <h1 className="text-2xl font-bold text-slate-900">Driver Dashboard</h1>
+                <p className="text-sm text-slate-500">{provider?.companyName}</p>
                 </div>
-              </div>
-
-              {/* Page Title for large screens */}
-              <div className="hidden lg:block">
-                <h1 className="text-2xl font-bold text-white">Dashboard Overview</h1>
-                <p className="text-sm text-blue-300">Manage your ambulance services</p>
               </div>
 
               <div className="flex items-center gap-4">
-                {/* Add Ambulance Button */}
                 <button
-                  onClick={() => setShowAddAmbulance(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-lg font-medium transition-all border border-blue-400/30"
+                  onClick={handleToggleStatus}
+                  className={`px-4 py-2 rounded-lg font-medium border ${
+                    isOnline
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-slate-50 text-slate-600 border-slate-200'
+                  }`}
                 >
-                  <Plus className="w-5 h-5" />
-                  <span className="hidden sm:inline">Add Ambulance</span>
+                  {isOnline ? 'Online' : 'Offline'}
                 </button>
+                <button
+                  onClick={() => document.getElementById('requests-section')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="hidden lg:inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-red-200 text-red-700 bg-red-50 hover:bg-red-100"
+                >
+                  <Bell className="w-4 h-4" /> Requests
+                </button>
+                <button
+                  onClick={() => document.getElementById('chat-section')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="hidden lg:inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-red-200 text-red-700 bg-red-50 hover:bg-red-100"
+                >
+                  <MessageCircle className="w-4 h-4" /> Chat
+                </button>
+                <button
+                  onClick={() => document.getElementById('fares-section')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="hidden lg:inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-red-200 text-red-700 bg-red-50 hover:bg-red-100"
+                >
+                  <BadgeDollarSign className="w-4 h-4" /> Fares
+                </button>
+                {!ambulances.length && (
+                  <button
+                    onClick={() => setShowAddAmbulance(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white rounded-lg font-medium transition-all border border-red-300"
+                  >
+                    <Plus className="w-5 h-5" />
+                    <span className="hidden sm:inline">{autoProvisioning ? 'Setting Up...' : 'Complete Driver Profile'}</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
         </header>
 
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <button onClick={() => document.getElementById('requests-section')?.scrollIntoView({ behavior: 'smooth' })} className="p-4 rounded-xl bg-white border border-red-100 text-left hover:border-red-300">
+            <p className="text-xs text-slate-500">Manage</p>
+            <p className="text-lg font-bold text-slate-900">Emergency Requests</p>
+          </button>
+          <button onClick={() => document.getElementById('chat-section')?.scrollIntoView({ behavior: 'smooth' })} className="p-4 rounded-xl bg-white border border-red-100 text-left hover:border-red-300">
+            <p className="text-xs text-slate-500">Communicate</p>
+            <p className="text-lg font-bold text-slate-900">Trip Chat</p>
+          </button>
+          <button onClick={() => document.getElementById('fares-section')?.scrollIntoView({ behavior: 'smooth' })} className="p-4 rounded-xl bg-white border border-red-100 text-left hover:border-red-300">
+            <p className="text-xs text-slate-500">Configure</p>
+            <p className="text-lg font-bold text-slate-900">Route Fares</p>
+          </button>
+        </div>
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-slate-800/50 backdrop-blur-lg rounded-xl shadow-xl p-6 border border-blue-500/20">
+          <div className="bg-white rounded-xl shadow-xl p-6 border border-red-100">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-blue-300 text-sm">Total Ambulances</p>
-                <p className="text-3xl font-bold text-white">{ambulances.length}</p>
+                <p className="text-slate-500 text-sm">Driver Vehicle</p>
+                <p className="text-3xl font-bold text-slate-900">{ambulances.length ? "1" : "0"}</p>
               </div>
-              <Ambulance className="w-12 h-12 text-blue-400" />
+              <Ambulance className="w-12 h-12 text-red-500" />
             </div>
           </div>
 
-          <div className="bg-slate-800/50 backdrop-blur-lg rounded-xl shadow-xl p-6 border border-yellow-500/20">
+          <div className="bg-white rounded-xl shadow-xl p-6 border border-yellow-500/20">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-yellow-300 text-sm">Pending Requests</p>
-                <p className="text-3xl font-bold text-white">{incomingRequests.length}</p>
+                <p className="text-amber-700 text-sm">Pending Requests</p>
+                <p className="text-3xl font-bold text-slate-900">{incomingRequests.length}</p>
               </div>
               <Bell className="w-12 h-12 text-yellow-400" />
             </div>
           </div>
 
-          <div className="bg-slate-800/50 backdrop-blur-lg rounded-xl shadow-xl p-6 border border-green-500/20">
+          <div className="bg-white rounded-xl shadow-xl p-6 border border-green-500/20">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-green-300 text-sm">Active Bookings</p>
-                <p className="text-3xl font-bold text-white">{activeBookings.length}</p>
+                <p className="text-emerald-700 text-sm">Active Bookings</p>
+                <p className="text-3xl font-bold text-slate-900">{activeBookings.length}</p>
               </div>
               <Clock className="w-12 h-12 text-green-400" />
             </div>
           </div>
 
-          <div className="bg-slate-800/50 backdrop-blur-lg rounded-xl shadow-xl p-6 border border-purple-500/20">
+          <div className="bg-white rounded-xl shadow-xl p-6 border border-purple-500/20">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-purple-300 text-sm">Status</p>
+                <p className="text-rose-700 text-sm">Status</p>
                 <p className={`text-2xl font-bold ${isOnline ? 'text-green-400' : 'text-slate-400'}`}>
                   {isOnline ? 'Online' : 'Offline'}
                 </p>
@@ -512,13 +759,22 @@ export default function ProviderDashboard() {
               <Power className={`w-12 h-12 ${isOnline ? 'text-green-400' : 'text-slate-400'}`} />
             </div>
           </div>
+          <div className="bg-white rounded-xl shadow-xl p-6 border border-red-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-slate-500 text-sm">Total Earnings</p>
+                <p className="text-3xl font-bold text-slate-900">৳{totalEarnings}</p>
+              </div>
+              <BadgeDollarSign className="w-12 h-12 text-red-500" />
+            </div>
+          </div>
         </div>
 
-        {/* Emergency Requests Alert - Redirects to dedicated page */}
+        {/* Emergency Requests Alert */}
         {incomingRequests.length > 0 && (
           <div className="mb-8">
             <div 
-              onClick={() => router.push('/provider-dashboard/emergency')}
+              onClick={() => document.getElementById('requests-section')?.scrollIntoView({ behavior: 'smooth' })}
               className="bg-gradient-to-r from-yellow-900/50 to-orange-900/50 backdrop-blur-lg rounded-xl shadow-xl p-6 border-2 border-yellow-500/50 cursor-pointer hover:border-yellow-400 transition-all transform hover:scale-[1.02]"
             >
               <div className="flex items-center justify-between">
@@ -527,10 +783,10 @@ export default function ProviderDashboard() {
                     <Bell className="w-8 h-8 text-yellow-400 animate-pulse" />
                   </div>
                   <div>
-                    <h3 className="text-2xl font-bold text-white mb-1">
+                    <h3 className="text-2xl font-bold text-slate-900 mb-1">
                       {incomingRequests.length} New Emergency {incomingRequests.length === 1 ? 'Request' : 'Requests'}
                     </h3>
-                    <p className="text-yellow-300">Click here to view and accept requests</p>
+                    <p className="text-amber-700">Click here to view and accept requests</p>
                   </div>
                 </div>
                 <div className="text-yellow-400 text-4xl">→</div>
@@ -539,60 +795,233 @@ export default function ProviderDashboard() {
           </div>
         )}
 
-        {/* My Ambulances */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-white">My Ambulances</h2>
-            <button
-              onClick={() => setShowAddAmbulance(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-lg font-medium transition-all transform hover:scale-105 shadow-lg border border-blue-400/30"
-            >
-              <Plus className="w-5 h-5" />
-              Add Ambulance
-            </button>
-          </div>
-
-          {ambulances.length === 0 ? (
-            <div className="bg-slate-800/50 backdrop-blur-lg rounded-xl shadow-xl p-12 text-center border border-slate-700">
-              <Ambulance className="w-16 h-16 text-slate-500 mx-auto mb-4" />
-              <p className="text-slate-300 mb-4">No ambulances registered yet</p>
-              <button
-                onClick={() => setShowAddAmbulance(true)}
-                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-lg font-bold transition-all transform hover:scale-105 shadow-lg border border-blue-400/30"
-              >
-                Add Your First Ambulance
-              </button>
-            </div>
+        <section id="requests-section" className="mb-8 bg-white rounded-xl shadow-xl p-6 border border-red-100">
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">Emergency Requests</h2>
+          {incomingRequests.length === 0 ? (
+            <p className="text-slate-500">No pending requests right now.</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {ambulances.map((ambulance) => (
-                <div key={ambulance._id} className="bg-slate-800/50 backdrop-blur-lg rounded-xl shadow-xl p-6 border border-blue-500/20">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="bg-blue-500/20 p-3 rounded-lg border border-blue-500/30">
-                      <Ambulance className="w-6 h-6 text-blue-400" />
-                    </div>
+            <div className="space-y-4">
+              {incomingRequests.map((request) => (
+                <div key={request._id} className="rounded-lg border border-red-100 bg-[#fffafa] p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <h3 className="font-bold text-lg text-white">{ambulance.type}</h3>
-                      <p className="text-sm text-blue-300">{ambulance.vehicleNumber}</p>
+                      <p className="font-bold text-slate-900">{request.userName || 'User'}</p>
+                      <p className="text-sm text-slate-600">Phone: {request.userPhone || '--'}</p>
+                      <p className="text-sm text-slate-600">
+                        Location: {request.userLocation?.latitude?.toFixed?.(4)}, {request.userLocation?.longitude?.toFixed?.(4)}
+                      </p>
+                      <p className="text-sm text-slate-600">Ambulance Type: {request.ambulanceType}</p>
+                      <p className="text-sm text-slate-600">Condition: {request.triageInfo?.condition || '--'}</p>
                     </div>
-                  </div>
-                  <div className="space-y-2 text-sm text-blue-200">
-                    <p><span className="font-medium text-blue-300">License:</span> {ambulance.licenseNumber}</p>
-                    <p><span className="font-medium text-blue-300">Driver:</span> {ambulance.driverName}</p>
-                    <p><span className="font-medium text-blue-300">Phone:</span> {ambulance.driverPhone}</p>
-                    <div className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
-                      ambulance.isAvailable 
-                        ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-                        : 'bg-slate-700 text-slate-400 border border-slate-600'
-                    }`}>
-                      {ambulance.isAvailable ? 'Available' : 'Busy'}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleAcceptRequest(request._id)}
+                        disabled={processingRequests.has(request._id)}
+                        className="px-4 py-2 rounded-lg bg-emerald-600 text-white disabled:bg-slate-300"
+                      >
+                        Accept
+                      </button>
+                      <button
+                        onClick={() => handleRejectRequest(request._id)}
+                        disabled={processingRequests.has(request._id)}
+                        className="px-4 py-2 rounded-lg bg-red-600 text-white disabled:bg-slate-300"
+                      >
+                        Reject
+                      </button>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           )}
+        </section>
+
+        <section className="mb-8 bg-white rounded-xl shadow-xl p-6 border border-red-100">
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">Ongoing Trips</h2>
+          {activeBookings.length === 0 ? (
+            <p className="text-slate-500">No active bookings.</p>
+          ) : (
+            <div className="space-y-3">
+              {activeBookings.map((b) => (
+                <div key={b._id} className="rounded-lg border border-red-100 bg-[#fffafa] p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="font-bold text-slate-900">{b.userName || 'User'}</p>
+                      <p className="text-sm text-slate-600">Phone: {b.userPhone || '--'}</p>
+                      <p className="text-sm text-slate-600">
+                        Location: {b.userLocation?.latitude?.toFixed?.(4)}, {b.userLocation?.longitude?.toFixed?.(4)}
+                      </p>
+                      <p className="text-sm text-slate-600">Status: {b.status}</p>
+                      <p className="text-sm font-bold text-red-600">Fare: ৳{b.offeredFare || 0}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      {["en_route", "arrived", "completed"].map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => updateBookingStatus(b._id, s)}
+                          className="px-3 py-1.5 rounded-md border border-red-200 text-red-700 bg-red-50 text-sm"
+                        >
+                          {s}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() => setSelectedBookingId(b._id)}
+                        className="px-3 py-1.5 rounded-md bg-slate-900 text-white text-sm"
+                      >
+                        Open Chat
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Driver Profile */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold text-slate-900">Driver Profile</h2>
+            {!ambulances.length && (
+              <button
+                onClick={() => setShowAddAmbulance(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white rounded-lg font-medium transition-all transform hover:scale-105 shadow-lg border border-red-300"
+              >
+                <Plus className="w-5 h-5" />
+                Complete Profile
+              </button>
+            )}
+          </div>
+
+          {ambulances.length === 0 ? (
+            <div className="bg-white rounded-xl shadow-xl p-12 text-center border border-slate-700">
+              <Ambulance className="w-16 h-16 text-slate-500 mx-auto mb-4" />
+              <p className="text-slate-300 mb-4">
+                {autoProvisioning
+                  ? 'Creating your driver profile from registration info...'
+                  : 'Complete your driver profile before going online'}
+              </p>
+              <button
+                onClick={() => setShowAddAmbulance(true)}
+                className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-700 hover:to-red-600 text-white rounded-lg font-bold transition-all transform hover:scale-105 shadow-lg border border-red-300"
+              >
+                {autoProvisioning ? 'Setting Up...' : 'Complete Driver Profile'}
+              </button>
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl shadow-xl p-6 border border-red-100">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-slate-900">Vehicle & Location</h3>
+                <button onClick={() => setEditingProfile((v) => !v)} className="inline-flex items-center gap-2 px-3 py-2 text-sm rounded-lg border border-red-200 text-red-700 bg-red-50">
+                  <Edit3 className="w-4 h-4" /> {editingProfile ? 'Cancel' : 'Edit'}
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {editingProfile ? (
+                  <>
+                    <input className="border border-red-200 rounded-lg px-3 py-2" placeholder="Ambulance Type" value={profileForm.type} onChange={(e) => setProfileForm({ ...profileForm, type: e.target.value })} />
+                    <input className="border border-red-200 rounded-lg px-3 py-2" placeholder="Vehicle Number" value={profileForm.vehicleNumber} onChange={(e) => setProfileForm({ ...profileForm, vehicleNumber: e.target.value })} />
+                    <input className="border border-red-200 rounded-lg px-3 py-2" placeholder="License Number" value={profileForm.licenseNumber} onChange={(e) => setProfileForm({ ...profileForm, licenseNumber: e.target.value })} />
+                    <input className="border border-red-200 rounded-lg px-3 py-2" placeholder="Driver Name" value={profileForm.driverName} onChange={(e) => setProfileForm({ ...profileForm, driverName: e.target.value })} />
+                    <input className="border border-red-200 rounded-lg px-3 py-2" placeholder="Driver Phone" value={profileForm.driverPhone} onChange={(e) => setProfileForm({ ...profileForm, driverPhone: e.target.value })} />
+                    <input className="border border-red-200 rounded-lg px-3 py-2" placeholder="Location Label" value={profileForm.locationLabel} onChange={(e) => setProfileForm({ ...profileForm, locationLabel: e.target.value })} />
+                    <button onClick={saveDriverProfile} className="md:col-span-2 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white">
+                      <Save className="w-4 h-4" /> Save Profile
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p><span className="text-slate-500">Type:</span> {ambulances[0]?.type}</p>
+                    <p><span className="text-slate-500">Vehicle:</span> {ambulances[0]?.vehicleNumber}</p>
+                    <p><span className="text-slate-500">License:</span> {ambulances[0]?.licenseNumber}</p>
+                    <p><span className="text-slate-500">Driver:</span> {ambulances[0]?.driverName}</p>
+                    <p><span className="text-slate-500">Phone:</span> {ambulances[0]?.driverPhone}</p>
+                    <p><span className="text-slate-500">Area:</span> {ambulances[0]?.locationLabel || `Division ${provider?.division || "--"}, Upazila ${provider?.upazila || "--"}`}</p>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </div>
+
+        <div className="bg-white rounded-xl shadow-xl p-6 border border-red-100">
+          <h3 className="text-lg font-bold text-slate-900 mb-3">Recent Trips</h3>
+          <div className="space-y-2">
+            {allBookings.slice(0, 8).map((b) => (
+              <div key={b._id} className="p-3 rounded-lg border border-red-100 bg-[#fffafa]">
+                <div className="flex justify-between">
+                  <p className="font-semibold text-slate-900">{b.userName || 'User'}</p>
+                  <p className="text-sm text-slate-500">{b.status}</p>
+                </div>
+                <p className="text-sm text-slate-600">Phone: {b.userPhone || '--'}</p>
+                <p className="text-sm text-slate-600">Location: {b.userLocation?.latitude?.toFixed?.(4)}, {b.userLocation?.longitude?.toFixed?.(4)}</p>
+                <p className="text-sm font-bold text-red-600">Fare: ৳{b.offeredFare || 0}</p>
+              </div>
+            ))}
+            {allBookings.length === 0 && <p className="text-slate-500 text-sm">No trips yet.</p>}
+          </div>
+        </div>
+
+        <section id="chat-section" className="mt-8 bg-white rounded-xl shadow-xl p-6 border border-red-100">
+          <h3 className="text-lg font-bold text-slate-900 mb-3">Trip Chat</h3>
+          <div className="mb-3">
+            <select
+              className="w-full md:w-80 border border-red-200 rounded-lg px-3 py-2"
+              value={selectedBookingId}
+              onChange={(e) => setSelectedBookingId(e.target.value)}
+            >
+              <option value="">Select ongoing trip</option>
+              {activeBookings.map((b) => (
+                <option key={b._id} value={b._id}>
+                  {b.userName || 'User'} - {b._id}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="h-64 overflow-y-auto bg-[#fffafa] border border-red-100 rounded-lg p-3 space-y-2">
+            {messages.map((msg) => (
+              <div
+                key={msg._id}
+                className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${
+                  msg.senderRole === 'provider' ? 'ml-auto bg-red-600 text-white' : 'bg-white border border-red-100 text-slate-700'
+                }`}
+              >
+                {msg.text}
+              </div>
+            ))}
+            {selectedBookingId && messages.length === 0 && <p className="text-sm text-slate-500">No messages yet.</p>}
+          </div>
+          <div className="mt-3 flex gap-2">
+            <input
+              value={chatText}
+              onChange={(e) => setChatText(e.target.value)}
+              placeholder="Type message..."
+              className="flex-1 border border-red-200 rounded-lg px-3 py-2"
+            />
+            <button onClick={sendMessage} className="px-4 py-2 rounded-lg bg-red-600 text-white">
+              Send
+            </button>
+          </div>
+        </section>
+
+        <section id="fares-section" className="mt-8 bg-white rounded-xl shadow-xl p-6 border border-red-100">
+          <h3 className="text-lg font-bold text-slate-900 mb-3">Route Fare Settings</h3>
+          <p className="text-sm text-slate-500 mb-4">Set custom fares for your driver account.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {routeList.map((route) => (
+              <div key={route.id} className="rounded-lg border border-red-100 p-4 bg-[#fffafa]">
+                <p className="font-semibold text-slate-900">{route.name}</p>
+                <p className="text-sm text-slate-500 mb-2">Base fare: ৳{route.baseFare}</p>
+                <input
+                  type="number"
+                  defaultValue={fareMap[route.id] ?? route.baseFare}
+                  onBlur={(e) => handleFareChange(route.id, e.target.value)}
+                  className="w-full border border-red-200 rounded-lg px-3 py-2"
+                />
+              </div>
+            ))}
+          </div>
+        </section>
       </main>
 
       {/* Toast Notification */}
@@ -610,6 +1039,7 @@ export default function ProviderDashboard() {
         onClose={() => setShowAddAmbulance(false)}
         onSuccess={handleAmbulanceAdded}
         providerId={provider?._id}
+        provider={provider}
       />
 
       {/* Request Notification Toast */}
@@ -623,3 +1053,4 @@ export default function ProviderDashboard() {
     </div>
   );
 }
+

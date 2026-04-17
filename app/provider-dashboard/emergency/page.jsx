@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bell, MapPin, User as UserIcon, Phone, Clock, AlertCircle } from 'lucide-react';
-import ProviderSidebar from '@/app/components/provider/ProviderSidebar';
 import Toast from '@/app/components/Toast';
 import RequestNotification from '@/app/components/provider/RequestNotification';
 
@@ -26,8 +25,9 @@ export default function EmergencyRequestsPage() {
         return;
       }
       const parsedUser = JSON.parse(userData);
+      const normalizedRole = String(parsedUser?.role || '').toLowerCase();
       
-      if (parsedUser.role !== 'provider') {
+      if (normalizedRole !== 'provider') {
         router.push('/dashboard');
         return;
       }
@@ -102,36 +102,6 @@ export default function EmergencyRequestsPage() {
       }
     } catch (error) {
       console.error('❌ Error fetching requests:', error);
-    }
-  };
-
-  const handleToggleStatus = async () => {
-    try {
-      const response = await fetch('/api/provider/toggle-status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ providerId: provider._id, isOnline: !isOnline })
-      });
-
-      if (!response.ok) {
-        showToast('Failed to update status', 'error');
-        return;
-      }
-
-      const text = await response.text();
-      if (!text) return;
-
-      const data = JSON.parse(text);
-
-      if (data.success) {
-        setIsOnline(!isOnline);
-        showToast(
-          !isOnline ? 'You are now online' : 'You are now offline',
-          'success'
-        );
-      }
-    } catch (error) {
-      showToast('Failed to update status', 'error');
     }
   };
 
@@ -254,39 +224,37 @@ export default function EmergencyRequestsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-950 via-slate-900 to-blue-950 flex items-center justify-center">
-        <div className="text-white">Loading...</div>
+      <div className="min-h-screen bg-[#fff7f7] flex items-center justify-center">
+        <div className="text-slate-900">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-950 via-slate-900 to-blue-950">
-      <ProviderSidebar provider={provider} isOnline={isOnline} onToggleStatus={handleToggleStatus} />
-      
-      <div className="lg:ml-72">
+    <div className="min-h-screen bg-[#fff7f7]">
+      <div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-slate-900 mb-2 flex items-center gap-3">
               <Bell className="w-8 h-8 text-yellow-400" />
               Emergency Requests
             </h1>
-            <p className="text-blue-300">Manage incoming ambulance requests</p>
+            <p className="text-slate-500">Manage incoming ambulance requests</p>
           </div>
 
           {!isOnline && (
-            <div className="bg-yellow-900/30 border-2 border-yellow-500/50 rounded-xl p-6 mb-6">
-              <p className="text-yellow-300 text-center font-semibold">
+            <div className="bg-yellow-900/30 border-2 border-amber-200 rounded-xl p-6 mb-6">
+              <p className="text-amber-700 text-center font-semibold">
                 ⚠️ You are currently offline. Go online to receive emergency requests.
               </p>
             </div>
           )}
 
           {incomingRequests.length === 0 ? (
-            <div className="bg-slate-800/50 backdrop-blur-lg rounded-xl p-12 text-center border border-blue-500/20">
+            <div className="bg-white rounded-xl p-12 text-center border border-red-100">
               <Bell className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-              <h3 className="text-xl font-bold text-white mb-2">No Pending Requests</h3>
-              <p className="text-blue-300">
+              <h3 className="text-xl font-bold text-slate-900 mb-2">No Pending Requests</h3>
+              <p className="text-slate-500">
                 {isOnline 
                   ? 'New emergency requests will appear here when users need ambulance services' 
                   : 'Go online to start receiving requests'}
@@ -295,7 +263,7 @@ export default function EmergencyRequestsPage() {
           ) : (
             <div className="grid grid-cols-1 gap-6">
               {incomingRequests.map((request) => (
-                <div key={request._id} className="bg-slate-800/50 backdrop-blur-lg rounded-xl shadow-xl p-6 border-2 border-yellow-500/50">
+                <div key={request._id} className="bg-white rounded-xl shadow-xl p-6 border-2 border-amber-200">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-4">
@@ -303,33 +271,33 @@ export default function EmergencyRequestsPage() {
                           <AlertCircle className="w-6 h-6 text-yellow-400" />
                         </div>
                         <div>
-                          <h3 className="font-bold text-lg text-white">Emergency Request</h3>
-                          <p className="text-sm text-yellow-300">Type: {request.ambulanceType}</p>
+                          <h3 className="font-bold text-lg text-slate-900">Emergency Request</h3>
+                          <p className="text-sm text-amber-700">Type: {request.ambulanceType}</p>
                         </div>
                       </div>
 
-                      <div className="bg-blue-900/30 p-4 rounded-lg mb-4 border border-blue-500/30">
-                        <p className="font-semibold text-blue-300 mb-2">Patient Contact:</p>
+                      <div className="bg-red-50 p-4 rounded-lg mb-4 border border-red-200">
+                        <p className="font-semibold text-slate-500 mb-2">Patient Contact:</p>
                         <div className="space-y-1 text-sm">
-                          <p className="text-white flex items-center gap-2">
-                            <UserIcon className="w-4 h-4 text-blue-400" />
-                            <span className="font-medium text-blue-300">Name:</span> {request.userName || 'Not provided'}
+                          <p className="text-slate-900 flex items-center gap-2">
+                            <UserIcon className="w-4 h-4 text-red-500" />
+                            <span className="font-medium text-slate-500">Name:</span> {request.userName || 'Not provided'}
                           </p>
-                          <p className="text-white flex items-center gap-2">
-                            <Phone className="w-4 h-4 text-blue-400" />
-                            <span className="font-medium text-blue-300">Phone:</span> {request.userPhone || 'Not provided'}
+                          <p className="text-slate-900 flex items-center gap-2">
+                            <Phone className="w-4 h-4 text-red-500" />
+                            <span className="font-medium text-slate-500">Phone:</span> {request.userPhone || 'Not provided'}
                           </p>
                         </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-4 mb-4">
-                        <div className="flex items-center gap-2 text-blue-200">
+                        <div className="flex items-center gap-2 text-slate-600">
                           <MapPin className="w-4 h-4 text-red-400" />
                           <span className="text-sm">
                             {request.userLocation?.latitude.toFixed(4)}, {request.userLocation?.longitude.toFixed(4)}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 text-blue-200">
+                        <div className="flex items-center gap-2 text-slate-600">
                           <Clock className="w-4 h-4 text-cyan-400" />
                           <span className="text-sm">{new Date(request.createdAt).toLocaleTimeString()}</span>
                         </div>
@@ -355,7 +323,7 @@ export default function EmergencyRequestsPage() {
                           processingRequests.has(request._id)
                             ? 'bg-gray-600 cursor-not-allowed opacity-50'
                             : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 transform hover:scale-105 border-green-400/30'
-                        } text-white`}
+                        } text-slate-900`}
                       >
                         {processingRequests.has(request._id) ? 'Processing...' : 'Accept'}
                       </button>
@@ -366,7 +334,7 @@ export default function EmergencyRequestsPage() {
                           processingRequests.has(request._id)
                             ? 'bg-gray-600 cursor-not-allowed opacity-50'
                             : 'bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 transform hover:scale-105 border-red-400/30'
-                        } text-white`}
+                        } text-slate-900`}
                       >
                         Reject
                       </button>
@@ -376,7 +344,7 @@ export default function EmergencyRequestsPage() {
               ))}
             </div>
           )}
-        </div>
+      </div>
       </div>
 
       {toast && (
@@ -397,3 +365,4 @@ export default function EmergencyRequestsPage() {
     </div>
   );
 }
+

@@ -27,6 +27,9 @@ import {
   Wind,
   BedSingle,
   Send,
+  Star,
+  BadgeDollarSign,
+  MessageCircle,
 } from "lucide-react";
 import Footer from "../components/footer/footer";
 import Navbar from "../components/navbar/navbar";
@@ -34,6 +37,7 @@ import Navbar from "../components/navbar/navbar";
 const DEFAULT_LOCATION = { latitude: 23.8103, longitude: 90.4125 };
 
 const TRACKING_STEPS = [
+  { key: "pending_driver_acceptance", label: "চালকের অনুমোদনের অপেক্ষায়" },
   { key: "searching", label: "অ্যাম্বুলেন্স খোঁজা হচ্ছে" },
   { key: "driver_assigned", label: "চালক নির্ধারিত হয়েছে" },
   { key: "en_route", label: "অ্যাম্বুলেন্স পথে আছে" },
@@ -53,6 +57,7 @@ const FIRST_AID_TIPS = {
 const formatStatus = (status) => {
   if (!status) return "কোনো বুকিং নেই";
   const statusMap = {
+    pending_driver_acceptance: "অনুমোদনের অপেক্ষায়",
     searching: "খোঁজা হচ্ছে",
     driver_assigned: "চালক নিযুক্ত",
     en_route: "পথে আছে",
@@ -86,6 +91,16 @@ export default function DashboardPage() {
   const [severity, setSeverity] = useState("stable");
   const [targetHospitalId, setTargetHospitalId] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [routes, setRoutes] = useState([]);
+  const [selectedRouteId, setSelectedRouteId] = useState("");
+  const [availableDrivers, setAvailableDrivers] = useState([]);
+  const [loadingDrivers, setLoadingDrivers] = useState(false);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatText, setChatText] = useState("");
+  const [isSendingChat, setIsSendingChat] = useState(false);
+  const [driverLiveLocation, setDriverLiveLocation] = useState(null);
+  const [bookingNotice, setBookingNotice] = useState("");
+  const [lastBookingStatus, setLastBookingStatus] = useState("");
 
   // Area states
   const [allDivisions, setAllDivisions] = useState([]);
@@ -161,12 +176,13 @@ export default function DashboardPage() {
       };
 
       try {
-        const [divRes, distRes, upzRes, hospRes, drvRes] = await Promise.all([
+        const [divRes, distRes, upzRes, hospRes, drvRes, routesRes] = await Promise.all([
           safeFetch("/json/bd-divisions.json"),
           safeFetch("/json/bd-districts.json"),
           safeFetch("/json/bd-upazilas.json"),
           safeFetch("/json/hospitals.json"),
           safeFetch("/json/drivers.json"),
+          safeFetch("/json/routes.json"),
         ]);
 
         // Handle different JSON structures
@@ -175,12 +191,14 @@ export default function DashboardPage() {
         const upzs = upzRes?.upazilas || upzRes || [];
         const hosps = hospRes || {};
         const drvs = drvRes?.drivers || [];
+        const routeList = routesRes?.routes || [];
 
         setAllDivisions(divs);
         setAllDistricts(dists);
         setAllUpazilas(upzs);
         setAllHospitals(hosps);
         setAllDrivers(drvs);
+        setRoutes(routeList);
       } catch (err) {
         console.error("Error loading location data:", err);
       }
@@ -221,6 +239,44 @@ export default function DashboardPage() {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (!activeBooking?._id) {
+      setChatMessages([]);
+      return;
+    }
+    const fetchChat = async () => {
+      try {
+        const res = await fetch(`/api/bookings/chat?bookingId=${activeBooking._id}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.success) setChatMessages(data.messages || []);
+      } catch (error) {}
+    };
+    fetchChat();
+    const interval = setInterval(fetchChat, 3000);
+    return () => clearInterval(interval);
+  }, [activeBooking?._id]);
+
+  useEffect(() => {
+    if (!activeBooking?._id) {
+      setDriverLiveLocation(null);
+      return;
+    }
+    const fetchDriverLocation = async () => {
+      try {
+        const res = await fetch(`/api/bookings/driver-location?bookingId=${activeBooking._id}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.success && data.location) {
+          setDriverLiveLocation(data.location);
+        }
+      } catch (error) {}
+    };
+    fetchDriverLocation();
+    const interval = setInterval(fetchDriverLocation, 30 * 1000);
+    return () => clearInterval(interval);
+  }, [activeBooking?._id]);
+
   const getUserLocation = () => {
     if (!navigator.geolocation) {
       setUserLocation(DEFAULT_LOCATION);
@@ -246,7 +302,20 @@ export default function DashboardPage() {
       if (!contentType || !contentType.includes("application/json")) return;
 
       const data = await res.json();
-      if (data.success) setActiveBooking(data.booking);
+      if (data.success) {
+        const nextBooking = data.booking;
+        if (nextBooking?.status && nextBooking.status !== lastBookingStatus) {
+          if (nextBooking.status === "driver_assigned") {
+            setBookingNotice("Driver accepted your request. Ambulance is preparing to move.");
+          } else if (nextBooking.status === "en_route") {
+            setBookingNotice("Ambulance is now on the way.");
+          } else if (nextBooking.status === "arrived") {
+            setBookingNotice("Ambulance has arrived at your location.");
+          }
+          setLastBookingStatus(nextBooking.status);
+        }
+        setActiveBooking(nextBooking);
+      }
     } catch (error) {
       console.error("Booking fetch error:", error);
     } finally {
@@ -254,54 +323,46 @@ export default function DashboardPage() {
     }
   };
 
-  const findNearestDriver = () => {
-    if (!user) return null;
-
-    // Tier 1: Match Upazila + Type
-    let matched = allDrivers.filter(
-      (d) =>
-        d.status === "available" &&
-        d.ambulanceType === selectedAmbulanceType &&
-        d.upazila_id.toString() === user.upazila?.toString(),
-    );
-
-    // Tier 2: Match District + Type
-    if (matched.length === 0) {
-      matched = allDrivers.filter(
-        (d) =>
-          d.status === "available" &&
-          d.ambulanceType === selectedAmbulanceType &&
-          d.district_id.toString() === user.district?.toString(),
-      );
+  const fetchNearbyDrivers = async () => {
+    if (!needsAmbulance)
+      return alert("দয়া করে আগে 'অ্যাম্বুলেন্স প্রয়োজন' অপশনটি চালু করুন।");
+    if (!userLocation)
+      return alert("আপনার অবস্থান শনাক্ত করা হচ্ছে, দয়া করে অপেক্ষা করুন...");
+    if (!selectedRouteId)
+      return alert("দয়া করে একটি রুট নির্বাচন করুন।");
+    setLoadingDrivers(true);
+    try {
+      const response = await fetch("/api/drivers/nearby", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userLocation,
+          ambulanceType: selectedAmbulanceType,
+          userDivision: user?.division,
+          userUpazila: user?.upazila,
+          routeId: selectedRouteId,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || "ড্রাইভার লোড করা যায়নি");
+      }
+      setAvailableDrivers(data.drivers || []);
+    } catch (error) {
+      alert(error.message || "ড্রাইভার লোড করা যায়নি");
+    } finally {
+      setLoadingDrivers(false);
     }
-
-    // Tier 3: Match Division + Type
-    if (matched.length === 0) {
-      matched = allDrivers.filter(
-        (d) =>
-          d.status === "available" &&
-          d.ambulanceType === selectedAmbulanceType &&
-          d.division_id.toString() === user.division?.toString(),
-      );
-    }
-
-    return matched.length > 0 ? matched[0] : null;
   };
 
-  const handleSOSClick = async (directHospitalId = null, eta = null) => {
+  const handleSOSClick = async (selectedDriver, directHospitalId = null, eta = null) => {
     if (!needsAmbulance)
       return alert("দয়া করে আগে 'অ্যাম্বুলেন্স প্রয়োজন' অপশনটি চালু করুন।");
     if (!userLocation)
       return alert("আপনার অবস্থান শনাক্ত করা হচ্ছে, দয়া করে অপেক্ষা করুন...");
     if (!patientAge || !symptoms)
       return alert("দয়া করে রোগীর বয়স এবং সমস্যা সংক্ষেপে লিখুন।");
-
-    const driver = findNearestDriver();
-    if (!driver) {
-      return alert(
-        "দুঃখিত, এই মুহূর্তে আপনার এলাকায় কোনো অ্যাম্বুলেন্স পাওয়া যায়নি।",
-      );
-    }
+    if (!selectedDriver) return alert("দয়া করে একটি ড্রাইভার নির্বাচন করুন।");
 
     setIsSubmitting(true);
     try {
@@ -310,15 +371,18 @@ export default function DashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: user._id,
+          userName: user.name,
+          userPhone: user.phone,
           userLocation,
           ambulanceType: selectedAmbulanceType,
+          userDivision: user.division,
+          userUpazila: user.upazila,
+          selectedDriverId: selectedDriver.id,
+          routeId: selectedRouteId,
+          routeName: selectedDriver.routeName,
+          offeredFare: selectedDriver.offeredFare,
           targetHospitalId: directHospitalId || targetHospitalId,
           estimatedArrival: eta,
-          driverId: driver.id,
-          driverInfo: {
-            name: driver.name,
-            phone: driver.phone,
-          },
           patientInfo: {
             age: patientAge,
             symptoms: symptoms,
@@ -326,12 +390,46 @@ export default function DashboardPage() {
           },
         }),
       });
-      const data = await response.json();
-      if (data.success) setActiveBooking(data.booking);
+      const contentType = response.headers.get("content-type") || "";
+      const data = contentType.includes("application/json")
+        ? await response.json()
+        : null;
+
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || "Booking request failed");
+      }
+
+      setActiveBooking(data.booking);
+      setAvailableDrivers([]);
     } catch (e) {
-      alert("বুকিং করতে সমস্যা হয়েছে।");
+      alert(e.message || "বুকিং করতে সমস্যা হয়েছে।");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleSendChat = async () => {
+    if (!activeBooking?._id || !chatText.trim()) return;
+    setIsSendingChat(true);
+    try {
+      const res = await fetch("/api/bookings/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bookingId: activeBooking._id,
+          senderId: user?._id,
+          senderRole: "seeker",
+          text: chatText.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setChatText("");
+        setChatMessages((prev) => [...prev, data.message]);
+      }
+    } catch (error) {
+    } finally {
+      setIsSendingChat(false);
     }
   };
 
@@ -345,13 +443,18 @@ export default function DashboardPage() {
     if (!activeBooking) return;
     if (!confirm("আপনি কি নিশ্চিত যে আপনি বুকিংটি বাতিল করতে চান?")) return;
     try {
-      await fetch(`/api/bookings/cancel/${activeBooking._id}`, {
+      const res = await fetch(`/api/bookings/cancel/${activeBooking._id}`, {
         method: "POST",
       });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error || "বাতিল করা যায়নি।");
+      }
       setActiveBooking(null);
+      fetchActiveBooking();
       alert("বুকিং বাতিল করা হয়েছে।");
     } catch (e) {
-      alert("বাতিল করতে সমস্যা হয়েছে।");
+      alert(e.message || "বাতিল করতে সমস্যা হয়েছে।");
     }
   };
 
@@ -368,7 +471,6 @@ export default function DashboardPage() {
 
   return (
     <>
-      <Navbar></Navbar>
       <div className="min-h-screen bg-slate-50 text-slate-900 pb-10">
         {/* --- RE-DESIGNED HEADER --- */}
         <header className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-md border-b border-slate-200">
@@ -412,6 +514,12 @@ export default function DashboardPage() {
               >
                 বাতিল করুন
               </button>
+            </div>
+          )}
+
+          {bookingNotice && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
+              <p className="text-emerald-800 text-sm font-bold">{bookingNotice}</p>
             </div>
           )}
 
@@ -495,6 +603,24 @@ export default function DashboardPage() {
 
                 <div className="space-y-2">
                   <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
+                    <Route className="h-3 w-3" /> রুট নির্বাচন করুন
+                  </label>
+                  <select
+                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 outline-none appearance-none"
+                    value={selectedRouteId}
+                    onChange={(e) => setSelectedRouteId(e.target.value)}
+                  >
+                    <option value="">রুট নির্বাচন করুন</option>
+                    {routes.map((route) => (
+                      <option key={route.id} value={route.id}>
+                        {route.name} - ৳{route.baseFare}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
                     <FileText className="h-3 w-3" /> প্রধান সমস্যা/লক্ষণসমূহ
                   </label>
                   <textarea
@@ -521,22 +647,64 @@ export default function DashboardPage() {
                         </button>
                       ))}
                     </div>
+                    <div className="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                      <button
+                        onClick={fetchNearbyDrivers}
+                        disabled={isSubmitting || !!activeBooking || loadingDrivers}
+                        className="w-full py-3 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 disabled:bg-slate-300"
+                      >
+                        {loadingDrivers ? "লোড হচ্ছে..." : "নিকটবর্তী ড্রাইভার দেখুন"}
+                      </button>
+                    </div>
                   </div>
-                  <button
-                    onClick={handleSOSClick}
-                    disabled={
-                      isSubmitting || !!activeBooking || !needsAmbulance
-                    }
-                    className="md:w-64 bg-red-600 text-white rounded-2xl font-black flex items-center justify-center gap-3 hover:bg-red-700 transition-all shadow-xl shadow-red-100 active:scale-95 disabled:bg-slate-200 disabled:shadow-none h-16 md:mt-6"
-                  >
-                    <ShieldAlert className="h-6 w-6" />
-                    {isSubmitting
-                      ? "পাঠানো হচ্ছে..."
-                      : activeBooking
-                        ? "বুকিং সচল"
-                        : "অ্যাম্বুলেন্স ডাকুন"}
-                  </button>
                 </div>
+
+                {availableDrivers.length > 0 && (
+                  <div className="space-y-3">
+                    <p className="text-xs font-bold text-slate-500 uppercase">
+                      নিকটবর্তী ড্রাইভার ({availableDrivers.length})
+                    </p>
+                    {availableDrivers.map((driver) => (
+                      <div
+                        key={driver.id}
+                        className="rounded-2xl border border-slate-100 bg-slate-50 p-4"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="text-sm font-black">{driver.name}</p>
+                            <p className="text-xs text-slate-500 font-semibold">
+                              {driver.ambulanceModel} • {driver.ambulanceNumber}
+                            </p>
+                            <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-bold text-slate-600">
+                              <span className="inline-flex items-center gap-1 bg-white rounded-full px-2 py-1">
+                                <Navigation className="h-3 w-3" /> {driver.distanceKm} km
+                              </span>
+                              <span className="inline-flex items-center gap-1 bg-white rounded-full px-2 py-1">
+                                <BadgeDollarSign className="h-3 w-3" /> ৳{driver.offeredFare}
+                              </span>
+                              <span className="inline-flex items-center gap-1 bg-white rounded-full px-2 py-1">
+                                <Star className="h-3 w-3" /> {driver.rating}
+                              </span>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => handleSOSClick(driver)}
+                            disabled={isSubmitting || !!activeBooking}
+                            className="px-4 py-2 rounded-xl bg-red-600 text-white text-xs font-black hover:bg-red-700 disabled:bg-slate-300"
+                          >
+                            {isSubmitting ? "পাঠানো হচ্ছে..." : "অ্যাম্বুলেন্স ডাকুন"}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {availableDrivers.length === 0 && !loadingDrivers && (
+                  <p className="text-xs font-semibold text-slate-500">
+                    ড্রাইভার দেখতে উপরের বাটনে ক্লিক করুন।
+                  </p>
+                )}
               </div>
             </div>
 
@@ -640,9 +808,12 @@ export default function DashboardPage() {
                           </div>
                         </div>
                         <button
-                          onClick={() => handleSOSClick(h.id)}
+                          onClick={() => handleSOSClick(availableDrivers[0], h.id)}
                           disabled={
-                            isSubmitting || !!activeBooking || !needsAmbulance
+                            isSubmitting ||
+                            !!activeBooking ||
+                            !needsAmbulance ||
+                            availableDrivers.length === 0
                           }
                           className="bg-blue-600 text-white p-2.5 rounded-xl hover:bg-blue-700 transition-colors disabled:bg-slate-200"
                           title="এই হাসপাতালে রিকোয়েস্ট পাঠান"
@@ -656,6 +827,73 @@ export default function DashboardPage() {
               </section>
             </div>
           </div>
+
+          {activeBooking && (
+            <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+              <div className="flex items-center gap-2 mb-4">
+                <MessageCircle className="h-5 w-5 text-blue-600" />
+                <h3 className="font-black text-lg">ড্রাইভারের সাথে চ্যাট</h3>
+              </div>
+              <div className="h-48 overflow-y-auto bg-slate-50 border border-slate-100 rounded-2xl p-3 space-y-2">
+                {chatMessages.length === 0 ? (
+                  <p className="text-xs text-slate-500">এখনো কোনো মেসেজ নেই।</p>
+                ) : (
+                  chatMessages.map((msg) => (
+                    <div
+                      key={msg._id}
+                      className={`max-w-[80%] px-3 py-2 rounded-xl text-sm ${
+                        msg.senderRole === "seeker"
+                          ? "ml-auto bg-blue-600 text-white"
+                          : "bg-white border border-slate-200 text-slate-700"
+                      }`}
+                    >
+                      {msg.text}
+                    </div>
+                  ))
+                )}
+              </div>
+              <div className="mt-3 flex gap-2">
+                <input
+                  value={chatText}
+                  onChange={(e) => setChatText(e.target.value)}
+                  placeholder="মেসেজ লিখুন..."
+                  className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none"
+                />
+                <button
+                  onClick={handleSendChat}
+                  disabled={isSendingChat || !chatText.trim()}
+                  className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-bold disabled:bg-slate-300"
+                >
+                  পাঠান
+                </button>
+              </div>
+            </section>
+          )}
+
+          {activeBooking && driverLiveLocation && (
+            <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+              <div className="flex items-center gap-2 mb-4">
+                <Navigation className="h-5 w-5 text-blue-600" />
+                <h3 className="font-black text-lg">লাইভ ট্র্যাকিং</h3>
+              </div>
+              <div className="rounded-2xl overflow-hidden border border-slate-200">
+                <iframe
+                  title="driver-live-location"
+                  src={`https://maps.google.com/maps?q=${driverLiveLocation.latitude},${driverLiveLocation.longitude}&z=15&output=embed`}
+                  className="w-full h-64"
+                  loading="lazy"
+                />
+              </div>
+              <a
+                href={`https://www.google.com/maps?q=${driverLiveLocation.latitude},${driverLiveLocation.longitude}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex mt-3 text-sm font-bold text-blue-600 hover:text-blue-700"
+              >
+                গুগল ম্যাপে খুলুন
+              </a>
+            </section>
+          )}
 
           {/* Profile Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-10">
@@ -791,7 +1029,6 @@ export default function DashboardPage() {
           </div>
         </main>
       </div>
-      <Footer></Footer>
     </>
   );
 }

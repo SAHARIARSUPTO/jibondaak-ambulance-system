@@ -147,7 +147,7 @@ export default function RegisterSeekerPage() {
           );
         }
         setSuccess(true);
-        setTimeout(() => router.push("/dashboard/seeker"), 2000);
+        setTimeout(() => router.push("/dashboard"), 2000);
       } else {
         setError(data.error || "নিবন্ধন ব্যর্থ হয়েছে।");
       }
