@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { listBookingsByProvider } from "@/lib/bookingStore";
+import { listBookingsByProvider } from "@/lib/dbStore";
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -11,7 +11,7 @@ export async function GET(request) {
     );
   }
 
-  const bookings = listBookingsByProvider(providerId);
+  const bookings = await listBookingsByProvider(providerId);
   const earnings = bookings
     .filter((b) => b.status === "completed")
     .reduce((sum, b) => sum + Number(b.offeredFare || 0), 0);

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { acceptRequest } from "@/lib/bookingStore";
+import { acceptRequest } from "@/lib/dbStore";
 
 export async function POST(request) {
   try {
@@ -12,7 +12,7 @@ export async function POST(request) {
       );
     }
 
-    const booking = acceptRequest(requestId, providerId);
+    const booking = await acceptRequest(requestId, providerId);
     if (!booking) {
       return NextResponse.json(
         { success: false, error: "Request already handled or not found" },
@@ -28,4 +28,3 @@ export async function POST(request) {
     );
   }
 }
-

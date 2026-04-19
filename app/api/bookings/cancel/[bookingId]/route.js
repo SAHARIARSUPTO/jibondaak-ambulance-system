@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { cancelBookingById } from "@/lib/bookingStore";
+import { cancelBookingById } from "@/lib/dbStore";
 
 export async function POST(request, { params }) {
   try {
@@ -12,7 +12,7 @@ export async function POST(request, { params }) {
       );
     }
 
-    const booking = cancelBookingById(bookingId);
+    const booking = await cancelBookingById(bookingId);
     if (!booking) {
       return NextResponse.json(
         { success: false, error: "Booking not found" },

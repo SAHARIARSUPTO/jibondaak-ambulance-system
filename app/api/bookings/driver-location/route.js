@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getBookingById } from "@/lib/bookingStore";
+import { getBookingById } from "@/lib/dbStore";
 
 export async function GET(request) {
   try {
@@ -12,7 +12,7 @@ export async function GET(request) {
       );
     }
 
-    const booking = getBookingById(bookingId);
+    const booking = await getBookingById(bookingId);
     if (!booking) {
       return NextResponse.json(
         { success: false, error: "Booking not found" },

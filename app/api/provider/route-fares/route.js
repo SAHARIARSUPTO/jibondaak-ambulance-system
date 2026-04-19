@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAllDriverRouteFares, setRouteFare } from "@/lib/bookingStore";
+import { getAllDriverRouteFares, setRouteFare } from "@/lib/dbStore";
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -12,7 +12,7 @@ export async function GET(request) {
   }
   return NextResponse.json({
     success: true,
-    fares: getAllDriverRouteFares(driverId),
+    fares: await getAllDriverRouteFares(driverId),
   });
 }
 
@@ -26,7 +26,7 @@ export async function POST(request) {
         { status: 400 },
       );
     }
-    const fare = setRouteFare(driverId, routeId, amount);
+    const fare = await setRouteFare(driverId, routeId, amount);
     return NextResponse.json({ success: true, fare });
   } catch (error) {
     return NextResponse.json(
@@ -35,4 +35,3 @@ export async function POST(request) {
     );
   }
 }
-

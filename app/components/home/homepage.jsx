@@ -1,9 +1,72 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { MapPin, Search, Navigation, LocateFixed } from "lucide-react";
+import { useDivisions, useDistricts } from "bd-geo-location/react";
+
 const HomePage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const router = useRouter();
+
+  // Using bd-geo-location hooks
+  const divisions = useDivisions();
+  // We pass null to get a general list or we can map through divisions to get all districts
+  const districts = useDistricts();
+
+  const locationPool = useMemo(() => {
+    const pool = [];
+    if (divisions) {
+      divisions.forEach((d) => {
+        pool.push({
+          name: d.name,
+          bnName: d.bnName || d.bn_name || d.name,
+          type: "বিভাগ",
+        });
+      });
+    }
+    if (districts) {
+      districts.forEach((d) => {
+        pool.push({
+          name: d.name,
+          bnName: d.bnName || d.bn_name || d.name,
+          type: "জেলা",
+        });
+      });
+    }
+    return pool;
+  }, [divisions, districts]);
+
+  const suggestions = useMemo(() => {
+    if (!searchTerm || searchTerm.length < 2) return [];
+    const term = searchTerm.toLowerCase();
+    return locationPool
+      .filter(
+        (loc) =>
+          loc.name?.toLowerCase().includes(term) || loc.bnName?.includes(term),
+      )
+      .slice(0, 6);
+  }, [searchTerm, locationPool]);
+
+  const handleSearch = (e) => {
+    if (e) e.preventDefault();
+    if (!searchTerm.trim()) return;
+    router.push(`/search-results?query=${encodeURIComponent(searchTerm)}`);
+  };
+
+  const handleGPS = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const { latitude, longitude } = position.coords;
+        // Search by coordinates
+        router.push(
+          `/search-results?lat=${latitude}&lng=${longitude}&query=Current%20Location`,
+        );
+      });
+    }
+  };
 
   return (
     <>
@@ -39,23 +102,75 @@ const HomePage = () => {
               খুঁজে পেতে আমরা আছি সবসময় আপনার পাশে।
             </p>
 
-            <form className="max-w-2xl mx-auto mb-8">
-              <div
-                className={`flex flex-col sm:flex-row shadow-2xl rounded-2xl overflow-hidden border-2 transition-all ${isFocused ? "border-red-600 ring-4 ring-red-50" : "border-slate-200"}`}
-              >
-                <input
-                  type="text"
-                  placeholder="আপনার বর্তমান অবস্থান বা গ্রাম লিখুন..."
-                  className="flex-1 px-6 py-5 text-xl outline-none"
-                  onFocus={() => setIsFocused(true)}
-                  onBlur={() => setIsFocused(false)}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <button className="bg-red-600 hover:bg-red-700 text-white px-10 py-5 text-xl font-bold transition-colors">
-                  খুঁজুন
-                </button>
-              </div>
-            </form>
+            <div className="max-w-2xl mx-auto mb-8 relative">
+              <form onSubmit={handleSearch} className="relative z-20">
+                <div
+                  className={`flex flex-col sm:flex-row shadow-2xl rounded-2xl overflow-hidden border-2 transition-all bg-white ${isFocused ? "border-red-600 ring-4 ring-red-50" : "border-slate-200"}`}
+                >
+                  <div className="flex-1 flex items-center px-6">
+                    <MapPin className="text-slate-400 h-6 w-6 mr-3" />
+                    <input
+                      type="text"
+                      placeholder="আপনার বর্তমান অবস্থান বা গ্রাম লিখুন..."
+                      className="flex-1 py-5 text-xl outline-none"
+                      value={searchTerm}
+                      onFocus={() => {
+                        setIsFocused(true);
+                        setShowSuggestions(true);
+                      }}
+                      onBlur={() => {
+                        setIsFocused(false);
+                        // Delay hiding so clicks on suggestions register
+                        setTimeout(() => setShowSuggestions(false), 200);
+                      }}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleGPS}
+                      className="p-2 text-slate-400 hover:text-red-600 transition-colors"
+                      title="আপনার অবস্থান ব্যবহার করুন"
+                    >
+                      <LocateFixed className="h-5 w-5" />
+                    </button>
+                  </div>
+                  <button
+                    type="submit"
+                    className="bg-red-600 hover:bg-red-700 text-white px-10 py-5 text-xl font-bold transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Search className="h-6 w-6" /> খুঁজুন
+                  </button>
+                </div>
+              </form>
+
+              {/* Suggestions Dropdown */}
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  {suggestions.map((s) => (
+                    <button
+                      key={s.name}
+                      onClick={() => {
+                        setSearchTerm(s.bnName || s.name);
+                        router.push(
+                          `/search-results?query=${encodeURIComponent(s.bnName || s.name)}`,
+                        );
+                      }}
+                      className="w-full text-left px-6 py-4 hover:bg-slate-50 flex items-center justify-between border-b border-slate-50 last:border-0 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Navigation className="h-4 w-4 text-red-500" />
+                        <span className="font-bold text-slate-800 text-lg">
+                          {s.bnName || s.name}
+                        </span>
+                      </div>
+                      <span className="text-xs font-bold text-slate-300">
+                        অঞ্চল
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div className="flex items-center justify-center gap-2 text-slate-500 font-medium">
               <svg

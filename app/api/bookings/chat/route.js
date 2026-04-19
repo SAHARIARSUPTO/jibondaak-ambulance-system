@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getBookingById, getChatMessages, makeLocalEntityId, saveChatMessage } from "@/lib/bookingStore";
+import { getBookingById, getChatMessages, saveChatMessage } from "@/lib/dbStore";
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -12,7 +12,7 @@ export async function GET(request) {
   }
   return NextResponse.json({
     success: true,
-    messages: getChatMessages(bookingId),
+    messages: await getChatMessages(bookingId),
   });
 }
 
@@ -26,7 +26,7 @@ export async function POST(request) {
         { status: 400 },
       );
     }
-    const booking = getBookingById(bookingId);
+    const booking = await getBookingById(bookingId);
     if (!booking) {
       return NextResponse.json(
         { success: false, error: "Booking not found" },
@@ -34,15 +34,13 @@ export async function POST(request) {
       );
     }
     const message = {
-      _id: makeLocalEntityId("chat"),
-      bookingId,
       senderId: String(senderId),
       senderRole,
       text: String(text).trim(),
       createdAt: new Date(),
     };
-    saveChatMessage(bookingId, message);
-    return NextResponse.json({ success: true, message });
+    const savedMessage = await saveChatMessage(bookingId, message);
+    return NextResponse.json({ success: true, message: savedMessage });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: "Failed to send message" },
@@ -50,4 +48,3 @@ export async function POST(request) {
     );
   }
 }
-

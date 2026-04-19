@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { loadDrivers, loadRoutes, resolveFare } from "@/lib/dispatchUtils";
 import {
-  getActiveBookingByUserId,
+  createDriverAssignmentNotification,
+  getDriverById,
   getProviderOnline,
-  listProviderDrivers,
-  makeLocalBookingId,
+  getActiveBookingByUserId,
   saveBooking,
-} from "@/lib/bookingStore";
+} from "@/lib/dbStore";
 
 export async function POST(request) {
   try {
@@ -28,39 +28,52 @@ export async function POST(request) {
       patientInfo,
     } = body || {};
 
-    if (!userId || !userLocation || !ambulanceType || !patientInfo || !selectedDriverId) {
+    if (
+      !userId ||
+      !userLocation ||
+      !ambulanceType ||
+      !patientInfo ||
+      !selectedDriverId
+    ) {
       return NextResponse.json(
         { success: false, error: "Missing required booking fields" },
         { status: 400 },
       );
     }
 
-    const existingBooking = getActiveBookingByUserId(String(userId));
+    const existingBooking = await getActiveBookingByUserId(String(userId));
     if (existingBooking) {
       return NextResponse.json({ success: true, booking: existingBooking });
     }
 
-    const [drivers, routes] = await Promise.all([loadDrivers(), loadRoutes()]);
-    const providerDrivers = listProviderDrivers().map((d) => ({
-      ...d,
-      status: getProviderOnline(d.providerId) ? "available" : "offline",
-    }));
-    const allDrivers = [...providerDrivers, ...drivers];
-    const driver = allDrivers.find((d) => d.id === selectedDriverId);
+    const [allDrivers, routes] = await Promise.all([
+      loadDrivers(), // Load static JSON drivers
+      loadRoutes(),
+    ]);
+
+    // 1. Try finding driver in DB using the provided ID
+    let driver = await getDriverById(selectedDriverId);
+
+    // 2. Fallback to static JSON drivers if not found in DB
+    if (!driver) {
+      driver = allDrivers.find(
+        (d) => d.id === selectedDriverId || d._id === selectedDriverId,
+      );
+    }
 
     if (!driver) {
+      console.error(
+        `Booking Failed: Driver not found for ID: ${selectedDriverId}`,
+      );
       return NextResponse.json(
         { success: false, error: "Selected driver not found" },
         { status: 404 },
       );
     }
 
-    if (driver.status !== "available") {
-      return NextResponse.json(
-        { success: false, error: "Selected driver is currently unavailable" },
-        { status: 409 },
-      );
-    }
+    const providerOnline = driver.providerId
+      ? await getProviderOnline(driver.providerId)
+      : true;
 
     if (
       userDivision &&
@@ -69,7 +82,10 @@ export async function POST(request) {
       driver.upazila_id?.toString() !== userUpazila?.toString()
     ) {
       return NextResponse.json(
-        { success: false, error: "Driver is outside the requested service area" },
+        {
+          success: false,
+          error: "Driver is outside the requested service area",
+        },
         { status: 400 },
       );
     }
@@ -86,8 +102,7 @@ export async function POST(request) {
           });
 
     const now = new Date();
-    const booking = saveBooking({
-      _id: makeLocalBookingId(),
+    const booking = await saveBooking({
       userId: String(userId),
       userName: userName || "",
       userPhone: userPhone || "",
@@ -129,6 +144,15 @@ export async function POST(request) {
       createdAt: now,
       updatedAt: now,
     });
+
+    if (driver.providerId) {
+      await createDriverAssignmentNotification({
+        bookingId: booking._id,
+        providerId: driver.providerId,
+        driverId: driver.id,
+        isOnline: providerOnline,
+      });
+    }
 
     return NextResponse.json({ success: true, booking });
   } catch (error) {

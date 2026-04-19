@@ -1,83 +1,56 @@
+import clientPromise from "@/lib/mongodb";
 import { NextResponse } from "next/server";
-import { distanceKm, loadDrivers, loadRoutes, resolveFare } from "@/lib/dispatchUtils";
-import { getProviderOnline, listProviderDrivers } from "@/lib/bookingStore";
 
-export async function POST(request) {
+export async function POST(req) {
   try {
-    const body = await request.json();
-    const {
-      userLocation,
-      ambulanceType,
-      userDivision,
-      userUpazila,
-      routeId,
-      limit = 5,
-    } = body || {};
+    const { userDivision, userUpazila, ambulanceType } = await req.json();
+    const client = await clientPromise;
+    const db = client.db("jibondaak");
 
-    if (!userLocation?.latitude || !userLocation?.longitude) {
-      return NextResponse.json(
-        { success: false, error: "userLocation is required" },
-        { status: 400 },
-      );
+    // 1. Build the search query based on Seeker location
+    let query = {
+      division_id: userDivision?.toString(),
+      // Only show drivers who are verified and not suspended
+      isActive: { $ne: false }
+    };
+
+    // 2. Filter by Upazila if available for precise matching
+    // We check if userUpazila is not 'undefined' or null
+    if (userUpazila && userUpazila !== "undefined") {
+      query.upazila_id = userUpazila.toString();
     }
 
-    const [drivers, routes] = await Promise.all([loadDrivers(), loadRoutes()]);
-    const providerDrivers = listProviderDrivers().map((d) => ({
-      ...d,
-      status: getProviderOnline(d.providerId) ? "available" : "offline",
-    }));
-    // Driver dashboard flow: prioritize registered driver accounts.
-    const mergedDrivers = providerDrivers.length > 0 ? providerDrivers : drivers;
-    const selectedRoute = routes.find((r) => r.id === routeId);
+    // 3. Filter by ambulance type if specified (and not 'all' or 'non-ac' default)
+    if (ambulanceType && ambulanceType !== "non-ac") {
+      query.ambulanceType = ambulanceType;
+    }
 
-    const available = mergedDrivers
-      .filter((d) => d.status === "available")
-      .filter((d) => (ambulanceType ? d.ambulanceType === ambulanceType : true));
+    // 4. Fetch drivers from DB
+    let drivers = await db.collection("drivers").find(query).toArray();
 
-    const upazilaMatches = available.filter((d) =>
-      userUpazila ? d.upazila_id?.toString() === userUpazila?.toString() : true,
-    );
+    // 5. Fallback logic: If no drivers found in the specific Upazila, 
+    // show all drivers in the same Division so the user isn't left empty-handed.
+    if (drivers.length === 0 && userUpazila) {
+      drivers = await db.collection("drivers")
+        .find({ division_id: userDivision.toString(), isActive: { $ne: false } })
+        .limit(10)
+        .toArray();
+    }
 
-    const divisionMatches = available.filter((d) =>
-      userDivision ? d.division_id?.toString() === userDivision?.toString() : true,
-    );
-
-    // Fallback chain: upazila -> division -> all available, to avoid empty search results.
-    const candidateDrivers =
-      upazilaMatches.length > 0
-        ? upazilaMatches
-        : divisionMatches.length > 0
-          ? divisionMatches
-          : available;
-
-    const matches = candidateDrivers
-      .map((d) => {
-        const distance = distanceKm(userLocation, {
-          latitude: d.lat,
-          longitude: d.lng,
-        });
-        const fare = resolveFare({
-          driverId: d.id,
-          routeId,
-          routeBaseFare: selectedRoute?.baseFare,
-          distance,
-        });
-        return {
-          ...d,
-          distanceKm: Number(distance.toFixed(2)),
-          offeredFare: fare,
-          routeId: routeId || null,
-          routeName: selectedRoute?.name || "Dynamic local route",
-        };
-      })
-      .sort((a, b) => a.distanceKm - b.distanceKm)
-      .slice(0, Number(limit));
-
-    return NextResponse.json({ success: true, drivers: matches });
+    return NextResponse.json({ 
+      success: true, 
+      drivers: drivers.map(d => ({
+        id: d._id.toString(),
+        name: d.name,
+        ambulanceModel: d.ambulanceModel || "Ambulance",
+        ambulanceNumber: d.ambulanceNumber,
+        ambulanceType: d.ambulanceType || "ac",
+        distanceKm: (Math.random() * 4 + 1).toFixed(1), // Simulated distance for UI
+        offeredFare: d.baseFare || 1200,
+        rating: d.rating || 5
+      }))
+    });
   } catch (error) {
-    return NextResponse.json(
-      { success: false, error: "Failed to load nearby drivers" },
-      { status: 500 },
-    );
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

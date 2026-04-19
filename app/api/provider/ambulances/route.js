@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
 import {
-  addProviderAmbulance,
-  hasProviderAmbulance,
   listProviderAmbulances,
-  makeLocalEntityId,
-  upsertProviderDriver,
-} from "@/lib/bookingStore";
+  upsertDriverProfile,
+  upsertProviderAmbulance,
+} from "@/lib/dbStore";
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -18,7 +16,7 @@ export async function GET(request) {
   }
   return NextResponse.json({
     success: true,
-    ambulances: listProviderAmbulances(providerId),
+    ambulances: await listProviderAmbulances(providerId),
   });
 }
 
@@ -46,29 +44,24 @@ export async function POST(request) {
       );
     }
 
-    if (hasProviderAmbulance(providerId)) {
+    const existing = await listProviderAmbulances(providerId);
+    if (existing.length > 0) {
       return NextResponse.json(
         { success: false, error: "Only one ambulance profile is allowed per driver account" },
         { status: 409 },
       );
     }
 
-    const ambulance = {
-      _id: makeLocalEntityId("amb"),
-      providerId: String(providerId),
+    const ambulance = await upsertProviderAmbulance(providerId, {
       type: type || "non-ac",
       vehicleNumber,
       licenseNumber: licenseNumber || "",
       driverName,
       driverPhone,
       locationLabel: locationLabel || "",
-      isAvailable: true,
-      createdAt: new Date(),
-    };
+    });
 
-    addProviderAmbulance(providerId, ambulance);
-
-    const driver = upsertProviderDriver(providerId, {
+    const driver = await upsertDriverProfile(providerId, {
       name: driverName,
       phone: driverPhone,
       ambulanceType: type || "non-ac",
@@ -118,7 +111,7 @@ export async function PUT(request) {
       );
     }
 
-    const existing = listProviderAmbulances(providerId)[0];
+    const existing = (await listProviderAmbulances(providerId))[0];
     if (!existing) {
       return NextResponse.json(
         { success: false, error: "Driver profile not found" },
@@ -126,20 +119,16 @@ export async function PUT(request) {
       );
     }
 
-    const ambulance = {
-      ...existing,
+    const ambulance = await upsertProviderAmbulance(providerId, {
       type: type || existing.type,
       vehicleNumber: vehicleNumber || existing.vehicleNumber,
       licenseNumber: licenseNumber || existing.licenseNumber,
       driverName: driverName || existing.driverName,
       driverPhone: driverPhone || existing.driverPhone,
       locationLabel: locationLabel ?? existing.locationLabel,
-      updatedAt: new Date(),
-    };
+    });
 
-    addProviderAmbulance(providerId, ambulance);
-
-    const driver = upsertProviderDriver(providerId, {
+    const driver = await upsertDriverProfile(providerId, {
       name: ambulance.driverName,
       phone: ambulance.driverPhone,
       ambulanceType: ambulance.type,
