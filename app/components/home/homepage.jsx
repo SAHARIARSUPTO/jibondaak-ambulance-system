@@ -3,7 +3,8 @@ import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { MapPin, Search, Navigation, LocateFixed } from "lucide-react";
-import { useDivisions, useDistricts } from "bd-geo-location/react";
+import ExpertiseSection from "./service";
+import MedicalNetworkSection from "./medicalnotif";
 
 const HomePage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -11,33 +12,81 @@ const HomePage = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const router = useRouter();
 
-  // Using bd-geo-location hooks
-  const divisions = useDivisions();
-  // We pass null to get a general list or we can map through divisions to get all districts
-  const districts = useDistricts();
+  // Load JSONs from public folder
+  const [locationPool, setLocationPool] = useState([]);
+  useEffect(() => {
+    async function loadLocations() {
+      // Helper to fetch and parse JSON
+      const fetchJson = async (url) => {
+        const res = await fetch(url);
+        return res.json();
+      };
+      // Fetch all JSONs in parallel
+      const [divisions, districts, upazilas, postcodes, dhaka] =
+        await Promise.all([
+          fetchJson("/json/bd-divisions.json"),
+          fetchJson("/json/bd-districts.json"),
+          fetchJson("/json/bd-upazilas.json"),
+          fetchJson("/json/bd-postcodes.json"),
+          fetchJson("/json/dhaka-city.json"),
+        ]);
 
-  const locationPool = useMemo(() => {
-    const pool = [];
-    if (divisions) {
-      divisions.forEach((d) => {
-        pool.push({
-          name: d.name,
-          bnName: d.bnName || d.bn_name || d.name,
-          type: "বিভাগ",
+      const pool = [];
+      // Divisions
+      if (divisions?.divisions) {
+        divisions.divisions.forEach((d) => {
+          pool.push({
+            name: d.name,
+            bnName: d.bn_name || d.name,
+            type: "বিভাগ",
+          });
         });
-      });
-    }
-    if (districts) {
-      districts.forEach((d) => {
-        pool.push({
-          name: d.name,
-          bnName: d.bnName || d.bn_name || d.name,
-          type: "জেলা",
+      }
+      // Districts
+      if (districts?.districts) {
+        districts.districts.forEach((d) => {
+          pool.push({
+            name: d.name,
+            bnName: d.bn_name || d.name,
+            type: "জেলা",
+          });
         });
-      });
+      }
+      // Upazilas
+      if (upazilas?.upazilas) {
+        upazilas.upazilas.forEach((u) => {
+          pool.push({
+            name: u.name,
+            bnName: u.bn_name || u.name,
+            type: "উপজেলা",
+          });
+        });
+      }
+      // Post offices (as union/area)
+      if (postcodes?.postcodes) {
+        postcodes.postcodes.forEach((p) => {
+          pool.push({
+            name: p.postOffice,
+            bnName: p.postOffice,
+            upazila: p.upazila,
+            type: "পোস্ট অফিস/ইউনিয়ন/এলাকা",
+          });
+        });
+      }
+      // Dhaka city areas
+      if (dhaka?.dhaka) {
+        dhaka.dhaka.forEach((a) => {
+          pool.push({
+            name: a.name,
+            bnName: a.bn_name || a.name,
+            type: "ঢাকা সিটি এলাকা",
+          });
+        });
+      }
+      setLocationPool(pool);
     }
-    return pool;
-  }, [divisions, districts]);
+    loadLocations();
+  }, []);
 
   const suggestions = useMemo(() => {
     if (!searchTerm || searchTerm.length < 2) return [];
@@ -45,9 +94,11 @@ const HomePage = () => {
     return locationPool
       .filter(
         (loc) =>
-          loc.name?.toLowerCase().includes(term) || loc.bnName?.includes(term),
+          (loc.name && loc.name.toLowerCase().includes(term)) ||
+          (loc.bnName && loc.bnName.includes(term)) ||
+          (loc.upazila && loc.upazila.toLowerCase().includes(term)),
       )
-      .slice(0, 6);
+      .slice(0, 8);
   }, [searchTerm, locationPool]);
 
   const handleSearch = (e) => {
@@ -148,7 +199,7 @@ const HomePage = () => {
                 <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                   {suggestions.map((s) => (
                     <button
-                      key={s.name}
+                      key={`${s.type}-${s.name}-${s.upazila || ""}`}
                       onClick={() => {
                         setSearchTerm(s.bnName || s.name);
                         router.push(
@@ -162,9 +213,14 @@ const HomePage = () => {
                         <span className="font-bold text-slate-800 text-lg">
                           {s.bnName || s.name}
                         </span>
+                        {s.upazila && (
+                          <span className="ml-2 text-slate-400 text-sm">
+                            ({s.upazila})
+                          </span>
+                        )}
                       </div>
                       <span className="text-xs font-bold text-slate-300">
-                        অঞ্চল
+                        {s.type}
                       </span>
                     </button>
                   ))}
@@ -185,7 +241,7 @@ const HomePage = () => {
                   clipRule="evenodd"
                 />
               </svg>
-              সারাদেশে ১,২০০+ অ্যাম্বুলেন্স যুক্ত আছে
+              সারাদেশজুড়ে কাভারেজ
             </div>
           </div>
         </section>
@@ -199,7 +255,7 @@ const HomePage = () => {
               </h2>
               <div className="h-1.5 w-24 bg-red-600 mx-auto rounded-full"></div>
             </div>
-
+            <MedicalNetworkSection></MedicalNetworkSection>
             <div className="grid md:grid-cols-3 gap-12 text-center">
               <div className="space-y-4 p-6 hover:bg-slate-50 rounded-3xl transition-colors">
                 <div className="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto text-3xl font-bold">
@@ -282,7 +338,7 @@ const HomePage = () => {
               </button>
             </div>
             <div className="flex-1 relative">
-              <div className="bg-gradient-to-tr from-red-600 to-orange-400 w-full aspect-square rounded-full opacity-20 blur-3xl absolute -right-20 -top-20"></div>
+              <div className="bg-linear-to-tr from-red-600 to-orange-400 w-full aspect-square rounded-full opacity-20 blur-3xl absolute -right-20 -top-20"></div>
               <div className="border border-white/10 bg-white/5 p-6 rounded-3xl backdrop-blur-xl relative">
                 <div className="flex justify-between items-center mb-6">
                   <span className="font-bold">লাইভ ট্র্যাকিং ড্যাশবোর্ড</span>
@@ -314,6 +370,8 @@ const HomePage = () => {
           </div>
         </footer>
       </main>
+
+      <ExpertiseSection></ExpertiseSection>
     </>
   );
 };

@@ -47,7 +47,10 @@ export async function POST(request) {
     const existing = await listProviderAmbulances(providerId);
     if (existing.length > 0) {
       return NextResponse.json(
-        { success: false, error: "Only one ambulance profile is allowed per driver account" },
+        {
+          success: false,
+          error: "Only one ambulance profile is allowed per driver account",
+        },
         { status: 409 },
       );
     }
@@ -59,6 +62,8 @@ export async function POST(request) {
       driverName,
       driverPhone,
       locationLabel: locationLabel || "",
+      division_id: divisionId || null,
+      upazila_id: upazilaId || null,
     });
 
     const driver = await upsertDriverProfile(providerId, {
@@ -126,6 +131,8 @@ export async function PUT(request) {
       driverName: driverName || existing.driverName,
       driverPhone: driverPhone || existing.driverPhone,
       locationLabel: locationLabel ?? existing.locationLabel,
+      division_id: divisionId || null,
+      upazila_id: upazilaId || null,
     });
 
     const driver = await upsertDriverProfile(providerId, {

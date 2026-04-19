@@ -125,6 +125,31 @@ export default function DashboardPage() {
 
   const greeting = useMemo(() => getGreeting(), []);
 
+  const [dbHospitals, setDbHospitals] = useState([]);
+
+  // Fetch Hospitals from Database based on user's selected area
+  useEffect(() => {
+    const fetchDbHospitals = async () => {
+      if (!user?.division) return;
+      try {
+        const params = new URLSearchParams();
+        if (user.division) params.append("division_id", user.division);
+        if (user.district) params.append("district_id", user.district);
+        if (user.upazila) params.append("upazila_id", user.upazila);
+
+        const res = await fetch(`/api/admin/hospitals?${params.toString()}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.success) {
+          setDbHospitals(data.hospitals || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch area-wise hospitals:", err);
+      }
+    };
+    fetchDbHospitals();
+  }, [user?.division, user?.district, user?.upazila]);
+
   // Memoized user location names for display
   const userDivisionName = useMemo(() => {
     if (!user?.division || allDivisions.length === 0) return "";
@@ -151,14 +176,7 @@ export default function DashboardPage() {
   }, [user?.upazila, allUpazilas]);
 
   // Filtered hospitals based on user division
-  const filteredHospitals = useMemo(() => {
-    // Map Bangla division name to English key in JSON
-    const divisionMap = {
-      রাজশাহী: "Rajshahi",
-    };
-    const englishKey = divisionMap[userDivisionName] || "Rajshahi";
-    return allHospitals[englishKey] || [];
-  }, [userDivisionName, allHospitals]);
+  const filteredHospitals = useMemo(() => dbHospitals, [dbHospitals]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -187,28 +205,24 @@ export default function DashboardPage() {
       };
 
       try {
-        const [divRes, distRes, upzRes, hospRes, drvRes, routesRes] =
-          await Promise.all([
-            safeFetch("/json/bd-divisions.json"),
-            safeFetch("/json/bd-districts.json"),
-            safeFetch("/json/bd-upazilas.json"),
-            safeFetch("/json/hospitals.json"),
-            safeFetch("/json/drivers.json"),
-            safeFetch("/json/routes.json"),
-          ]);
+        const [divRes, distRes, upzRes, drvRes, routesRes] = await Promise.all([
+          safeFetch("/json/bd-divisions.json"),
+          safeFetch("/json/bd-districts.json"),
+          safeFetch("/json/bd-upazilas.json"),
+          safeFetch("/json/drivers.json"),
+          safeFetch("/json/routes.json"),
+        ]);
 
         // Handle different JSON structures
         const divs = divRes?.divisions || divRes || [];
         const dists = distRes?.districts || distRes || [];
         const upzs = upzRes?.upazilas || upzRes || [];
-        const hosps = hospRes || {};
         const drvs = drvRes?.drivers || [];
         const routeList = routesRes?.routes || [];
 
         setAllDivisions(divs);
         setAllDistricts(dists);
         setAllUpazilas(upzs);
-        setAllHospitals(hosps);
         setAllDrivers(drvs);
         setRoutes(routeList);
       } catch (err) {
@@ -246,6 +260,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (user) {
       getUserLocation();
+      fetchActiveBooking();
       const interval = setInterval(() => fetchActiveBooking(), 5000);
       return () => clearInterval(interval);
     }
@@ -262,6 +277,9 @@ export default function DashboardPage() {
           `/api/bookings/chat?bookingId=${activeBooking._id}`,
         );
         if (!res.ok) return;
+        const ct = res.headers.get("content-type");
+        if (!ct || !ct.includes("application/json")) return;
+
         const data = await res.json();
         if (data.success) setChatMessages(data.messages || []);
       } catch (error) {}
@@ -282,6 +300,9 @@ export default function DashboardPage() {
           `/api/bookings/driver-location?bookingId=${activeBooking._id}`,
         );
         if (!res.ok) return;
+        const ct = res.headers.get("content-type");
+        if (!ct || !ct.includes("application/json")) return;
+
         const data = await res.json();
         if (data.success && data.location) {
           setDriverLiveLocation(data.location);
@@ -324,6 +345,23 @@ export default function DashboardPage() {
         // If this specific booking was dismissed by the user, don't show it
         if (nextBooking?._id === dismissedBookingId) {
           setActiveBooking(null);
+          return;
+        }
+
+        // Auto-delete cancelled/rejected bookings permanently
+        if (
+          nextBooking?.status === "cancelled" ||
+          nextBooking?.status === "rejected"
+        ) {
+          try {
+            await fetch(`/api/bookings/delete/${nextBooking._id}`, {
+              method: "DELETE",
+            });
+          } catch (e) {
+            console.error("Failed to delete booking:", e);
+          }
+          setActiveBooking(null);
+          setBookingNotice("");
           return;
         }
 
@@ -392,11 +430,19 @@ export default function DashboardPage() {
           routeId: selectedRouteId,
         }),
       });
+
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
+      const ct = response.headers.get("content-type");
+      if (!ct || !ct.includes("application/json"))
+        throw new Error("Invalid response from server");
+
       const data = await response.json();
-      if (!response.ok || !data?.success) {
+      if (!data?.success)
         throw new Error(data?.error || "ড্রাইভার লোড করা যায়নি");
-      }
+
       setAvailableDrivers(data.drivers || []);
+
       if (data.drivers?.length === 0) {
         alert(
           "দুঃখিত, এই মুহূর্তে এই রুটে কোনো ড্রাইভার পাওয়া যায়নি। অন্য রুট চেষ্টা করুন।",
@@ -505,6 +551,12 @@ export default function DashboardPage() {
           text: chatText.trim(),
         }),
       });
+
+      if (!res.ok) throw new Error("Chat delivery failed");
+      const ct = res.headers.get("content-type");
+      if (!ct || !ct.includes("application/json"))
+        throw new Error("Invalid chat response");
+
       const data = await res.json();
       if (res.ok && data.success) {
         setChatText("");
@@ -535,6 +587,12 @@ export default function DashboardPage() {
           upazila: user.upazila,
         }),
       });
+
+      if (!response.ok) throw new Error("Address update failed");
+      const ct = response.headers.get("content-type");
+      if (!ct || !ct.includes("application/json"))
+        throw new Error("Invalid server response");
+
       const data = await response.json();
       if (!data.success) throw new Error(data.error);
 
@@ -554,9 +612,16 @@ export default function DashboardPage() {
     }
   };
 
-  const handleClearBooking = () => {
-    // Locally clear the terminal state booking to allow fresh search
+  // Permanently delete cancelled/rejected booking from user dashboard
+  const handleClearBooking = async () => {
     if (activeBooking?._id) {
+      try {
+        await fetch(`/api/bookings/delete/${activeBooking._id}`, {
+          method: "DELETE",
+        });
+      } catch (e) {
+        // Ignore error, just clear from UI
+      }
       setDismissedBookingId(activeBooking._id);
     }
     setActiveBooking(null);
@@ -578,6 +643,11 @@ export default function DashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: user._id }),
       });
+      if (!res.ok) throw new Error("Request failed");
+      const ct = res.headers.get("content-type");
+      if (!ct || !ct.includes("application/json"))
+        throw new Error("Invalid response");
+
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.success) {
         throw new Error(data?.error || "Completion approval failed");
@@ -647,55 +717,68 @@ export default function DashboardPage() {
         <main className="mx-auto max-w-7xl px-4 mt-8 space-y-6">
           {/* Active Trip Banner */}
           {activeBooking && (
-            <div
-              className={`${
-                activeBooking.status === "rejected"
-                  ? "bg-red-600"
-                  : activeBooking.status === "cancelled"
-                    ? "bg-slate-800"
-                    : "bg-blue-600"
-              } rounded-3xl p-6 text-white flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl shadow-blue-100 animate-in fade-in slide-in-from-top-4 duration-500`}
-            >
-              <div className="flex items-center gap-4">
-                <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-md">
-                  <Activity className="h-6 w-6 animate-pulse" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold opacity-80 uppercase tracking-widest">
-                    {activeBooking.status === "rejected"
-                      ? "অনুরোধ প্রত্যাখ্যান করা হয়েছে"
-                      : activeBooking.status === "cancelled"
-                        ? "ট্রিপটি বাতিল করা হয়েছে"
-                        : "একটি ট্রিপ সচল আছে"}
-                  </p>
-                  <h2 className="text-xl font-black">
-                    {activeBooking.driverInfo
-                      ? `${activeBooking.driverInfo.name} ${formatStatus(activeBooking.status)}`
-                      : formatStatus(activeBooking.status)}
-                  </h2>
-                  {activeBooking.driverInfo && (
-                    <p className="text-sm font-bold mt-1">
-                      ফোন: {activeBooking.driverInfo.phone}
+            <div className="relative">
+              <div
+                className={`${
+                  activeBooking.status === "rejected"
+                    ? "bg-red-600"
+                    : activeBooking.status === "cancelled"
+                      ? "bg-slate-800"
+                      : "bg-blue-600"
+                } rounded-3xl p-6 text-white flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl shadow-blue-100 animate-in fade-in slide-in-from-top-4 duration-500`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="bg-white/20 p-3 rounded-2xl backdrop-blur-md">
+                    <Activity className="h-6 w-6 animate-pulse" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold opacity-80 uppercase tracking-widest">
+                      {activeBooking.status === "rejected"
+                        ? "অনুরোধ প্রত্যাখ্যান করা হয়েছে"
+                        : activeBooking.status === "cancelled"
+                          ? "ট্রিপটি বাতিল করা হয়েছে"
+                          : "একটি ট্রিপ সচল আছে"}
                     </p>
+                    <h2 className="text-xl font-black">
+                      {activeBooking.driverInfo
+                        ? `${activeBooking.driverInfo.name} ${formatStatus(activeBooking.status)}`
+                        : formatStatus(activeBooking.status)}
+                    </h2>
+                    {activeBooking.driverInfo && (
+                      <p className="text-sm font-bold mt-1">
+                        ফোন: {activeBooking.driverInfo.phone}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {activeBooking?.status === "awaiting_seeker_approval" && (
+                    <button
+                      onClick={handleApproveCompletion}
+                      className="bg-emerald-500 hover:bg-emerald-600 px-6 py-3 rounded-xl font-bold text-sm transition-all"
+                    >
+                      ট্রিপ সম্পন্ন নিশ্চিত করুন
+                    </button>
+                  )}
+                  {(activeBooking?.status === "rejected" ||
+                    activeBooking?.status === "cancelled") && (
+                    <button
+                      onClick={handleClearBooking}
+                      className="bg-white text-slate-900 hover:bg-slate-100 px-6 py-3 rounded-xl font-bold text-sm transition-all"
+                    >
+                      নতুন করে খুঁজুন
+                    </button>
                   )}
                 </div>
-              </div>
-              <div className="flex gap-2">
-                {activeBooking?.status === "awaiting_seeker_approval" && (
-                  <button
-                    onClick={handleApproveCompletion}
-                    className="bg-emerald-500 hover:bg-emerald-600 px-6 py-3 rounded-xl font-bold text-sm transition-all"
-                  >
-                    ট্রিপ সম্পন্ন নিশ্চিত করুন
-                  </button>
-                )}
-                {(activeBooking?.status === "rejected" ||
-                  activeBooking?.status === "cancelled") && (
+
+                {/* Quick Dismiss Button */}
+                {(activeBooking.status === "rejected" ||
+                  activeBooking.status === "cancelled") && (
                   <button
                     onClick={handleClearBooking}
-                    className="bg-slate-900 hover:bg-black px-6 py-3 rounded-xl font-bold text-sm transition-all"
+                    className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
                   >
-                    নতুন করে খুঁজুন
+                    <X className="h-4 w-4" />
                   </button>
                 )}
               </div>
@@ -703,10 +786,16 @@ export default function DashboardPage() {
           )}
 
           {bookingNotice && (
-            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
+            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex justify-between items-center">
               <p className="text-emerald-800 text-sm font-bold">
                 {bookingNotice}
               </p>
+              <button
+                onClick={() => setBookingNotice("")}
+                className="text-emerald-600 hover:text-emerald-800"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
           )}
 
@@ -850,8 +939,8 @@ export default function DashboardPage() {
                   >
                     <option value="">নিকটস্থ যেকোনো হাসপাতাল</option>
                     {filteredHospitals.map((h) => (
-                      <option key={h.id} value={h.id}>
-                        {h.name_bn}
+                      <option key={h._id} value={h._id}>
+                        {h.name}
                       </option>
                     ))}
                   </select>
@@ -1033,11 +1122,11 @@ export default function DashboardPage() {
                 <div className="space-y-3">
                   {filteredHospitals.map((h) => (
                     <div
-                      key={h.id}
+                      key={h._id}
                       className="p-3 rounded-2xl bg-slate-50 border border-slate-100"
                     >
                       <div className="flex justify-between items-center mb-1">
-                        <p className="text-xs font-black">{h.name_bn}</p>
+                        <p className="text-xs font-black">{h.name}</p>
                         <a href={`tel:${h.phone}`} className="text-blue-600">
                           <Phone className="h-3 w-3" />
                         </a>
@@ -1045,54 +1134,23 @@ export default function DashboardPage() {
                       <p className="text-[10px] text-slate-500 mb-2">
                         {h.address}
                       </p>
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        {h.specialties.map((f) => (
-                          <span
-                            key={f}
-                            className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded border border-slate-100 text-[8px] font-bold text-slate-500 uppercase"
-                          >
-                            {f.toLowerCase().includes("icu") && (
-                              <>
-                                <Activity className="h-2 w-2 text-red-500" />{" "}
-                                ICU
-                              </>
-                            )}
-                            {f.toLowerCase().includes("emergency") && (
-                              <>
-                                <Zap className="h-2 w-2 text-amber-500" />{" "}
-                                Emergency
-                              </>
-                            )}
-                            {f.toLowerCase().includes("nicu") && (
-                              <>
-                                <Baby className="h-2 w-2 text-blue-500" /> NICU
-                              </>
-                            )}
-                            {f.toLowerCase().includes("ventilator") && (
-                              <>
-                                <Wind className="h-2 w-2 text-slate-500" />{" "}
-                                Ventilator
-                              </>
-                            )}
-                            {f.toLowerCase().includes("general") && (
-                              <>
-                                <BedSingle className="h-2 w-2 text-emerald-500" />{" "}
-                                General
-                              </>
-                            )}
+                      {h.emergency_services && (
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          <span className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded border border-slate-100 text-[8px] font-bold text-slate-500 uppercase">
+                            {h.emergency_services}
                           </span>
-                        ))}
-                      </div>
+                        </div>
+                      )}
                       <div className="flex items-center justify-between mt-3">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2">
                             <span className="flex items-center gap-1 text-[9px] font-bold text-slate-500">
                               <BedSingle className="h-3 w-3 text-emerald-500" />{" "}
-                              বেড: {h.availableBeds || 0}
+                              বেড: {h.beds || 0}
                             </span>
                             <span className="flex items-center gap-1 text-[9px] font-bold text-slate-500">
                               <Activity className="h-3 w-3 text-red-500" /> ICU:{" "}
-                              {h.availableIcu || 0}
+                              {h.icu || 0}
                             </span>
                           </div>
                         </div>
@@ -1102,7 +1160,7 @@ export default function DashboardPage() {
                               alert("দয়া করে আগে নিকটস্থ ড্রাইভার লোড করুন।");
                               return;
                             }
-                            handleSOSClick(availableDrivers[0], h._id || h.id);
+                            handleSOSClick(availableDrivers[0], h._id);
                           }}
                           disabled={
                             isSubmitting ||
