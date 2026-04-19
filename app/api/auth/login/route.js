@@ -8,12 +8,9 @@ export async function POST(request) {
     const db = client.db('jibondaak');
 
     const body = await request.json();
-    const { email, password, userType } = body;
-
-    // Normalize email
+    const { email, password, role } = body;
     const normalizedEmail = email?.trim().toLowerCase();
-
-    console.log('🔐 Login attempt:', { email: normalizedEmail, userType });
+    const userType = role;
 
     // Validate input
     if (!normalizedEmail || !password) {
@@ -41,6 +38,16 @@ export async function POST(request) {
       }, { status: 401 });
     }
 
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      console.log('❌ Invalid password for user:', normalizedEmail);
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Invalid credentials. Please check your email and password.' 
+      }, { status: 401 });
+    }
+
     console.log('📋 User details:', { email: user.email, role: user.role });
 
     // Check user type matches
@@ -52,29 +59,29 @@ export async function POST(request) {
       }, { status: 401 });
     }
 
-    // Check password using bcrypt
-    console.log('🔑 Checking password...');
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    console.log('🔑 Password valid:', isPasswordValid);
-    
-    if (!isPasswordValid) {
-      console.log('❌ Invalid password');
-      // Generic error - don't reveal that email was correct
+    const userRole = user.role || 'seeker';
+
+    if (role && role !== userRole) {
       return NextResponse.json({ 
         success: false, 
-        error: 'Invalid credentials. Please check your email and password.' 
-      }, { status: 401 });
+        error: 'Account role does not match this login portal' 
+      }, { status: 403 });
     }
-
-    console.log('✅ Login successful');
 
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;
+    const normalizedUser = {
+      ...userWithoutPassword,
+      _id: userWithoutPassword?._id?.toString?.() || String(userWithoutPassword?._id || ""),
+      division: userWithoutPassword?.division ? String(userWithoutPassword.division) : "",
+      district: userWithoutPassword?.district ? String(userWithoutPassword.district) : "",
+      upazila: userWithoutPassword?.upazila ? String(userWithoutPassword.upazila) : "",
+    };
 
     return NextResponse.json({ 
       success: true, 
       message: 'Login successful',
-      user: userWithoutPassword
+      user: normalizedUser
     });
 
   } catch (error) {

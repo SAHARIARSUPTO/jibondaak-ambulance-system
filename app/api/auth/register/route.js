@@ -1,65 +1,127 @@
-import { NextResponse } from 'next/server';
-import clientPromise from '@/lib/mongodb';
-import bcrypt from 'bcryptjs';
-const UserModel = require('@/models/User');
+import { NextResponse } from "next/server";
+import clientPromise from "@/lib/mongodb";
+import bcrypt from "bcryptjs";
 
 export async function POST(request) {
   try {
     const client = await clientPromise;
-    const db = client.db('jibondaak');
+    const db = client.db("jibondaak");
 
     const body = await request.json();
-    const { name, email, phone, password, userType, companyName, licenseNumber } = body;
+    const { name, email, phone, password, role, companyName, licenseNumber, division, district, upazila } =
+      body;
 
-    console.log('📝 Registration attempt:', { email, userType });
+    const allowedRoles = new Set(["seeker", "provider"]);
+    const resolvedRole = role && allowedRoles.has(role) ? role : "seeker";
 
-    // Validate input
-    if (!name || !email || !phone || !password) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'All fields are required' 
-      }, { status: 400 });
+    // Invalid role check
+    if (role && !allowedRoles.has(role)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Invalid role provided",
+        },
+        { status: 400 },
+      );
     }
 
-    // Additional validation for providers
-    if (userType === 'provider') {
+    // Basic validation
+    if (!name || !email || !phone || !password) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "All fields are required",
+        },
+        { status: 400 },
+      );
+    }
+
+    // Provider validation
+    if (resolvedRole === "provider") {
       if (!companyName || !licenseNumber) {
-        return NextResponse.json({ 
-          success: false, 
-          error: 'Company name and license number are required for providers' 
-        }, { status: 400 });
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Company name and license number are required for providers",
+          },
+          { status: 400 },
+        );
       }
     }
 
-    // Hash password before storing
-    console.log('🔐 Hashing password...');
-    const hashedPassword = await bcrypt.hash(password, 10);
-    console.log('✅ Password hashed');
+    const usersCollection = db.collection("users");
 
-    // Create user using model
-    const user = await UserModel.create(db, {
-      name,
-      email: email.trim().toLowerCase(), // Normalize email
-      phone,
-      password: hashedPassword, // Store hashed password
-      role: userType || 'user',
-      companyName: userType === 'provider' ? companyName : undefined,
-      licenseNumber: userType === 'provider' ? licenseNumber : undefined
+    // Normalize email
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Check duplicate email
+    const existingUser = await usersCollection.findOne({
+      email: normalizedEmail,
     });
 
-    console.log('✅ User created successfully:', user.email);
+    if (existingUser) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Email already exists",
+        },
+        { status: 400 },
+      );
+    }
 
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Registration successful',
-      user
-    }, { status: 201 });
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Prepare user data
+    const userData = {
+      name,
+      email: normalizedEmail,
+      phone,
+      password: hashedPassword,
+      role: resolvedRole,
+      division: division ? String(division) : "",
+      district: district ? String(district) : "",
+      upazila: upazila ? String(upazila) : "",
+      createdAt: new Date(),
+    };
+
+    // Add provider-specific fields
+    if (resolvedRole === "provider") {
+      userData.companyName = companyName;
+      userData.licenseNumber = licenseNumber;
+    }
+
+    const result = await usersCollection.insertOne(userData);
+
+    // Safe response (no password)
+    const newUser = {
+      _id: result.insertedId,
+      name: userData.name,
+      email: userData.email,
+      phone: userData.phone,
+      role: userData.role,
+      division: userData.division,
+      district: userData.district,
+      upazila: userData.upazila,
+      companyName: userData.companyName || "",
+      licenseNumber: userData.licenseNumber || "",
+    };
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Registration successful",
+        user: newUser,
+      },
+      { status: 201 },
+    );
   } catch (error) {
-    console.error('❌ Registration error:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: error.message 
-    }, { status: 400 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Something went wrong",
+      },
+      { status: 500 },
+    );
   }
 }

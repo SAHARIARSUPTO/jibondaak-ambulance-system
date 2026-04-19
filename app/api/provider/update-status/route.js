@@ -1,43 +1,68 @@
-import { NextResponse } from 'next/server';
-import clientPromise from '@/lib/mongodb';
+import { NextResponse } from "next/server";
+import { updateBookingStatus, upsertDriverProfile } from "@/lib/dbStore";
+
+const ALLOWED = new Set([
+  "driver_assigned",
+  "en_route",
+  "arrived",
+  "trip_started",
+  "awaiting_seeker_approval",
+  "destination_reached",
+  "completed",
+  "cancelled",
+]);
 
 export async function POST(request) {
   try {
-    const client = await clientPromise;
-    const db = client.db('jibondaak');
-
     const body = await request.json();
-    const { bookingId, status } = body;
-
-    if (!bookingId || !status) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Booking ID and status are required' 
-      }, { status: 400 });
+    const { bookingId, status, latitude, longitude, providerId, reason } =
+      body || {};
+    if (!bookingId || !status || !ALLOWED.has(status)) {
+      return NextResponse.json(
+        { success: false, error: "Invalid bookingId or status" },
+        { status: 400 },
+      );
+    }
+    const patch = {};
+    if (typeof latitude === "number" && typeof longitude === "number") {
+      patch.driverCurrentLocation = {
+        latitude,
+        longitude,
+        updatedAt: new Date(),
+      };
     }
 
-    const { ObjectId } = require('mongodb');
+    if (status === "cancelled" && reason) {
+      patch.cancellationReason = reason;
+      patch.cancelledAt = new Date();
+    }
 
-    // Update booking status
-    await db.collection('bookings').updateOne(
-      { _id: new ObjectId(bookingId) },
-      { 
-        $set: { 
-          status,
-          updatedAt: new Date()
-        }
-      }
-    );
+    // Logic: When driver marks completed, it goes to seeker for approval
+    // When driver marks destination reached, it updates the state accordingly
+    let resolvedStatus = status;
+    if (status === "completed") resolvedStatus = "awaiting_seeker_approval";
 
-    return NextResponse.json({ 
-      success: true, 
-      message: `Booking status updated to ${status}`
-    });
+    const booking = await updateBookingStatus(bookingId, resolvedStatus, patch);
+    if (!booking) {
+      return NextResponse.json(
+        { success: false, error: "Booking not found" },
+        { status: 404 },
+      );
+    }
+    if (
+      providerId &&
+      typeof latitude === "number" &&
+      typeof longitude === "number"
+    ) {
+      await upsertDriverProfile(providerId, { lat: latitude, lng: longitude });
+    }
 
+    return NextResponse.json({ success: true, booking });
   } catch (error) {
-    return NextResponse.json({ 
-      success: false, 
-      error: error.message 
-    }, { status: 500 });
+    console.error("Status update error:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to update booking status" },
+      { status: 500 },
+    );
   }
 }

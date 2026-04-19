@@ -1,87 +1,156 @@
-﻿import { Ambulance, Phone, Mail, MapPin, ArrowUpRight } from "lucide-react";
+﻿import React from "react";
+import {
+  Ambulance,
+  Phone,
+  Mail,
+  MapPin,
+  ArrowUpRight,
+  ShieldCheck,
+  HeartPulse,
+} from "lucide-react";
 
 const Footer = () => {
+  const currentYear = new Date().getFullYear();
+
   return (
-    <footer className="relative overflow-hidden bg-slate-950 text-slate-200">
-      <div className="absolute inset-0 opacity-40">
-        <div className="absolute -top-32 -right-32 h-72 w-72 rounded-full bg-red-500/20 blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl" />
+    <footer className="relative border-t border-slate-200 bg-white text-slate-600">
+      {/* Subtle Background Pattern or Soft Gradients */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-30">
+        <div className="absolute -top-24 -left-24 h-96 w-96 rounded-full bg-red-50/50 blur-3xl" />
+        <div className="absolute top-1/2 right-0 h-64 w-64 rounded-full bg-blue-50/50 blur-3xl" />
       </div>
-      <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-10 px-6 py-14 lg:px-10">
-        <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-4">
+
+      <div className="relative mx-auto max-w-7xl px-6 py-16 lg:px-10">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
+          {/* Brand Section */}
+          <div className="space-y-6 lg:col-span-5">
             <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500/15">
-                <Ambulance className="h-6 w-6 text-red-400" />
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-500 shadow-lg shadow-red-200">
+                <Ambulance className="h-6 w-6 text-white" />
               </div>
-              <div>
-                <p className="text-xl font-semibold tracking-tight">
-                  Jibon<span className="text-red-400">Daak</span>
-                </p>
-                <p className="text-sm text-slate-400">
-                  Fast, reliable emergency response across Bangladesh.
-                </p>
+              <span className="text-2xl font-bold tracking-tight text-slate-900">
+                Jibon<span className="text-red-500">Daak</span>
+              </span>
+            </div>
+
+            <p className="max-w-md text-sm leading-relaxed text-slate-500">
+              Bangladesh's premier emergency response network. We bridge the gap
+              between critical moments and life-saving care with intelligent
+              coordination and a mission-first approach.
+            </p>
+
+            <div className="flex gap-4">
+              <div className="flex items-center gap-2 rounded-full bg-slate-50 px-4 py-2 border border-slate-100">
+                <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                <span className="text-[11px] font-medium uppercase tracking-wider text-slate-600">
+                  Govt Approved
+                </span>
+              </div>
+              <div className="flex items-center gap-2 rounded-full bg-slate-50 px-4 py-2 border border-slate-100">
+                <HeartPulse className="h-4 w-4 text-red-500" />
+                <span className="text-[11px] font-medium uppercase tracking-wider text-slate-600">
+                  24/7 Active
+                </span>
               </div>
             </div>
-            <p className="max-w-md text-sm text-slate-300">
-              We coordinate ambulances, trained responders, and critical-care
-              transport with a single call. Built to reach every village, river
-              crossing, and city lane.
-            </p>
           </div>
 
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div className="space-y-3">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
-                Contact
+          {/* Links & Contact Sections */}
+          <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:col-span-7">
+            {/* Quick Navigation */}
+            <div className="space-y-5">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-900">
+                Services & Navigation
               </p>
-              <div className="space-y-2 text-sm">
-                <p className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-red-400" /> 999 / 16263
-                </p>
-                <p className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-red-400" /> help@jibondaak.com
-                </p>
-                <p className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-red-400" /> Dhaka, Bangladesh
-                </p>
-              </div>
+              <ul className="grid grid-cols-1 gap-3">
+                {[
+                  { label: "About Our Mission", href: "/about" },
+                  { label: "Emergency Services", href: "/services" },
+                  { label: "Real-time Tracking", href: "/track" },
+                  { label: "Partner with Us", href: "/partner" },
+                ].map((item) => (
+                  <li key={item.label}>
+                    <a
+                      href={item.href}
+                      className="group flex items-center text-sm font-medium transition hover:text-red-600"
+                    >
+                      {item.label}
+                      <ArrowUpRight className="ml-1 h-3 w-3 opacity-0 transition-all group-hover:translate-x-0.5 group-hover:opacity-100" />
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
 
-            <div className="space-y-3">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">
-                Quick Links
+            {/* Contact Info */}
+            <div className="space-y-5">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-900">
+                Get in Touch
               </p>
-              <div className="grid gap-2 text-sm">
-                {[
-                  { label: "About", href: "/about" },
-                  { label: "Services", href: "/services" },
-                  { label: "Contact", href: "/contact" },
-                  { label: "Track Ambulance", href: "/track" },
-                ].map((item) => (
-                  <a
-                    key={item.label}
-                    href={item.href}
-                    className="group flex items-center justify-between rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-slate-200 transition hover:border-red-400/60 hover:bg-red-500/10"
-                  >
-                    <span>{item.label}</span>
-                    <ArrowUpRight className="h-4 w-4 text-red-300 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                  </a>
-                ))}
+              <div className="space-y-4">
+                <a href="tel:16263" className="flex items-start gap-3 group">
+                  <div className="mt-1 rounded-md bg-red-50 p-2 group-hover:bg-red-100 transition">
+                    <Phone className="h-4 w-4 text-red-600" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase text-slate-400">
+                      Emergency Call
+                    </p>
+                    <p className="text-sm font-semibold text-slate-800">
+                      16263 / 999
+                    </p>
+                  </div>
+                </a>
+
+                <div className="flex items-start gap-3">
+                  <div className="mt-1 rounded-md bg-blue-50 p-2">
+                    <Mail className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase text-slate-400">
+                      Support Email
+                    </p>
+                    <p className="text-sm font-semibold text-slate-800">
+                      help@jibondaak.com
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="mt-1 rounded-md bg-slate-100 p-2">
+                    <MapPin className="h-4 w-4 text-slate-600" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold uppercase text-slate-400">
+                      Headquarters
+                    </p>
+                    <p className="text-sm font-semibold text-slate-800">
+                      Dhaka, Bangladesh
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col items-start justify-between gap-4 border-t border-white/10 pt-6 text-xs text-slate-400 sm:flex-row sm:items-center">
-          <p>(c) 2026 JibonDaak. All rights reserved.</p>
-          <div className="flex flex-wrap gap-4">
-            <a href="/privacy" className="hover:text-red-300">
-              Privacy
+        {/* Bottom Bar */}
+        <div className="mt-16 flex flex-col items-center justify-between gap-6 border-t border-slate-100 pt-8 sm:flex-row">
+          <p className="text-xs text-slate-400">
+            © {currentYear} JibonDaak. A digital initiative for emergency
+            healthcare.
+          </p>
+          <div className="flex items-center gap-6">
+            <a
+              href="/privacy"
+              className="text-xs font-medium hover:text-red-600"
+            >
+              Privacy Policy
             </a>
-            <a href="/terms" className="hover:text-red-300">
-              Terms
+            <a href="/terms" className="text-xs font-medium hover:text-red-600">
+              Terms of Service
             </a>
+            <div className="h-4 w-[1px] bg-slate-200" />
           </div>
         </div>
       </div>

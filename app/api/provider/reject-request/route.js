@@ -1,37 +1,30 @@
-import { NextResponse } from 'next/server';
-import clientPromise from '@/lib/mongodb';
+import { NextResponse } from "next/server";
+import { rejectRequest } from "@/lib/dbStore";
 
 export async function POST(request) {
   try {
-    const client = await clientPromise;
-    const db = client.db('jibondaak');
-
     const body = await request.json();
-    const { requestId, providerId } = body;
-
-    if (!requestId || !providerId) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Request ID and Provider ID are required' 
-      }, { status: 400 });
+    const { requestId, providerId } = body || {};
+    if (!requestId) {
+      return NextResponse.json(
+        { success: false, error: "requestId is required" },
+        { status: 400 },
+      );
     }
 
-    // Just log the rejection, request stays available for other providers
-    await db.collection('rejectedRequests').insertOne({
-      requestId,
-      providerId,
-      rejectedAt: new Date()
-    });
+    const booking = await rejectRequest(requestId, providerId);
+    if (!booking) {
+      return NextResponse.json(
+        { success: false, error: "Request already handled or not found" },
+        { status: 409 },
+      );
+    }
 
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Request rejected'
-    });
-
+    return NextResponse.json({ success: true, booking });
   } catch (error) {
-    return NextResponse.json({ 
-      success: false, 
-      error: error.message 
-    }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: "Failed to reject request" },
+      { status: 500 },
+    );
   }
 }

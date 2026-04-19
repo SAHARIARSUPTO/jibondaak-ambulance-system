@@ -1,108 +1,150 @@
-import { NextResponse } from 'next/server';
-import clientPromise from '@/lib/mongodb';
+import { NextResponse } from "next/server";
+import {
+  listProviderAmbulances,
+  upsertDriverProfile,
+  upsertProviderAmbulance,
+} from "@/lib/dbStore";
 
 export async function GET(request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const providerId = searchParams.get('providerId');
-
-    if (!providerId) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Provider ID is required' 
-      }, { status: 400 });
-    }
-
-    console.log('🔍 Fetching ambulances for provider:', providerId);
-
-    const client = await clientPromise;
-    const db = client.db('jibondaak');
-
-    const ambulances = await db.collection('ambulances').find({ 
-      providerId 
-    }).toArray();
-
-    console.log('✅ Found ambulances:', ambulances.length);
-
-    return NextResponse.json({ 
-      success: true, 
-      ambulances: ambulances || []
-    });
-
-  } catch (error) {
-    console.error('❌ Error in provider/ambulances GET:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: error.message || 'Failed to fetch ambulances'
-    }, { status: 500 });
+  const { searchParams } = new URL(request.url);
+  const providerId = searchParams.get("providerId");
+  if (!providerId) {
+    return NextResponse.json(
+      { success: false, error: "providerId is required" },
+      { status: 400 },
+    );
   }
+  return NextResponse.json({
+    success: true,
+    ambulances: await listProviderAmbulances(providerId),
+  });
 }
 
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { 
-      providerId, 
-      type, 
-      vehicleNumber, 
-      licenseNumber, 
-      driverName, 
-      driverPhone 
-    } = body;
-
-    // Validate input
-    if (!providerId || !type || !vehicleNumber || !licenseNumber || !driverName || !driverPhone) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'All fields are required' 
-      }, { status: 400 });
-    }
-
-    console.log('🔍 Adding ambulance:', vehicleNumber);
-
-    const client = await clientPromise;
-    const db = client.db('jibondaak');
-
-    // Check if vehicle number already exists
-    const existing = await db.collection('ambulances').findOne({ vehicleNumber });
-    if (existing) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Vehicle number already registered' 
-      }, { status: 400 });
-    }
-
-    const ambulance = {
+    const {
       providerId,
       type,
       vehicleNumber,
       licenseNumber,
       driverName,
       driverPhone,
-      isAvailable: true,
-      currentLocation: null,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
+      locationLabel,
+      divisionId,
+      upazilaId,
+      baseLatitude,
+      baseLongitude,
+    } = body || {};
 
-    const result = await db.collection('ambulances').insertOne(ambulance);
+    if (!providerId || !vehicleNumber || !driverName || !driverPhone) {
+      return NextResponse.json(
+        { success: false, error: "Missing required fields" },
+        { status: 400 },
+      );
+    }
 
-    console.log('✅ Ambulance added:', result.insertedId);
+    const existing = await listProviderAmbulances(providerId);
+    if (existing.length > 0) {
+      return NextResponse.json(
+        { success: false, error: "Only one ambulance profile is allowed per driver account" },
+        { status: 409 },
+      );
+    }
 
-    return NextResponse.json({ 
-      success: true, 
-      message: 'Ambulance registered successfully',
-      ambulance: {
-        ...ambulance,
-        _id: result.insertedId
-      }
-    }, { status: 201 });
+    const ambulance = await upsertProviderAmbulance(providerId, {
+      type: type || "non-ac",
+      vehicleNumber,
+      licenseNumber: licenseNumber || "",
+      driverName,
+      driverPhone,
+      locationLabel: locationLabel || "",
+    });
 
+    const driver = await upsertDriverProfile(providerId, {
+      name: driverName,
+      phone: driverPhone,
+      ambulanceType: type || "non-ac",
+      ambulanceNumber: vehicleNumber,
+      ambulanceModel: "Driver Vehicle",
+      driverPhoto: "",
+      age: null,
+      tripsCovered: 0,
+      rating: 5,
+      division_id: divisionId || null,
+      upazila_id: upazilaId || null,
+      lat: typeof baseLatitude === "number" ? baseLatitude : 23.8103,
+      lng: typeof baseLongitude === "number" ? baseLongitude : 90.4125,
+      locationLabel: locationLabel || "",
+    });
+
+    return NextResponse.json({ success: true, ambulance, driver });
   } catch (error) {
-    console.error('❌ Error in provider/ambulances POST:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: error.message || 'Failed to add ambulance'
-    }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: "Failed to add ambulance" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function PUT(request) {
+  try {
+    const body = await request.json();
+    const {
+      providerId,
+      type,
+      vehicleNumber,
+      licenseNumber,
+      driverName,
+      driverPhone,
+      locationLabel,
+      divisionId,
+      upazilaId,
+      baseLatitude,
+      baseLongitude,
+    } = body || {};
+
+    if (!providerId) {
+      return NextResponse.json(
+        { success: false, error: "providerId is required" },
+        { status: 400 },
+      );
+    }
+
+    const existing = (await listProviderAmbulances(providerId))[0];
+    if (!existing) {
+      return NextResponse.json(
+        { success: false, error: "Driver profile not found" },
+        { status: 404 },
+      );
+    }
+
+    const ambulance = await upsertProviderAmbulance(providerId, {
+      type: type || existing.type,
+      vehicleNumber: vehicleNumber || existing.vehicleNumber,
+      licenseNumber: licenseNumber || existing.licenseNumber,
+      driverName: driverName || existing.driverName,
+      driverPhone: driverPhone || existing.driverPhone,
+      locationLabel: locationLabel ?? existing.locationLabel,
+    });
+
+    const driver = await upsertDriverProfile(providerId, {
+      name: ambulance.driverName,
+      phone: ambulance.driverPhone,
+      ambulanceType: ambulance.type,
+      ambulanceNumber: ambulance.vehicleNumber,
+      division_id: divisionId || null,
+      upazila_id: upazilaId || null,
+      lat: typeof baseLatitude === "number" ? baseLatitude : undefined,
+      lng: typeof baseLongitude === "number" ? baseLongitude : undefined,
+      locationLabel: ambulance.locationLabel || "",
+    });
+
+    return NextResponse.json({ success: true, ambulance, driver });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: "Failed to update driver profile" },
+      { status: 500 },
+    );
   }
 }

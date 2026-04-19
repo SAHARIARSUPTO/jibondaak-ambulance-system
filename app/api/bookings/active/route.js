@@ -1,41 +1,27 @@
-import { NextResponse } from 'next/server';
-import clientPromise from '@/lib/mongodb';
-const BookingModel = require('@/models/Booking');
+import { NextResponse } from "next/server";
+import { getActiveBookingByUserId } from "@/lib/dbStore";
 
 export async function GET(request) {
   try {
-    const client = await clientPromise;
-    const db = client.db('jibondaak');
-
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
+    const userId = searchParams.get("userId");
 
     if (!userId) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'User ID is required' 
-      }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: "userId is required" },
+        { status: 400 },
+      );
     }
 
-    // Find active booking
-    const booking = await BookingModel.findActiveByUserId(db, userId);
-
-    if (!booking) {
-      return NextResponse.json({ 
-        success: true, 
-        booking: null
-      });
-    }
-
-    return NextResponse.json({ 
-      success: true, 
-      booking
+    const booking = await getActiveBookingByUserId(userId);
+    return NextResponse.json({
+      success: true,
+      booking: booking || null,
     });
-
   } catch (error) {
-    return NextResponse.json({ 
-      success: false, 
-      error: error.message 
-    }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: "Failed to fetch active booking" },
+      { status: 500 },
+    );
   }
 }

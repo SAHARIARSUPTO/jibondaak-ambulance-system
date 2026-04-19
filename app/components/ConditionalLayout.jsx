@@ -1,26 +1,18 @@
-'use client';
-
-import { usePathname } from 'next/navigation';
-import Navbar from './navbar/navbar';
-import Footer from './footer/footer';
+"use client";
+import { usePathname } from "next/navigation";
+import Navbar from "./navbar/navbar";
+import Footer from "./footer/footer";
 
 export default function ConditionalLayout({ children }) {
   const pathname = usePathname();
-  
-  // Hide navbar and footer for dashboard pages
-  const isDashboard = pathname?.startsWith('/dashboard') || pathname?.startsWith('/provider-dashboard');
-  
-  if (isDashboard) {
-    return <main>{children}</main>;
-  }
-  
+  const isAuthPage =
+    pathname.includes("/login") || pathname.includes("/register");
+
   return (
     <>
-      <Navbar />
-      <main className="pt-20">
-        {children}
-      </main>
-      <Footer />
+      {!isAuthPage && <Navbar />}
+      {children}
+      {!isAuthPage && <Footer />}
     </>
   );
 }

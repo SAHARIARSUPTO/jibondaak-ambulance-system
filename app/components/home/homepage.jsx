@@ -1,379 +1,320 @@
 "use client";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
-import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { MapPin, Search, Navigation, LocateFixed } from "lucide-react";
+import { useDivisions, useDistricts } from "bd-geo-location/react";
 
 const HomePage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const router = useRouter();
+
+  // Using bd-geo-location hooks
+  const divisions = useDivisions();
+  // We pass null to get a general list or we can map through divisions to get all districts
+  const districts = useDistricts();
+
+  const locationPool = useMemo(() => {
+    const pool = [];
+    if (divisions) {
+      divisions.forEach((d) => {
+        pool.push({
+          name: d.name,
+          bnName: d.bnName || d.bn_name || d.name,
+          type: "বিভাগ",
+        });
+      });
+    }
+    if (districts) {
+      districts.forEach((d) => {
+        pool.push({
+          name: d.name,
+          bnName: d.bnName || d.bn_name || d.name,
+          type: "জেলা",
+        });
+      });
+    }
+    return pool;
+  }, [divisions, districts]);
+
+  const suggestions = useMemo(() => {
+    if (!searchTerm || searchTerm.length < 2) return [];
+    const term = searchTerm.toLowerCase();
+    return locationPool
+      .filter(
+        (loc) =>
+          loc.name?.toLowerCase().includes(term) || loc.bnName?.includes(term),
+      )
+      .slice(0, 6);
+  }, [searchTerm, locationPool]);
 
   const handleSearch = (e) => {
-    e.preventDefault();
-    console.log("Searching for ambulances near:", searchTerm);
-    // Integrate with your backend/API here
+    if (e) e.preventDefault();
+    if (!searchTerm.trim()) return;
+    router.push(`/search-results?query=${encodeURIComponent(searchTerm)}`);
+  };
+
+  const handleGPS = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const { latitude, longitude } = position.coords;
+        // Search by coordinates
+        router.push(
+          `/search-results?lat=${latitude}&lng=${longitude}&query=Current%20Location`,
+        );
+      });
+    }
   };
 
   return (
-    <main className="bg-slate-950 text-slate-100">
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-linear-to-br from-slate-900 via-gray-900 to-black">
-      {/* Animated Background Gradient Orbs */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-red-500/10 rounded-full blur-3xl animate-pulse-slow"></div>
-        <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-blue-500/10 rounded-full blur-3xl animate-pulse-slower"></div>
-      </div>
-
-      {/* Background Image with Overlay */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="https://user-gen-media-assets.s3.amazonaws.com/seedream_images/2f58b4e4-da5f-43f2-8a90-0342697fe3b5.png"
-          alt="Bangladeshi rural ambulance background"
-          fill
-          priority
-          className="object-cover animate-fade-in opacity-40"
-          sizes="100vw"
-          quality={90}
-        />
-        <div className="absolute inset-0 bg-linear-to-br from-black/80 via-black/70 to-black/60 backdrop-blur-[2px]"></div>
-      </div>
-
-      {/* Floating Particles */}
-      <div className="absolute inset-0 z-0">
-        <div className="particle particle-1"></div>
-        <div className="particle particle-2"></div>
-        <div className="particle particle-3"></div>
-      </div>
-
-      {/* Content */}
-      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-8 py-16 md:py-20 lg:py-24">
-        <div className="max-w-6xl mx-auto text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-full text-red-400 text-xs sm:text-sm font-medium mb-6 animate-fade-in-down backdrop-blur-sm">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-            </span>
-            Available 24/7 Nationwide
+    <>
+      <main className="bg-white text-slate-900 font-sans selection:bg-red-100">
+        {/* 1. HERO SECTION */}
+        <section className="relative items-center justify-center border-b border-slate-100 pt-8 pb-20 md:pt-12 md:pb-32">
+          <div className="absolute inset-0">
+            <Image
+              src="https://user-gen-media-assets.s3.amazonaws.com/seedream_images/2f58b4e4-da5f-43f2-8a90-0342697fe3b5.png"
+              alt="Ambulance service Bangladesh"
+              fill
+              className="object-cover opacity-15"
+              priority
+            />
           </div>
 
-          {/* Heading with Gradient */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black leading-tight mb-6 tracking-tight animate-fade-in-up">
-            <span className="text-white">Your Lifeline,</span>
-            <br />
-            <span className="bg-linear-to-r from-red-500 via-red-600 to-orange-500 bg-clip-text text-transparent animate-gradient bg-300% drop-shadow-[0_0_30px_rgba(239,68,68,0.3)]">
-              Reaching Every Corner
-            </span>
-          </h1>
-
-          {/* Subheading */}
-          <p className="text-base sm:text-lg md:text-xl lg:text-2xl font-light mb-10 md:mb-14 max-w-3xl mx-auto text-gray-300 leading-relaxed animate-fade-in-up-delayed">
-            Connecting you to critical care, no matter where you are in
-            Bangladesh.
-          </p>
-
-          {/* Search Form with Glow Effect */}
-          <form
-            onSubmit={handleSearch}
-            className="max-w-2xl mx-auto mb-12 md:mb-16 animate-fade-in-up-delayed-more"
-          >
-            <div
-              className={`relative flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-0 bg-white/10 backdrop-blur-md p-1.5 sm:p-2 rounded-2xl border transition-all duration-300 ${
-                isFocused
-                  ? "border-red-500 shadow-[0_0_40px_rgba(239,68,68,0.4)]"
-                  : "border-white/10 shadow-2xl"
-              }`}
-            >
-              {/* Glow Effect */}
-              <div className="absolute -inset-1 bg-linear-to-r from-red-600 to-orange-600 rounded-2xl blur-xl opacity-20 group-hover:opacity-30 transition duration-300"></div>
-
-              <input
-                type="text"
-                placeholder="Enter your location or village name..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                className="relative flex-1 px-5 sm:px-7 py-4 sm:py-5 rounded-xl sm:rounded-l-xl sm:rounded-r-none border-none outline-none text-white text-sm sm:text-base placeholder-gray-400 focus:placeholder-gray-500 transition-all duration-200 bg-white/5 backdrop-blur-sm"
-                aria-label="Search for ambulances"
-                required
-              />
-              <button
-                type="submit"
-                className="relative bg-linear-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 active:scale-95 text-white font-bold py-4 sm:py-5 px-7 sm:px-10 rounded-xl sm:rounded-r-xl sm:rounded-l-none shadow-lg shadow-red-500/30 hover:shadow-red-500/50 transition-all duration-300 flex items-center justify-center gap-2.5 whitespace-nowrap text-sm sm:text-base group"
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 sm:h-5 sm:w-5 group-hover:rotate-90 transition-transform duration-300"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-                <span>Find Ambulance</span>
-              </button>
+          <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-200 rounded-full text-red-600 text-sm font-bold mb-6">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
+              </span>
+              ২৪ ঘণ্টা জরুরি অ্যাম্বুলেন্স সেবা
             </div>
-          </form>
 
-          {/* Emergency Contact */}
-          <div className="inline-flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-6 bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl px-6 py-4 animate-fade-in-delayed">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-10 h-10 bg-red-500/20 rounded-full">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-red-400"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-                </svg>
-              </div>
-              <div className="text-left">
-                <p className="text-xs text-gray-400">Emergency Hotline</p>
-                <p className="text-lg sm:text-xl font-bold text-white">999</p>
-              </div>
-            </div>
-            <div className="hidden sm:block w-px h-10 bg-white/10"></div>
-            <p className="text-sm text-gray-300">
-              Critical care available nationwide
+            <h1 className="text-4xl md:text-7xl font-black text-slate-900 leading-[1.1] mb-6">
+              জীবন বাঁচাতে সময়ের <br />
+              <span className="text-red-600">মূল্য আমরা বুঝি</span>
+            </h1>
+
+            <p className="text-lg md:text-2xl text-slate-600 mb-10 max-w-3xl mx-auto leading-relaxed">
+              আপনার প্রিয়জনের জরুরি প্রয়োজনে দ্রুত এবং বিশ্বস্ত অ্যাম্বুলেন্স
+              খুঁজে পেতে আমরা আছি সবসময় আপনার পাশে।
             </p>
-          </div>
-        </div>
-      </div>
 
-      {/* Enhanced Animations */}
-      <style jsx>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(40px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        @keyframes fadeInDown {
-          from {
-            opacity: 0;
-            transform: translateY(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        @keyframes gradient {
-          0%,
-          100% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
-        }
-        @keyframes float {
-          0%,
-          100% {
-            transform: translateY(0px);
-          }
-          50% {
-            transform: translateY(-20px);
-          }
-        }
-        @keyframes pulseSlow {
-          0%,
-          100% {
-            opacity: 0.1;
-          }
-          50% {
-            opacity: 0.15;
-          }
-        }
-        @keyframes pulseSlower {
-          0%,
-          100% {
-            opacity: 0.08;
-          }
-          50% {
-            opacity: 0.12;
-          }
-        }
-
-        .bg-300% {
-          background-size: 300%;
-        }
-        .animate-gradient {
-          animation: gradient 6s ease infinite;
-        }
-        .animate-fade-in {
-          animation: fadeIn 1.5s ease-out forwards;
-        }
-        .animate-fade-in-up {
-          animation: fadeInUp 1s ease-out forwards;
-          animation-delay: 0.3s;
-          opacity: 0;
-        }
-        .animate-fade-in-up-delayed {
-          animation: fadeInUp 1s ease-out forwards;
-          animation-delay: 0.5s;
-          opacity: 0;
-        }
-        .animate-fade-in-up-delayed-more {
-          animation: fadeInUp 1s ease-out forwards;
-          animation-delay: 0.7s;
-          opacity: 0;
-        }
-        .animate-fade-in-down {
-          animation: fadeInDown 1s ease-out forwards;
-          animation-delay: 0.2s;
-          opacity: 0;
-        }
-        .animate-fade-in-delayed {
-          animation: fadeIn 1s ease-out forwards;
-          animation-delay: 1s;
-          opacity: 0;
-        }
-        .animate-fade-in-stagger {
-          animation: fadeInUp 1s ease-out forwards;
-          animation-delay: 0.9s;
-          opacity: 0;
-        }
-        .animate-pulse-slow {
-          animation: pulseSlow 8s ease-in-out infinite;
-        }
-        .animate-pulse-slower {
-          animation: pulseSlower 10s ease-in-out infinite;
-        }
-
-        .particle {
-          position: absolute;
-          background: radial-gradient(
-            circle,
-            rgba(239, 68, 68, 0.1) 0%,
-            transparent 70%
-          );
-          border-radius: 50%;
-          animation: float 6s ease-in-out infinite;
-        }
-        .particle-1 {
-          width: 300px;
-          height: 300px;
-          top: 10%;
-          left: 10%;
-          animation-delay: 0s;
-        }
-        .particle-2 {
-          width: 200px;
-          height: 200px;
-          top: 60%;
-          right: 15%;
-          animation-delay: 2s;
-        }
-        .particle-3 {
-          width: 250px;
-          height: 250px;
-          bottom: 10%;
-          left: 50%;
-          animation-delay: 4s;
-        }
-      `}</style>
-      </section>
-
-      <section className="relative overflow-hidden bg-slate-950 py-16 sm:py-20 lg:py-24">
-        <div className="absolute inset-0">
-          <div className="absolute left-1/4 top-0 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 h-72 w-72 rounded-full bg-red-500/10 blur-3xl" />
-        </div>
-        <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 lg:flex-row lg:items-center lg:gap-16 lg:px-8">
-          <div className="flex-1 space-y-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.4em] text-red-300">
-              Live Coverage
-            </p>
-            <h2 className="font-display text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl">
-              OpenStreetMap visibility for every dispatch zone.
-            </h2>
-            <p className="text-base text-slate-300 sm:text-lg">
-              Track the nearest response units, identify clear routes, and share
-              the fastest pickup point with our operators. The live map panel
-              gives you confidence before the ambulance arrives.
-            </p>
-            <div className="grid gap-4 sm:grid-cols-3">
-              {[
-                { label: "Median Response", value: "9 min" },
-                { label: "Coverage Points", value: "1,200+" },
-                { label: "Active Units", value: "320" },
-              ].map((stat) => (
+            <div className="max-w-2xl mx-auto mb-8 relative">
+              <form onSubmit={handleSearch} className="relative z-20">
                 <div
-                  key={stat.label}
-                  className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4"
+                  className={`flex flex-col sm:flex-row shadow-2xl rounded-2xl overflow-hidden border-2 transition-all bg-white ${isFocused ? "border-red-600 ring-4 ring-red-50" : "border-slate-200"}`}
                 >
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-400">
-                    {stat.label}
-                  </p>
-                  <p className="mt-2 text-2xl font-semibold text-white">
-                    {stat.value}
-                  </p>
-                </div>
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-3 text-sm text-slate-300">
-              {["Geo-verified drivers", "Smart rerouting", "Village coverage"].map(
-                (item) => (
-                  <span
-                    key={item}
-                    className="rounded-full border border-red-400/30 bg-red-500/10 px-4 py-2"
+                  <div className="flex-1 flex items-center px-6">
+                    <MapPin className="text-slate-400 h-6 w-6 mr-3" />
+                    <input
+                      type="text"
+                      placeholder="আপনার বর্তমান অবস্থান বা গ্রাম লিখুন..."
+                      className="flex-1 py-5 text-xl outline-none"
+                      value={searchTerm}
+                      onFocus={() => {
+                        setIsFocused(true);
+                        setShowSuggestions(true);
+                      }}
+                      onBlur={() => {
+                        setIsFocused(false);
+                        // Delay hiding so clicks on suggestions register
+                        setTimeout(() => setShowSuggestions(false), 200);
+                      }}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleGPS}
+                      className="p-2 text-slate-400 hover:text-red-600 transition-colors"
+                      title="আপনার অবস্থান ব্যবহার করুন"
+                    >
+                      <LocateFixed className="h-5 w-5" />
+                    </button>
+                  </div>
+                  <button
+                    type="submit"
+                    className="bg-red-600 hover:bg-red-700 text-white px-10 py-5 text-xl font-bold transition-colors flex items-center justify-center gap-2"
                   >
-                    {item}
-                  </span>
-                )
+                    <Search className="h-6 w-6" /> খুঁজুন
+                  </button>
+                </div>
+              </form>
+
+              {/* Suggestions Dropdown */}
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  {suggestions.map((s) => (
+                    <button
+                      key={s.name}
+                      onClick={() => {
+                        setSearchTerm(s.bnName || s.name);
+                        router.push(
+                          `/search-results?query=${encodeURIComponent(s.bnName || s.name)}`,
+                        );
+                      }}
+                      className="w-full text-left px-6 py-4 hover:bg-slate-50 flex items-center justify-between border-b border-slate-50 last:border-0 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Navigation className="h-4 w-4 text-red-500" />
+                        <span className="font-bold text-slate-800 text-lg">
+                          {s.bnName || s.name}
+                        </span>
+                      </div>
+                      <span className="text-xs font-bold text-slate-300">
+                        অঞ্চল
+                      </span>
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
-          </div>
 
-          <div className="flex-1">
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-4 shadow-2xl">
-              <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-slate-900/60 px-4 py-3 text-xs text-slate-300">
-                <span className="uppercase tracking-[0.3em]">Dhaka Live Grid</span>
-                <span className="rounded-full bg-red-500/20 px-3 py-1 text-[10px] font-semibold text-red-200">
-                  Active
-                </span>
-              </div>
-              <div className="mt-4 overflow-hidden rounded-2xl border border-white/10">
-                <iframe
-                  title="OpenStreetMap live coverage"
-                  src="https://www.openstreetmap.org/export/embed.html?bbox=90.320%2C23.690%2C90.470%2C23.800&amp;layer=mapnik"
-                  className="h-80 w-full border-0 sm:h-96"
-                  loading="lazy"
+            <div className="flex items-center justify-center gap-2 text-slate-500 font-medium">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                  clipRule="evenodd"
                 />
+              </svg>
+              সারাদেশে ১,২০০+ অ্যাম্বুলেন্স যুক্ত আছে
+            </div>
+          </div>
+        </section>
+
+        {/* 2. WHAT WE DO & PROCESS */}
+        <section className="py-20 px-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-5xl font-bold mb-4">
+                আমরা যেভাবে কাজ করি
+              </h2>
+              <div className="h-1.5 w-24 bg-red-600 mx-auto rounded-full"></div>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-12 text-center">
+              <div className="space-y-4 p-6 hover:bg-slate-50 rounded-3xl transition-colors">
+                <div className="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto text-3xl font-bold">
+                  ১
+                </div>
+                <h3 className="text-2xl font-bold">সহজ সার্চ</h3>
+                <p className="text-slate-600 leading-relaxed">
+                  আপনার লোকেশন লিখে সার্চ দিলেই আপনার সবচেয়ে কাছে থাকা
+                  অ্যাম্বুলেন্সগুলোর তালিকা চলে আসবে।
+                </p>
               </div>
-              <div className="mt-4 flex items-center justify-between text-xs text-slate-400">
-                <span>Powered by OpenStreetMap contributors</span>
-                <a
-                  href="https://www.openstreetmap.org"
-                  className="text-red-300 hover:text-red-200"
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  Open full map
-                </a>
+              <div className="space-y-4 p-6 hover:bg-slate-50 rounded-3xl transition-colors">
+                <div className="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto text-3xl font-bold">
+                  ২
+                </div>
+                <h3 className="text-2xl font-bold">সরাসরি যোগাযোগ</h3>
+                <p className="text-slate-600 leading-relaxed">
+                  মাঝখানে কোনো দালাল নেই। সরাসরি ড্রাইভারের সাথে কথা বলে ভাড়া
+                  নির্ধারণ করুন ও কনফার্ম করুন।
+                </p>
+              </div>
+              <div className="space-y-4 p-6 hover:bg-slate-50 rounded-3xl transition-colors">
+                <div className="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto text-3xl font-bold">
+                  ৩
+                </div>
+                <h3 className="text-2xl font-bold">দ্রুত সেবা</h3>
+                <p className="text-slate-600 leading-relaxed">
+                  অ্যাম্বুলেন্সটি ম্যাপে ট্র্যাক করুন এবং কয়েক মিনিটের মধ্যেই
+                  সেটি আপনার দরজায় পৌঁছে যাবে।
+                </p>
               </div>
             </div>
           </div>
-        </div>
-      </section>
-    </main>
+        </section>
+
+        {/* 3. PROVIDER / DRIVER JOIN SECTION */}
+        <section className="py-20 bg-slate-900 text-white overflow-hidden relative">
+          <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center gap-12">
+            <div className="flex-1 z-10">
+              <span className="text-red-500 font-bold tracking-widest uppercase text-sm">
+                অ্যাম্বুলেন্স মালিক ও চালকদের জন্য
+              </span>
+              <h2 className="text-4xl md:text-5xl font-bold mt-4 mb-6 leading-tight">
+                আমাদের সাথে যোগ দিন, <br />
+                অসহায় মানুষের পাশে দাঁড়ান
+              </h2>
+              <p className="text-slate-400 text-lg mb-8 leading-relaxed">
+                আপনার যদি একটি অ্যাম্বুলেন্স থাকে, তবে আজই প্রোভাইডার হিসেবে
+                রেজিস্ট্রেশন করুন। আমরা আপনাকে সরাসরি রোগীদের সাথে সংযোগ করিয়ে
+                দেব।
+              </p>
+              <ul className="space-y-4 mb-10">
+                {[
+                  "কোনো মাসিক চার্জ নেই",
+                  "সরাসরি পেমেন্ট পান",
+                  "সারাদেশে সেবা দেওয়ার সুযোগ",
+                ].map((item) => (
+                  <li key={item} className="flex items-center gap-3">
+                    <div className="bg-green-500 rounded-full p-1">
+                      <svg
+                        className="w-4 h-4 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="3"
+                          d="M5 13l4 4L19 7"
+                        ></path>
+                      </svg>
+                    </div>
+                    <span className="text-slate-200 font-medium">{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <button className="bg-white text-slate-900 px-8 py-4 rounded-xl font-bold text-lg hover:bg-red-500 hover:text-white transition-all transform hover:scale-105">
+                ড্রাইভার হিসেবে যোগ দিন
+              </button>
+            </div>
+            <div className="flex-1 relative">
+              <div className="bg-gradient-to-tr from-red-600 to-orange-400 w-full aspect-square rounded-full opacity-20 blur-3xl absolute -right-20 -top-20"></div>
+              <div className="border border-white/10 bg-white/5 p-6 rounded-3xl backdrop-blur-xl relative">
+                <div className="flex justify-between items-center mb-6">
+                  <span className="font-bold">লাইভ ট্র্যাকিং ড্যাশবোর্ড</span>
+                  <span className="bg-red-500 px-3 py-1 rounded-full text-xs">
+                    LIVE
+                  </span>
+                </div>
+                <iframe
+                  title="OSM Live"
+                  src="https://www.openstreetmap.org/export/embed.html?bbox=90.320%2C23.690%2C90.470%2C23.800&amp;layer=mapnik"
+                  className="w-full h-64 rounded-xl grayscale"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 4. FOOTER / CALL TO ACTION */}
+        <footer className="py-12 border-t border-slate-100 bg-slate-50 text-center">
+          <p className="text-slate-500 font-medium mb-4">জরুরি হেল্পলাইন</p>
+          <a
+            href="tel:999"
+            className="text-5xl font-black text-red-600 hover:text-red-700 transition-colors"
+          >
+            ৯৯৯
+          </a>
+          <div className="mt-8 text-slate-400 text-sm">
+            © ২০২৪ আপনার লাইফলাইন অ্যাম্বুলেন্স সেবা। সর্বস্বত্ব সংরক্ষিত।
+          </div>
+        </footer>
+      </main>
+    </>
   );
 };
 

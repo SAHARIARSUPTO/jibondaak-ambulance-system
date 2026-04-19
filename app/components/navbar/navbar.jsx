@@ -1,49 +1,59 @@
-"use client";
-import React, { useState } from "react";
+﻿﻿"use client";
+import React, { useState, useEffect } from "react";
 import {
   Ambulance,
-  Globe,
   Menu,
   X,
   HeartHandshake,
-  ChevronDown,
+  Home,
+  Info,
+  Phone,
+  User,
+  LogOut,
 } from "lucide-react";
-
-const Link = ({ href, children, className, onClick }) => (
-  <a href={href} className={className} onClick={onClick}>
-    {children}
-  </a>
-);
-
-const LANGUAGES = [
-  { code: "EN", name: "English" },
-  { code: "BN", name: "Bangla" },
-];
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedLang, setSelectedLang] = useState(LANGUAGES[0]);
-  const [isLangOpen, setIsLangOpen] = useState(false); // Desktop language dropdown
+  const [user, setUser] = useState(null);
+  const router = useRouter();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    const checkUser = () => {
+      const userData = localStorage.getItem("user");
+      if (userData) {
+        setUser(JSON.parse(userData));
+      } else {
+        setUser(null);
+      }
+    };
+
+    checkUser();
+    // Sync user state across tabs/components
+    window.addEventListener("storage", checkUser);
+    return () => window.removeEventListener("storage", checkUser);
+  }, [pathname]);
 
   const toggleNavbar = () => setIsOpen(!isOpen);
 
-  const handleLanguageChange = (lang) => {
-    setSelectedLang(lang);
-    setIsLangOpen(false);
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    setUser(null);
+    setIsOpen(false);
+    router.push("/login");
   };
 
   const navItems = [
-    { name: "Home", href: "/" },
-    { name: "About", href: "/about" },
-    { name: "Services", href: "/services" },
-    { name: "Contact", href: "/contact" },
-    { name: "Support", href: "/support" },
-    { name: "login", href: "/login" },
+    { name: "হোম", href: "/", icon: Home },
+    { name: "আমাদের সম্পর্কে", href: "/about", icon: Info },
+    { name: "যোগাযোগ", href: "/contact", icon: Phone },
   ];
 
   return (
-    // Fixed navbar
-    <nav className="fixed top-0 left-0 right-0 w-full z-50 bg-slate-950/90 backdrop-blur border-b border-white/10 transition-all duration-300">
+    // NOT sticky
+    <nav className="w-full z-30 bg-white/80 backdrop-blur-md border-b border-gray-100 transition-all duration-300 sticky top-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
@@ -51,9 +61,9 @@ const Navbar = () => {
             href="/"
             className="flex items-center space-x-2 transition-transform hover:scale-[1.02]"
           >
-            <Ambulance className="text-red-400 w-8 h-8 md:w-7 md:h-7 shrink-0" />
-            <span className="text-2xl md:text-xl font-extrabold text-white tracking-tight">
-              Jibon<span className="text-red-400">Daak</span>
+            <Ambulance className="text-red-600 w-8 h-8 md:w-7 md:h-7 shrink-0" />
+            <span className="text-2xl md:text-xl font-bold text-gray-900 tracking-tighter">
+              জীবন<span className="text-red-500">ডাক</span>
             </span>
           </Link>
 
@@ -63,78 +73,93 @@ const Navbar = () => {
               <Link
                 key={item.name}
                 href={item.href}
-                className="text-slate-200 text-[15px] font-medium px-4 py-2 rounded-full transition-all duration-200 hover:text-red-300 hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-red-500"
+                className="flex items-center space-x-2 text-gray-600 text-[15px] font-medium tracking-tight px-4 py-2 rounded-full transition-all duration-200 hover:text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500"
               >
-                {item.name}
+                <item.icon className="w-4 h-4" />
+                <span>{item.name}</span>
               </Link>
             ))}
           </div>
 
           {/* Utility Buttons Desktop */}
           <div className="hidden md:flex items-center space-x-4">
+            {/* Persistent Action Buttons */}
+            {!user?._id && (
+              <>
+                <Link
+                  href="/login/seeker"
+                  className="flex items-center border border-red-200 text-red-600 px-4 py-2.5 rounded-full text-sm font-semibold shadow-sm hover:bg-red-50 transition-all duration-300 whitespace-nowrap"
+                >
+                  অ্যাম্বুলেন্স দরকার?
+                </Link>
+                <Link
+                  href="/login/provider"
+                  className="flex items-center border border-gray-200 text-gray-900 px-4 py-2.5 rounded-full text-sm font-semibold shadow-sm hover:bg-gray-50 transition-all duration-300 whitespace-nowrap"
+                >
+                  অ্যাম্বুলেন্স রেজিস্টার
+                </Link>
+              </>
+            )}
+
+            {user?._id && (
+              <div className="flex items-center space-x-3 px-4 py-1.5 bg-gray-50 rounded-full border border-gray-100">
+                <div className="bg-red-100 p-1.5 rounded-full">
+                  <User className="w-4 h-4 text-red-600" />
+                </div>
+                <Link
+                  href={
+                    user.role === "provider"
+                      ? "/provider-dashboard"
+                      : "/dashboard"
+                  }
+                  className="flex flex-col"
+                >
+                  <div className="flex flex-col">
+                    <span className="text-[9px] uppercase tracking-wider text-gray-500 font-bold leading-none">
+                      Welcome
+                    </span>
+                    <span className="text-sm font-bold text-gray-900 leading-tight">
+                      {user.name}
+                    </span>
+                  </div>
+                </Link>
+              </div>
+            )}
+
             {/* Donate Button */}
             <Link
               href="/donate"
               className="group flex items-center bg-red-600 text-white px-5 py-2.5 rounded-full text-sm font-semibold shadow-lg hover:bg-red-700 transition-all duration-300 transform hover:scale-105 active:scale-95 whitespace-nowrap"
             >
               <HeartHandshake className="w-5 h-5 mr-2 group-hover:animate-pulse" />
-              Donate Now
+              ডোনেট করুন
             </Link>
 
-            {/* Language Dropdown */}
-            <div className="relative">
+            {user && (
               <button
-                onClick={() => setIsLangOpen(!isLangOpen)}
-                aria-expanded={isLangOpen}
-                aria-controls="language-menu"
-                className="flex items-center text-slate-200 hover:text-red-300 font-medium text-sm p-3 rounded-full transition-colors hover:bg-white/5"
+                onClick={handleLogout}
+                className="flex items-center text-gray-500 hover:text-red-600 font-medium text-sm p-3 rounded-full transition-colors hover:bg-red-50"
+                title="Logout"
               >
-                <Globe className="w-5 h-5 mr-1" />
-                <span className="font-bold">{selectedLang.code}</span>
-                <ChevronDown
-                  className={`w-4 h-4 ml-1 transition-transform duration-200 ${
-                    isLangOpen ? "rotate-180" : "rotate-0"
-                  }`}
-                />
+                <LogOut className="w-5 h-5" />
               </button>
-
-              {/* Dropdown Menu */}
-              {isLangOpen && (
-                <div
-                  id="language-menu"
-                  className="absolute right-0 mt-2 w-32 origin-top-right rounded-lg shadow-xl bg-slate-950 ring-1 ring-white/10 focus:outline-none py-1 transform opacity-100 scale-100 transition-all duration-150 ease-out z-50"
-                >
-                  {LANGUAGES.map((langItem) => (
-                    <button
-                      key={langItem.code}
-                      onClick={() => handleLanguageChange(langItem)}
-                      className={`block w-full text-left px-4 py-2 text-sm transition-colors rounded-lg mx-auto ${
-                        selectedLang.code === langItem.code
-                          ? "bg-red-500/15 text-red-200 font-semibold"
-                          : "text-slate-200 hover:bg-white/5"
-                      }`}
-                      aria-current={
-                        selectedLang.code === langItem.code ? "page" : undefined
-                      }
-                    >
-                      {langItem.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            )}
           </div>
 
           {/* Mobile Language + Menu Button */}
-          <div className="md:hidden flex items-center space-x-3">
-            <div className="flex items-center text-slate-200">
-              <Globe className="w-6 h-6 mr-1" />
-              <span className="font-bold text-lg">{selectedLang.code}</span>
-            </div>
+          <div className="md:hidden flex items-center space-x-2">
+            {user && (
+              <div className="flex items-center space-x-2 mr-2">
+                <User className="w-5 h-5 text-red-600" />
+                <span className="text-sm font-bold text-gray-900">
+                  {user.name.split(" ")[0]}
+                </span>
+              </div>
+            )}
             <button
               onClick={toggleNavbar}
               aria-label={isOpen ? "Close menu" : "Open menu"}
-              className="text-slate-200 hover:text-red-300 focus:outline-none p-2 rounded-full hover:bg-white/5 transition-colors"
+              className="text-gray-900 hover:text-red-600 focus:outline-none p-2 rounded-full hover:bg-gray-50 transition-colors"
             >
               {isOpen ? (
                 <X className="w-7 h-7" />
@@ -155,7 +180,7 @@ const Navbar = () => {
               ? "animate-navbar-show max-h-96 opacity-100"
               : "animate-navbar-hide max-h-0 opacity-0"
           }
-          bg-slate-950 shadow-xl border-t border-white/10`}
+          bg-white shadow-2xl border-t border-gray-100`}
         style={{ zIndex: 40 }}
       >
         <div className="px-4 py-4 space-y-3">
@@ -163,49 +188,62 @@ const Navbar = () => {
             <Link
               key={`mobile-${item.name}`}
               href={item.href}
-              className="block text-slate-200 hover:text-red-300 font-semibold py-2 px-3 rounded-lg transition-colors hover:bg-white/5"
+              className="flex items-center space-x-3 text-gray-700 hover:text-red-600 font-semibold py-3 px-4 rounded-xl transition-colors hover:bg-red-50"
               onClick={() => setIsOpen(false)}
             >
-              {item.name}
+              <item.icon className="w-5 h-5" />
+              <span>{item.name}</span>
             </Link>
           ))}
 
-          {/* Mobile Language Selector */}
-          <div className="pt-3 border-t border-white/10">
-            <div className="text-slate-200 font-bold mb-2 pt-2">
-              Select Language:
-            </div>
-            <div className="flex space-x-3">
-              {LANGUAGES.map((langItem) => (
-                <button
-                  key={`mobile-lang-${langItem.code}`}
-                  onClick={() => {
-                    handleLanguageChange(langItem);
-                    setIsOpen(false);
-                  }}
-                  className={`text-sm font-semibold px-4 py-2 rounded-full transition-all ${
-                    selectedLang.code === langItem.code
-                      ? "bg-red-600 text-white shadow-md"
-                      : "bg-white/10 text-slate-200 hover:bg-white/20"
-                  }`}
+          <div className="pt-3 border-t border-gray-100 space-y-3">
+            {!user && (
+              <>
+                <Link
+                  href="/login/seeker"
+                  className="block text-center bg-red-50 text-red-600 font-semibold py-3 px-4 rounded-xl transition-colors hover:bg-red-100"
+                  onClick={() => setIsOpen(false)}
                 >
-                  {langItem.name}
+                  অ্যাম্বুলেন্স দরকার?
+                </Link>
+                <Link
+                  href="/login/provider"
+                  className="block text-center bg-gray-100 text-gray-900 font-semibold py-3 px-4 rounded-xl transition-colors hover:bg-gray-200"
+                  onClick={() => setIsOpen(false)}
+                >
+                  অ্যাম্বুলেন্স রেজিস্টার
+                </Link>
+              </>
+            )}
+            {user && (
+              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
+                  Logged in as
+                </p>
+                <p className="text-gray-900 font-bold">{user.name}</p>
+                <button
+                  onClick={handleLogout}
+                  className="mt-3 flex items-center justify-center space-x-2 w-full py-2.5 bg-white border border-red-100 text-red-600 rounded-xl text-sm font-bold shadow-sm hover:bg-red-50 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>লগআউট</span>
                 </button>
-              ))}
+              </div>
+            )}
+          </div>
+          {/* Donate Button - Hidden when user is present */}
+          {!user && (
+            <div className="pt-4 border-t border-gray-100 mt-3">
+              <Link
+                href="/donate"
+                className="flex items-center justify-center bg-red-600 text-white w-full py-4 rounded-xl font-bold shadow-lg shadow-red-200 hover:bg-red-700 transition-colors text-base mt-2"
+                onClick={() => setIsOpen(false)}
+              >
+                <HeartHandshake className="w-5 h-5 mr-3" />
+                ডোনেট করুন
+              </Link>
             </div>
-          </div>
-
-          {/* Donate Button */}
-          <div className="pt-3 border-t border-white/10 mt-3">
-            <Link
-              href="/donate"
-              className="flex items-center justify-center bg-red-600 text-white w-full py-3 rounded-lg font-bold shadow-md hover:bg-red-700 transition-colors text-base mt-2"
-              onClick={() => setIsOpen(false)}
-            >
-              <HeartHandshake className="w-5 h-5 mr-3" />
-              Donate Now
-            </Link>
-          </div>
+          )}
         </div>
       </div>
 
