@@ -1,4 +1,4 @@
-﻿"use client";
+﻿﻿"use client";
 import React, { useState, useEffect } from "react";
 import {
   Ambulance,
@@ -84,29 +84,36 @@ const Navbar = () => {
           {/* Utility Buttons Desktop */}
           <div className="hidden md:flex items-center space-x-4">
             {/* Persistent Action Buttons */}
-            {(!user || user.role === "seeker") && (
-              <Link
-                href="/login/seeker"
-                className="flex items-center border border-red-200 text-red-600 px-4 py-2.5 rounded-full text-sm font-semibold shadow-sm hover:bg-red-50 transition-all duration-300 whitespace-nowrap"
-              >
-                অ্যাম্বুলেন্স দরকার?
-              </Link>
-            )}
-            {(!user || user.role === "provider") && (
-              <Link
-                href="/login/provider"
-                className="flex items-center border border-gray-200 text-gray-900 px-4 py-2.5 rounded-full text-sm font-semibold shadow-sm hover:bg-gray-50 transition-all duration-300 whitespace-nowrap"
-              >
-                অ্যাম্বুলেন্স রেজিস্টার
-              </Link>
+            {!user?._id && (
+              <>
+                <Link
+                  href="/login/seeker"
+                  className="flex items-center border bg-red-600 border-red-200 text-white px-4 py-2.5 rounded-full text-sm font-semibold shadow-sm hover:bg-red-700 transition-all duration-300 whitespace-nowrap"
+                >
+                  অ্যাম্বুলেন্স দরকার?
+                </Link>
+                <Link
+                  href="/login/provider"
+                  className="flex items-center border border-gray-200 text-gray-900 px-4 py-2.5 rounded-full text-sm font-semibold shadow-sm hover:bg-gray-50 transition-all duration-300 whitespace-nowrap"
+                >
+                  অ্যাম্বুলেন্স রেজিস্টার
+                </Link>
+              </>
             )}
 
-            {user && (
+            {user?._id && (
               <div className="flex items-center space-x-3 px-4 py-1.5 bg-gray-50 rounded-full border border-gray-100">
                 <div className="bg-red-100 p-1.5 rounded-full">
                   <User className="w-4 h-4 text-red-600" />
                 </div>
-                <Link href="/dashboard" className="flex flex-col">
+                <Link
+                  href={
+                    user.role === "provider"
+                      ? "/provider-dashboard"
+                      : "/dashboard"
+                  }
+                  className="flex flex-col"
+                >
                   <div className="flex flex-col">
                     <span className="text-[9px] uppercase tracking-wider text-gray-500 font-bold leading-none">
                       Welcome
@@ -120,13 +127,6 @@ const Navbar = () => {
             )}
 
             {/* Donate Button */}
-            <Link
-              href="/donate"
-              className="group flex items-center bg-red-600 text-white px-5 py-2.5 rounded-full text-sm font-semibold shadow-lg hover:bg-red-700 transition-all duration-300 transform hover:scale-105 active:scale-95 whitespace-nowrap"
-            >
-              <HeartHandshake className="w-5 h-5 mr-2 group-hover:animate-pulse" />
-              ডোনেট করুন
-            </Link>
 
             {user && (
               <button
@@ -190,23 +190,23 @@ const Navbar = () => {
           ))}
 
           <div className="pt-3 border-t border-gray-100 space-y-3">
-            {(!user || user.role === "seeker") && (
-              <Link
-                href="/login/seeker"
-                className="block text-center bg-red-50 text-red-600 font-semibold py-3 px-4 rounded-xl transition-colors hover:bg-red-100"
-                onClick={() => setIsOpen(false)}
-              >
-                অ্যাম্বুলেন্স দরকার?
-              </Link>
-            )}
-            {(!user || user.role === "provider") && (
-              <Link
-                href="/login/provider"
-                className="block text-center bg-gray-100 text-gray-900 font-semibold py-3 px-4 rounded-xl transition-colors hover:bg-gray-200"
-                onClick={() => setIsOpen(false)}
-              >
-                অ্যাম্বুলেন্স রেজিস্টার
-              </Link>
+            {!user && (
+              <>
+                <Link
+                  href="/login/seeker"
+                  className="block text-center bg-red-600 text-white font-semibold py-3 px-4 rounded-xl transition-colors hover:bg-red-700"
+                  onClick={() => setIsOpen(false)}
+                >
+                  অ্যাম্বুলেন্স দরকার?
+                </Link>
+                <Link
+                  href="/login/provider"
+                  className="block text-center bg-gray-100 text-gray-900 font-semibold py-3 px-4 rounded-xl transition-colors hover:bg-gray-200"
+                  onClick={() => setIsOpen(false)}
+                >
+                  অ্যাম্বুলেন্স রেজিস্টার
+                </Link>
+              </>
             )}
             {user && (
               <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
@@ -225,18 +225,6 @@ const Navbar = () => {
             )}
           </div>
           {/* Donate Button - Hidden when user is present */}
-          {!user && (
-            <div className="pt-4 border-t border-gray-100 mt-3">
-              <Link
-                href="/donate"
-                className="flex items-center justify-center bg-red-600 text-white w-full py-4 rounded-xl font-bold shadow-lg shadow-red-200 hover:bg-red-700 transition-colors text-base mt-2"
-                onClick={() => setIsOpen(false)}
-              >
-                <HeartHandshake className="w-5 h-5 mr-3" />
-                ডোনেট করুন
-              </Link>
-            </div>
-          )}
         </div>
       </div>
 

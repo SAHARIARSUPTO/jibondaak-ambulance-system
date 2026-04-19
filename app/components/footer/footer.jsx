@@ -41,12 +41,6 @@ const Footer = () => {
 
             <div className="flex gap-4">
               <div className="flex items-center gap-2 rounded-full bg-slate-50 px-4 py-2 border border-slate-100">
-                <ShieldCheck className="h-4 w-4 text-emerald-500" />
-                <span className="text-[11px] font-medium uppercase tracking-wider text-slate-600">
-                  Govt Approved
-                </span>
-              </div>
-              <div className="flex items-center gap-2 rounded-full bg-slate-50 px-4 py-2 border border-slate-100">
                 <HeartPulse className="h-4 w-4 text-red-500" />
                 <span className="text-[11px] font-medium uppercase tracking-wider text-slate-600">
                   24/7 Active
@@ -65,9 +59,7 @@ const Footer = () => {
               <ul className="grid grid-cols-1 gap-3">
                 {[
                   { label: "About Our Mission", href: "/about" },
-                  { label: "Emergency Services", href: "/services" },
-                  { label: "Real-time Tracking", href: "/track" },
-                  { label: "Partner with Us", href: "/partner" },
+                  { label: "Emergency Services", href: "/contact" },
                 ].map((item) => (
                   <li key={item.label}>
                     <a
@@ -88,7 +80,7 @@ const Footer = () => {
                 Get in Touch
               </p>
               <div className="space-y-4">
-                <a href="tel:16263" className="flex items-start gap-3 group">
+                <a href="tel:+000" className="flex items-start gap-3 group">
                   <div className="mt-1 rounded-md bg-red-50 p-2 group-hover:bg-red-100 transition">
                     <Phone className="h-4 w-4 text-red-600" />
                   </div>
@@ -96,9 +88,7 @@ const Footer = () => {
                     <p className="text-[10px] font-bold uppercase text-slate-400">
                       Emergency Call
                     </p>
-                    <p className="text-sm font-semibold text-slate-800">
-                      16263 / 999
-                    </p>
+                    <p className="text-sm font-semibold text-slate-800">999</p>
                   </div>
                 </a>
 
@@ -125,7 +115,7 @@ const Footer = () => {
                       Headquarters
                     </p>
                     <p className="text-sm font-semibold text-slate-800">
-                      Dhaka, Bangladesh
+                      Rajshahi, Bangladesh
                     </p>
                   </div>
                 </div>

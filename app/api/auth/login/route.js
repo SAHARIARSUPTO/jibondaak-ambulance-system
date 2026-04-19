@@ -70,11 +70,18 @@ export async function POST(request) {
 
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;
+    const normalizedUser = {
+      ...userWithoutPassword,
+      _id: userWithoutPassword?._id?.toString?.() || String(userWithoutPassword?._id || ""),
+      division: userWithoutPassword?.division ? String(userWithoutPassword.division) : "",
+      district: userWithoutPassword?.district ? String(userWithoutPassword.district) : "",
+      upazila: userWithoutPassword?.upazila ? String(userWithoutPassword.upazila) : "",
+    };
 
     return NextResponse.json({ 
       success: true, 
       message: 'Login successful',
-      user: userWithoutPassword
+      user: normalizedUser
     });
 
   } catch (error) {

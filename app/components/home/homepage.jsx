@@ -1,9 +1,123 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { MapPin, Search, Navigation, LocateFixed } from "lucide-react";
+import ExpertiseSection from "./service";
+import MedicalNetworkSection from "./medicalnotif";
+
 const HomePage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const router = useRouter();
+
+  // Load JSONs from public folder
+  const [locationPool, setLocationPool] = useState([]);
+  useEffect(() => {
+    async function loadLocations() {
+      // Helper to fetch and parse JSON
+      const fetchJson = async (url) => {
+        const res = await fetch(url);
+        return res.json();
+      };
+      // Fetch all JSONs in parallel
+      const [divisions, districts, upazilas, postcodes, dhaka] =
+        await Promise.all([
+          fetchJson("/json/bd-divisions.json"),
+          fetchJson("/json/bd-districts.json"),
+          fetchJson("/json/bd-upazilas.json"),
+          fetchJson("/json/bd-postcodes.json"),
+          fetchJson("/json/dhaka-city.json"),
+        ]);
+
+      const pool = [];
+      // Divisions
+      if (divisions?.divisions) {
+        divisions.divisions.forEach((d) => {
+          pool.push({
+            name: d.name,
+            bnName: d.bn_name || d.name,
+            type: "বিভাগ",
+          });
+        });
+      }
+      // Districts
+      if (districts?.districts) {
+        districts.districts.forEach((d) => {
+          pool.push({
+            name: d.name,
+            bnName: d.bn_name || d.name,
+            type: "জেলা",
+          });
+        });
+      }
+      // Upazilas
+      if (upazilas?.upazilas) {
+        upazilas.upazilas.forEach((u) => {
+          pool.push({
+            name: u.name,
+            bnName: u.bn_name || u.name,
+            type: "উপজেলা",
+          });
+        });
+      }
+      // Post offices (as union/area)
+      if (postcodes?.postcodes) {
+        postcodes.postcodes.forEach((p) => {
+          pool.push({
+            name: p.postOffice,
+            bnName: p.postOffice,
+            upazila: p.upazila,
+            type: "পোস্ট অফিস/ইউনিয়ন/এলাকা",
+          });
+        });
+      }
+      // Dhaka city areas
+      if (dhaka?.dhaka) {
+        dhaka.dhaka.forEach((a) => {
+          pool.push({
+            name: a.name,
+            bnName: a.bn_name || a.name,
+            type: "ঢাকা সিটি এলাকা",
+          });
+        });
+      }
+      setLocationPool(pool);
+    }
+    loadLocations();
+  }, []);
+
+  const suggestions = useMemo(() => {
+    if (!searchTerm || searchTerm.length < 2) return [];
+    const term = searchTerm.toLowerCase();
+    return locationPool
+      .filter(
+        (loc) =>
+          (loc.name && loc.name.toLowerCase().includes(term)) ||
+          (loc.bnName && loc.bnName.includes(term)) ||
+          (loc.upazila && loc.upazila.toLowerCase().includes(term)),
+      )
+      .slice(0, 8);
+  }, [searchTerm, locationPool]);
+
+  const handleSearch = (e) => {
+    if (e) e.preventDefault();
+    if (!searchTerm.trim()) return;
+    router.push(`/search-results?query=${encodeURIComponent(searchTerm)}`);
+  };
+
+  const handleGPS = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const { latitude, longitude } = position.coords;
+        // Search by coordinates
+        router.push(
+          `/search-results?lat=${latitude}&lng=${longitude}&query=Current%20Location`,
+        );
+      });
+    }
+  };
 
   return (
     <>
@@ -39,23 +153,80 @@ const HomePage = () => {
               খুঁজে পেতে আমরা আছি সবসময় আপনার পাশে।
             </p>
 
-            <form className="max-w-2xl mx-auto mb-8">
-              <div
-                className={`flex flex-col sm:flex-row shadow-2xl rounded-2xl overflow-hidden border-2 transition-all ${isFocused ? "border-red-600 ring-4 ring-red-50" : "border-slate-200"}`}
-              >
-                <input
-                  type="text"
-                  placeholder="আপনার বর্তমান অবস্থান বা গ্রাম লিখুন..."
-                  className="flex-1 px-6 py-5 text-xl outline-none"
-                  onFocus={() => setIsFocused(true)}
-                  onBlur={() => setIsFocused(false)}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <button className="bg-red-600 hover:bg-red-700 text-white px-10 py-5 text-xl font-bold transition-colors">
-                  খুঁজুন
-                </button>
-              </div>
-            </form>
+            <div className="max-w-2xl mx-auto mb-8 relative">
+              <form onSubmit={handleSearch} className="relative z-20">
+                <div
+                  className={`flex flex-col sm:flex-row shadow-2xl rounded-2xl overflow-hidden border-2 transition-all bg-white ${isFocused ? "border-red-600 ring-4 ring-red-50" : "border-slate-200"}`}
+                >
+                  <div className="flex-1 flex items-center px-6">
+                    <MapPin className="text-slate-400 h-6 w-6 mr-3" />
+                    <input
+                      type="text"
+                      placeholder="আপনার বর্তমান অবস্থান বা গ্রাম লিখুন..."
+                      className="flex-1 py-5 text-xl outline-none"
+                      value={searchTerm}
+                      onFocus={() => {
+                        setIsFocused(true);
+                        setShowSuggestions(true);
+                      }}
+                      onBlur={() => {
+                        setIsFocused(false);
+                        // Delay hiding so clicks on suggestions register
+                        setTimeout(() => setShowSuggestions(false), 200);
+                      }}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleGPS}
+                      className="p-2 text-slate-400 hover:text-red-600 transition-colors"
+                      title="আপনার অবস্থান ব্যবহার করুন"
+                    >
+                      <LocateFixed className="h-5 w-5" />
+                    </button>
+                  </div>
+                  <button
+                    type="submit"
+                    className="bg-red-600 hover:bg-red-700 text-white px-10 py-5 text-xl font-bold transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Search className="h-6 w-6" /> খুঁজুন
+                  </button>
+                </div>
+              </form>
+
+              {/* Suggestions Dropdown */}
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  {suggestions.map((s) => (
+                    <button
+                      key={`${s.type}-${s.name}-${s.upazila || ""}`}
+                      onClick={() => {
+                        setSearchTerm(s.bnName || s.name);
+                        router.push(
+                          `/search-results?query=${encodeURIComponent(s.bnName || s.name)}`,
+                        );
+                      }}
+                      className="w-full text-left px-6 py-4 hover:bg-slate-50 flex items-center justify-between border-b border-slate-50 last:border-0 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Navigation className="h-4 w-4 text-red-500" />
+                        <span className="font-bold text-slate-800 text-lg">
+                          {s.bnName || s.name}
+                        </span>
+                        {s.upazila && (
+                          <span className="ml-2 text-slate-400 text-sm">
+                            ({s.upazila})
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs font-bold text-slate-300">
+                        {s.type}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div className="flex items-center justify-center gap-2 text-slate-500 font-medium">
               <svg
@@ -70,7 +241,7 @@ const HomePage = () => {
                   clipRule="evenodd"
                 />
               </svg>
-              সারাদেশে ১,২০০+ অ্যাম্বুলেন্স যুক্ত আছে
+              সারাদেশজুড়ে কাভারেজ
             </div>
           </div>
         </section>
@@ -84,7 +255,7 @@ const HomePage = () => {
               </h2>
               <div className="h-1.5 w-24 bg-red-600 mx-auto rounded-full"></div>
             </div>
-
+            <MedicalNetworkSection></MedicalNetworkSection>
             <div className="grid md:grid-cols-3 gap-12 text-center">
               <div className="space-y-4 p-6 hover:bg-slate-50 rounded-3xl transition-colors">
                 <div className="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto text-3xl font-bold">
@@ -167,7 +338,7 @@ const HomePage = () => {
               </button>
             </div>
             <div className="flex-1 relative">
-              <div className="bg-gradient-to-tr from-red-600 to-orange-400 w-full aspect-square rounded-full opacity-20 blur-3xl absolute -right-20 -top-20"></div>
+              <div className="bg-linear-to-tr from-red-600 to-orange-400 w-full aspect-square rounded-full opacity-20 blur-3xl absolute -right-20 -top-20"></div>
               <div className="border border-white/10 bg-white/5 p-6 rounded-3xl backdrop-blur-xl relative">
                 <div className="flex justify-between items-center mb-6">
                   <span className="font-bold">লাইভ ট্র্যাকিং ড্যাশবোর্ড</span>
@@ -199,6 +370,8 @@ const HomePage = () => {
           </div>
         </footer>
       </main>
+
+      <ExpertiseSection></ExpertiseSection>
     </>
   );
 };

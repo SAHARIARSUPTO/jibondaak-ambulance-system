@@ -8,7 +8,7 @@ export async function POST(request) {
     const db = client.db("jibondaak");
 
     const body = await request.json();
-    const { name, email, phone, password, role, companyName, licenseNumber } =
+    const { name, email, phone, password, role, companyName, licenseNumber, division, district, upazila } =
       body;
 
     const allowedRoles = new Set(["seeker", "provider"]);
@@ -79,6 +79,9 @@ export async function POST(request) {
       phone,
       password: hashedPassword,
       role: resolvedRole,
+      division: division ? String(division) : "",
+      district: district ? String(district) : "",
+      upazila: upazila ? String(upazila) : "",
       createdAt: new Date(),
     };
 
@@ -97,6 +100,9 @@ export async function POST(request) {
       email: userData.email,
       phone: userData.phone,
       role: userData.role,
+      division: userData.division,
+      district: userData.district,
+      upazila: userData.upazila,
       companyName: userData.companyName || "",
       licenseNumber: userData.licenseNumber || "",
     };

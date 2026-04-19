@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { setProviderOnline } from "@/lib/bookingStore";
+import { setProviderOnline } from "@/lib/dbStore";
 
 export async function POST(request) {
   try {
@@ -11,7 +11,7 @@ export async function POST(request) {
         { status: 400 },
       );
     }
-    const value = setProviderOnline(providerId, isOnline);
+    const value = await setProviderOnline(providerId, isOnline);
     return NextResponse.json({ success: true, isOnline: value });
   } catch (error) {
     return NextResponse.json(
@@ -20,4 +20,3 @@ export async function POST(request) {
     );
   }
 }
-

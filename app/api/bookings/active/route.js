@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getActiveBookingByUserId } from "@/lib/bookingStore";
+import { getActiveBookingByUserId } from "@/lib/dbStore";
 
 export async function GET(request) {
   try {
@@ -13,7 +13,7 @@ export async function GET(request) {
       );
     }
 
-    const booking = getActiveBookingByUserId(userId);
+    const booking = await getActiveBookingByUserId(userId);
     return NextResponse.json({
       success: true,
       booking: booking || null,

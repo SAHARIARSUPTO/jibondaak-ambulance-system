@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getProviderOnline } from "@/lib/bookingStore";
+import { getProviderOnline } from "@/lib/dbStore";
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -12,7 +12,6 @@ export async function GET(request) {
   }
   return NextResponse.json({
     success: true,
-    isOnline: getProviderOnline(providerId),
+    isOnline: await getProviderOnline(providerId),
   });
 }
-
