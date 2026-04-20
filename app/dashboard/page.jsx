@@ -122,6 +122,8 @@ export default function DashboardPage() {
   const [loadingAction, setLoadingAction] = useState(false);
   const [districts, setDistricts] = useState([]);
   const [upazilas, setUpazilas] = useState([]);
+  const [hospitalLoading, setHospitalLoading] = useState(false);
+  const [hospitalError, setHospitalError] = useState("");
 
   const greeting = useMemo(() => getGreeting(), []);
 
@@ -130,7 +132,15 @@ export default function DashboardPage() {
   // Fetch Hospitals from Database based on user's selected area
   useEffect(() => {
     const fetchDbHospitals = async () => {
-      if (!user?.division) return;
+      setHospitalError("");
+      setHospitalLoading(true);
+      setDbHospitals([]);
+
+      if (!user?.division) {
+        setHospitalLoading(false);
+        return;
+      }
+
       try {
         const params = new URLSearchParams();
         if (user.division) params.append("division_id", user.division);
@@ -138,13 +148,30 @@ export default function DashboardPage() {
         if (user.upazila) params.append("upazila_id", user.upazila);
 
         const res = await fetch(`/api/admin/hospitals?${params.toString()}`);
-        if (!res.ok) return;
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(errorText || "Failed to load hospitals");
+        }
+
         const data = await res.json();
         if (data.success) {
-          setDbHospitals(data.hospitals || []);
+          const hospitals = data.hospitals || [];
+          setDbHospitals(hospitals);
+          if (hospitals.length === 0) {
+            setHospitalError(
+              "দুঃখিত, আপনার এলাকার হাসপাতাল পাওয়া যায়নি। দয়া করে বিভাগ/জেলা/উপজেলা ঠিক করে আবার চেষ্টা করুন।",
+            );
+          }
+        } else {
+          setHospitalError(data.error || "Failed to load hospitals");
         }
       } catch (err) {
         console.error("Failed to fetch area-wise hospitals:", err);
+        setHospitalError(
+          "হাসপাতাল লোড করতে ব্যর্থ হয়েছে। পরে আবার চেষ্টা করুন।",
+        );
+      } finally {
+        setHospitalLoading(false);
       }
     };
     fetchDbHospitals();
@@ -366,18 +393,34 @@ export default function DashboardPage() {
         }
 
         if (nextBooking?.status && nextBooking.status !== lastBookingStatus) {
-          if (nextBooking.status === "driver_assigned") {
+          if (nextBooking.status === "pending_driver_acceptance") {
             setBookingNotice(
-              "Driver accepted your request. Ambulance is preparing to move.",
+              "আপনার বুকিংটি গ্রহণের জন্য চালকের প্রতিক্রিয়ার অপেক্ষায় আছে।",
+            );
+          } else if (nextBooking.status === "searching") {
+            setBookingNotice(
+              "আপনার জন্য একটি উপযুক্ত অ্যাম্বুলেন্স খোঁজা হচ্ছে।",
+            );
+          } else if (nextBooking.status === "driver_assigned") {
+            setBookingNotice(
+              "ড্রাইভার আপনার অনুরোধ গ্রহণ করেছেন। অ্যাম্বুলেন্স প্রস্তুত হচ্ছে।",
             );
           } else if (nextBooking.status === "en_route") {
-            setBookingNotice("Ambulance is now on the way.");
+            setBookingNotice("অ্যাম্বুলেন্স এখন আপনার দিকে এগুচ্ছে।");
           } else if (nextBooking.status === "arrived") {
-            setBookingNotice("Ambulance has arrived at your location.");
+            setBookingNotice("অ্যাম্বুলেন্স আপনার জায়গায় পৌঁছেছে।");
+          } else if (nextBooking.status === "trip_started") {
+            setBookingNotice(
+              "আপনার ট্রিপ শুরু হয়েছে। নিরাপদ যাত্রা কামনা করি।",
+            );
+          } else if (nextBooking.status === "destination_reached") {
+            setBookingNotice("আপনার গন্তব্যে পৌঁছেছে। দয়া করে চালককে জানান।");
           } else if (nextBooking.status === "awaiting_seeker_approval") {
             setBookingNotice(
-              "Driver marked the trip complete. Please approve to close this trip.",
+              "ড্রাইভার ট্রিপ সম্পন্ন হিসেবে চিহ্নিত করেছে। অনুগ্রহ করে নিশ্চিত করুন।",
             );
+          } else if (nextBooking.status === "completed") {
+            setBookingNotice("ট্রিপ সফলভাবে সম্পন্ন হয়েছে। ধন্যবাদ।");
           } else if (nextBooking.status === "rejected") {
             setBookingNotice(
               "দুঃখিত, চালক আপনার অনুরোধটি গ্রহণ করতে পারেননি। অনুগ্রহ করে অন্য চালক চেষ্টা করুন।",
@@ -799,6 +842,54 @@ export default function DashboardPage() {
             </div>
           )}
 
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
+            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.35em] text-slate-400 font-bold mb-3">
+                হাসপাতাল সংখ্যা
+              </p>
+              <p className="text-3xl font-black text-slate-900">
+                {hospitalLoading ? "..." : dbHospitals.length}
+              </p>
+              <p className="text-sm text-slate-500 mt-2">
+                আপনার নির্বাচিত এলাকার হাসপাতাল
+              </p>
+            </div>
+            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.35em] text-slate-400 font-bold mb-3">
+                ড্রাইভার
+              </p>
+              <p className="text-3xl font-black text-slate-900">
+                {availableDrivers.length}
+              </p>
+              <p className="text-sm text-slate-500 mt-2">নিকটবর্তী চালক</p>
+            </div>
+            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.35em] text-slate-400 font-bold mb-3">
+                বুকিং স্ট্যাটাস
+              </p>
+              <p className="text-3xl font-black text-slate-900">
+                {activeBooking
+                  ? formatStatus(activeBooking.status)
+                  : "কোনো বুকিং নেই"}
+              </p>
+              <p className="text-sm text-slate-500 mt-2">
+                আপনার সাম্প্রতিক অবস্থান
+              </p>
+            </div>
+            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+              <p className="text-xs uppercase tracking-[0.35em] text-slate-400 font-bold mb-3">
+                লোকেশন
+              </p>
+              <p className="text-base font-bold text-slate-900">
+                {userDivisionName || "বিভাগ নেই"}
+              </p>
+              <p className="text-sm text-slate-500 mt-1">
+                {userDistrictName && `${userDistrictName}, `}
+                {userUpazilaName || "উপজেলা নেই"}
+              </p>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* --- MAIN ACTION COLUMN --- */}
             <div className="lg:col-span-2 bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100">
@@ -1120,61 +1211,76 @@ export default function DashboardPage() {
                   আপনি চাইলে নির্দিষ্ট হাসপাতালে সরাসরি রিকোয়েস্ট পাঠাতে পারেন
                 </p>
                 <div className="space-y-3">
-                  {filteredHospitals.map((h) => (
-                    <div
-                      key={h._id}
-                      className="p-3 rounded-2xl bg-slate-50 border border-slate-100"
-                    >
-                      <div className="flex justify-between items-center mb-1">
-                        <p className="text-xs font-black">{h.name}</p>
-                        <a href={`tel:${h.phone}`} className="text-blue-600">
-                          <Phone className="h-3 w-3" />
-                        </a>
-                      </div>
-                      <p className="text-[10px] text-slate-500 mb-2">
-                        {h.address}
-                      </p>
-                      {h.emergency_services && (
-                        <div className="flex flex-wrap gap-2 mb-2">
-                          <span className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded border border-slate-100 text-[8px] font-bold text-slate-500 uppercase">
-                            {h.emergency_services}
-                          </span>
+                  {hospitalLoading ? (
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 text-center text-slate-500">
+                      হাসপাতাল লোড করা হচ্ছে...
+                    </div>
+                  ) : hospitalError ? (
+                    <div className="rounded-3xl border border-amber-200 bg-amber-50 p-6 text-center text-amber-800">
+                      {hospitalError}
+                    </div>
+                  ) : filteredHospitals.length === 0 ? (
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 text-center text-slate-500">
+                      আপনার নির্বাচিত এলাকায় কোনো হাসপাতাল পাওয়া যায়নি। অনুগ্রহ
+                      করে অঞ্চলটি যাচাই করুন।
+                    </div>
+                  ) : (
+                    filteredHospitals.map((h) => (
+                      <div
+                        key={h._id}
+                        className="p-3 rounded-2xl bg-slate-50 border border-slate-100"
+                      >
+                        <div className="flex justify-between items-center mb-1">
+                          <p className="text-xs font-black">{h.name}</p>
+                          <a href={`tel:${h.phone}`} className="text-blue-600">
+                            <Phone className="h-3 w-3" />
+                          </a>
                         </div>
-                      )}
-                      <div className="flex items-center justify-between mt-3">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="flex items-center gap-1 text-[9px] font-bold text-slate-500">
-                              <BedSingle className="h-3 w-3 text-emerald-500" />{" "}
-                              বেড: {h.beds || 0}
-                            </span>
-                            <span className="flex items-center gap-1 text-[9px] font-bold text-slate-500">
-                              <Activity className="h-3 w-3 text-red-500" /> ICU:{" "}
-                              {h.icu || 0}
+                        <p className="text-[10px] text-slate-500 mb-2">
+                          {h.address}
+                        </p>
+                        {h.emergency_services && (
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            <span className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded border border-slate-100 text-[8px] font-bold text-slate-500 uppercase">
+                              {h.emergency_services}
                             </span>
                           </div>
-                        </div>
-                        <button
-                          onClick={() => {
-                            if (availableDrivers.length === 0) {
-                              alert("দয়া করে আগে নিকটস্থ ড্রাইভার লোড করুন।");
-                              return;
+                        )}
+                        <div className="flex items-center justify-between mt-3">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="flex items-center gap-1 text-[9px] font-bold text-slate-500">
+                                <BedSingle className="h-3 w-3 text-emerald-500" />{" "}
+                                বেড: {h.beds || 0}
+                              </span>
+                              <span className="flex items-center gap-1 text-[9px] font-bold text-slate-500">
+                                <Activity className="h-3 w-3 text-red-500" />{" "}
+                                ICU: {h.icu || 0}
+                              </span>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => {
+                              if (availableDrivers.length === 0) {
+                                alert("দয়া করে আগে নিকটস্থ ড্রাইভার লোড করুন।");
+                                return;
+                              }
+                              handleSOSClick(availableDrivers[0], h._id);
+                            }}
+                            disabled={
+                              isSubmitting ||
+                              !!activeBooking ||
+                              availableDrivers.length === 0
                             }
-                            handleSOSClick(availableDrivers[0], h._id);
-                          }}
-                          disabled={
-                            isSubmitting ||
-                            !!activeBooking ||
-                            availableDrivers.length === 0
-                          }
-                          className="bg-blue-600 text-white p-2.5 rounded-xl hover:bg-blue-700 transition-colors disabled:bg-slate-200"
-                          title="এই হাসপাতালে রিকোয়েস্ট পাঠান"
-                        >
-                          <Send className="h-3.5 w-3.5" />
-                        </button>
+                            className="bg-blue-600 text-white p-2.5 rounded-xl hover:bg-blue-700 transition-colors disabled:bg-slate-200"
+                            title="এই হাসপাতালে রিকোয়েস্ট পাঠান"
+                          >
+                            <Send className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </section>
             </div>
