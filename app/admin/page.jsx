@@ -24,6 +24,9 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("overview"); // overview, drivers, hospitals
+  // Hospital user creation
+  const [hospitalUserForm, setHospitalUserForm] = useState({ hospitalId: "", username: "", password: "" });
+  const [hospitalUserMsg, setHospitalUserMsg] = useState("");
 
   // Location Data for Dynamic Selection
   const [locations, setLocations] = useState({
@@ -67,13 +70,23 @@ export default function AdminDashboardPage() {
 
   const fetchLocationData = async () => {
     try {
+      const safeLoad = async (url) => {
+        const res = await fetch(url);
+        if (!res.ok) return [];
+        const ct = res.headers.get("content-type");
+        if (!ct || !ct.includes("application/json")) {
+          const text = await res.text();
+          return text ? JSON.parse(text) : [];
+        }
+        return res.json();
+      };
+
       const [divs, dists, upzs] = await Promise.all([
-        fetch("/json/bd-divisions.json").then((res) => res.json()),
-        fetch("/json/bd-districts.json").then((res) => res.json()),
-        fetch("/json/bd-upazilas.json").then((res) => res.json()),
+        safeLoad("/json/bd-divisions.json"),
+        safeLoad("/json/bd-districts.json"),
+        safeLoad("/json/bd-upazilas.json"),
       ]);
-      setLocations({
-        divisions: divs.divisions || divs,
+      setLocations({        divisions: divs.divisions || divs,
         districts: dists.districts || dists,
         upazilas: upzs.upazilas || upzs,
       });
@@ -124,8 +137,12 @@ export default function AdminDashboardPage() {
     setError("");
     try {
       const response = await fetch("/api/admin/dashboard");
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const ct = response.headers.get("content-type");
+      if (!ct || !ct.includes("application/json")) throw new Error("Invalid response from server");
+
       const data = await response.json();
-      if (!data.success) {
+      if (!data?.success) {
         throw new Error(data.error || "Failed to load admin data");
       }
       setDashboardData(data);
@@ -133,6 +150,31 @@ export default function AdminDashboardPage() {
       setError(err.message || "Unable to load admin console");
     } finally {
       setLoading(false);
+    }
+  };
+  // Hospital user creation handler
+  const handleCreateHospitalUser = async () => {
+    setHospitalUserMsg("");
+    if (!hospitalUserForm.hospitalId || !hospitalUserForm.username || !hospitalUserForm.password) {
+      setHospitalUserMsg("Fill all fields");
+      return;
+    }
+    const res = await fetch("/api/admin/hospital-user", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(hospitalUserForm),
+    });
+    if (!res.ok) {
+      setHospitalUserMsg("Server error creating user");
+      return;
+    }
+    const data = await res.json().catch(() => ({ success: false }));
+    if (data?.success) {
+      setHospitalUserMsg("Hospital user created!");
+      setHospitalUserForm({ hospitalId: "", username: "", password: "" });
+      fetchDashboard();
+    } else {
+      setHospitalUserMsg(data.error || "Failed to create user");
     }
   };
 
@@ -148,8 +190,9 @@ export default function AdminDashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(driverForm),
       });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error);
+      if (!res.ok) throw new Error("Server error saving driver");
+      const data = await res.json().catch(() => ({ success: false, error: "Invalid JSON" }));
+      if (!data?.success) throw new Error(data?.error || "Unknown error");
 
       alert("ড্রাইভার সফলভাবে ডাটাবেসে যোগ করা হয়েছে!");
       setDriverForm({
@@ -182,8 +225,9 @@ export default function AdminDashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(hospForm),
       });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error);
+      if (!res.ok) throw new Error("Server error saving hospital");
+      const data = await res.json().catch(() => ({ success: false, error: "Invalid JSON" }));
+      if (!data?.success) throw new Error(data?.error || "Unknown error");
 
       alert("হাসপাতাল সফলভাবে রেজিস্টার করা হয়েছে!");
       setHospForm({
@@ -217,8 +261,12 @@ export default function AdminDashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, isActive: !currentStatus }),
       });
+      if (!response.ok) throw new Error("Update failed");
+      const ct = response.headers.get("content-type");
+      if (!ct || !ct.includes("application/json")) throw new Error("Invalid server response");
+
       const data = await response.json();
-      if (!data.success) {
+      if (!data?.success) {
         throw new Error(data.error || "Failed to update user");
       }
       setDashboardData((prev) =>
@@ -255,8 +303,12 @@ export default function AdminDashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ambulanceId, isAvailable: !currentStatus }),
       });
+      if (!response.ok) throw new Error("Update failed");
+      const ct = response.headers.get("content-type");
+      if (!ct || !ct.includes("application/json")) throw new Error("Invalid server response");
+
       const data = await response.json();
-      if (!data.success) {
+      if (!data?.success) {
         throw new Error(data.error || "Failed to update ambulance");
       }
       setDashboardData((prev) =>
@@ -295,30 +347,31 @@ export default function AdminDashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ providerId, isOnline: !currentStatus }),
       });
+      if (!response.ok) throw new Error("Update failed");
+      const ct = response.headers.get("content-type");
+      if (!ct || !ct.includes("application/json")) throw new Error("Invalid server response");
+
       const data = await response.json();
-      if (!data.success) {
+      if (!data?.success) {
         throw new Error(data.error || "Failed to update provider status");
       }
       setDashboardData((prev) => {
         if (!prev) return prev;
         const delta = currentStatus ? -1 : 1;
-        const updatedProviders = prev.providers.map((provider) =>
-          provider.id === providerId
-            ? { ...provider, isOnline: !currentStatus }
-            : provider,
+        const updatedProviders = prev.providers.map((p) =>
+          p.id === providerId ? { ...p, isOnline: !currentStatus } : p
         );
-        const currentOnline = prev.metrics?.providersOnline || 0;
         return {
           ...prev,
           providers: updatedProviders,
           metrics: {
             ...prev.metrics,
-            providersOnline: Math.max(0, currentOnline + delta),
+            onlineProviders: (prev.metrics?.onlineProviders || 0) + delta,
           },
         };
       });
     } catch (err) {
-      setError(err.message || "Unable to toggle provider availability");
+      setError(err.message || "Unable to update provider status");
     } finally {
       setBusyProviders((prev) => {
         const next = new Set(prev);
@@ -328,80 +381,65 @@ export default function AdminDashboardPage() {
     }
   };
 
+  if (loading && !dashboardData) {
+    return <div className="min-h-screen flex items-center justify-center">লোডিং হচ্ছে...</div>;
+  }
+
   const metrics = dashboardData?.metrics || {};
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 font-sans">
-      {/* Navigation Sidebar/Top Bar */}
-      <nav className="border-b border-slate-100 bg-white sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="h-10 w-10 bg-red-600 rounded-xl flex items-center justify-center shadow-lg shadow-red-100">
-              <ShieldCheck className="text-white h-6 w-6" />
-            </div>
-            <h1 className="text-xl font-black tracking-tight uppercase">
-              JibonDaak <span className="text-red-600">Admin</span>
-            </h1>
+    <div className="min-h-screen bg-slate-50 text-slate-900 pb-20">
+      {/* Header with Navigation */}
+      <header className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-md border-b border-slate-200">
+        <div className="mx-auto max-w-7xl px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <ShieldCheck className="h-6 w-6 text-red-600" />
+            <span className="text-xl font-bold">Admin Console</span>
           </div>
-          <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-2xl border border-slate-100">
-            {["overview", "drivers", "hospitals"].map((t) => (
-              <button
-                key={t}
-                onClick={() => setActiveTab(t)}
-                className={`px-6 py-2 rounded-xl text-xs font-black uppercase transition-all ${activeTab === t ? "bg-white text-red-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
-              >
-                {t}
-              </button>
-            ))}
+          <div className="flex gap-4">
+            <button onClick={() => setActiveTab("overview")} className={`text-xs font-bold ${activeTab === "overview" ? "text-red-600" : "text-slate-500"}`}>
+              Overview
+            </button>
+            <button onClick={() => setActiveTab("drivers")} className={`text-xs font-bold ${activeTab === "drivers" ? "text-red-600" : "text-slate-500"}`}>
+              Drivers
+            </button>
+            <button onClick={() => setActiveTab("hospitals")} className={`text-xs font-bold ${activeTab === "hospitals" ? "text-red-600" : "text-slate-500"}`}>
+              Hospitals
+            </button>
           </div>
         </div>
-      </nav>
+      </header>
 
-      <div className="mx-auto max-w-7xl px-6 py-10">
+      <div className="max-w-7xl mx-auto px-4 mt-8">
+        {error && (
+          <div className="bg-red-50 border border-red-200 p-4 rounded-2xl mb-6 text-red-600 text-sm font-bold">
+            {error}
+          </div>
+        )}
+
         {activeTab === "overview" && (
-          <section className="space-y-10 animate-in fade-in duration-500">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-              <MetricCard
-                title="Total Users"
-                value={metrics.totalUsers}
-                icon={<Users className="text-blue-600" />}
-              />
-              <MetricCard
-                title="Providers"
-                value={metrics.totalProviders}
-                subValue={`${metrics.providersOnline || 0} Online`}
-                icon={<ShieldCheck className="text-red-600" />}
-              />
-              <MetricCard
-                title="Active Requests"
-                value={metrics.searchingRequests}
-                icon={<MapPin className="text-orange-600" />}
-              />
-              <MetricCard
-                title="Active Trips"
-                value={metrics.activeBookings}
-                icon={<Activity className="text-emerald-600" />}
-              />
+          <section className="space-y-8 animate-in fade-in duration-500">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <MetricCard title="Total Users" value={metrics.totalUsers} subValue="+12% this week" icon={<Users className="text-blue-600" />} />
+              <MetricCard title="Online Drivers" value={metrics.onlineProviders} icon={<RefreshCw className="text-red-600" />} />
+              <MetricCard title="Active Requests" value={metrics.searchingRequests} icon={<MapPin className="text-orange-600" />} />
+              <MetricCard title="Active Trips" value={metrics.activeBookings} icon={<Activity className="text-emerald-600" />} />
             </div>
 
             <div className="grid gap-8 lg:grid-cols-2">
-              <div className="bg-slate-50 rounded-[2.5rem] p-8 border border-slate-100">
+              <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm">
                 <h2 className="text-lg font-black mb-6 flex items-center gap-2">
-                  <Users className="h-5 w-5" /> User Directory
+                  <Users className="h-5 w-5 text-blue-600" /> User Directory
                 </h2>
                 <div className="space-y-3">
                   {dashboardData?.users.map((user) => (
-                    <div
-                      key={user.id}
-                      className="bg-white border border-slate-100 rounded-3xl p-5 flex items-center justify-between shadow-sm"
-                    >
+                    <div key={user.id} className="bg-slate-50 border border-slate-100 rounded-3xl p-5 flex items-center justify-between">
                       <div>
                         <p className="font-black text-slate-900">{user.name}</p>
-                        <p className="text-xs text-slate-400 font-bold">
-                          {user.email} • {user.role}
-                        </p>
+                        <p className="text-xs text-slate-400 font-bold">{user.email} • {user.role}</p>
                       </div>
                       <button
+                        disabled={busyUserIds.has(user.id)}
                         onClick={() => toggleUserActive(user.id, user.isActive)}
                         className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border-2 transition-all ${user.isActive ? "border-emerald-100 text-emerald-600 bg-emerald-50" : "border-red-100 text-red-600 bg-red-50"}`}
                       >
@@ -412,21 +450,16 @@ export default function AdminDashboardPage() {
                 </div>
               </div>
 
-              <div className="bg-slate-50 rounded-[2.5rem] p-8 border border-slate-100">
+              <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm">
                 <h2 className="text-lg font-black mb-6 flex items-center gap-2">
-                  <MapPin className="h-5 w-5" /> Recent Requests
+                  <MapPin className="h-5 w-5 text-red-600" /> Recent Requests
                 </h2>
                 <div className="space-y-3">
                   {dashboardData?.searchRequests.length === 0 ? (
-                    <p className="text-slate-400 text-sm font-bold">
-                      No pending requests
-                    </p>
+                    <p className="text-slate-400 text-sm font-bold">No pending requests</p>
                   ) : (
                     dashboardData?.searchRequests.map((req) => (
-                      <div
-                        key={req.id}
-                        className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm"
-                      >
+                      <div key={req.id} className="bg-slate-50 border border-slate-100 rounded-3xl p-5 shadow-sm">
                         <div className="flex justify-between items-start mb-2">
                           <span className="bg-red-50 text-red-600 text-[10px] px-3 py-1 rounded-full font-black uppercase">
                             {req.ambulanceType || "General"}
@@ -436,8 +469,7 @@ export default function AdminDashboardPage() {
                           </span>
                         </div>
                         <p className="text-xs font-bold text-slate-600">
-                          Location: {req.userLocation?.latitude.toFixed(3)},{" "}
-                          {req.userLocation?.longitude.toFixed(3)}
+                          Location: {req.userLocation?.latitude.toFixed(3)}, {req.userLocation?.longitude.toFixed(3)}
                         </p>
                       </div>
                     ))
@@ -450,154 +482,100 @@ export default function AdminDashboardPage() {
 
         {activeTab === "drivers" && (
           <div className="max-w-4xl mx-auto animate-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-white rounded-[3rem] p-10 border-2 border-slate-100 shadow-xl shadow-slate-100/50">
-              <h2 className="text-2xl font-black mb-2 tracking-tight">
-                Add New Driver
-              </h2>
-              <p className="text-slate-400 text-sm font-bold mb-10 uppercase tracking-widest">
-                Database Registration
-              </p>
-
+            <div className="bg-white rounded-[3rem] p-10 border-2 border-slate-100 shadow-xl">
+              <h2 className="text-2xl font-black mb-2">Add New Driver</h2>
+              <p className="text-slate-400 text-sm font-bold mb-10 uppercase tracking-widest">Database Registration</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <AdminInput
-                  label="Full Name"
-                  placeholder="e.g. Supto"
-                  value={driverForm.name}
-                  onChange={(v) => setDriverForm({ ...driverForm, name: v })}
-                />
-                <AdminInput
-                  label="Phone Number"
-                  placeholder="017XXXXXXXX"
-                  value={driverForm.phone}
-                  onChange={(v) => setDriverForm({ ...driverForm, phone: v })}
-                />
-                <AdminInput
-                  label="Vehicle Model"
-                  placeholder="Toyota Hiace"
-                  value={driverForm.ambulanceModel}
-                  onChange={(v) =>
-                    setDriverForm({ ...driverForm, ambulanceModel: v })
-                  }
-                />
-                <AdminInput
-                  label="Plate Number"
-                  placeholder="DHA-1234"
-                  value={driverForm.ambulanceNumber}
-                  onChange={(v) =>
-                    setDriverForm({ ...driverForm, ambulanceNumber: v })
-                  }
-                />
+                <AdminInput label="Full Name" placeholder="e.g. Supto" value={driverForm.name} onChange={(v) => setDriverForm({ ...driverForm, name: v })} />
+                <AdminInput label="Phone Number" placeholder="017XXXXXXXX" value={driverForm.phone} onChange={(v) => setDriverForm({ ...driverForm, phone: v })} />
+                <AdminInput label="Vehicle Model" placeholder="Toyota Hiace" value={driverForm.ambulanceModel} onChange={(v) => setDriverForm({ ...driverForm, ambulanceModel: v })} />
+                <AdminInput label="Plate Number" placeholder="DHA-1234" value={driverForm.ambulanceNumber} onChange={(v) => setDriverForm({ ...driverForm, ambulanceNumber: v })} />
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-8 bg-slate-50 rounded-[2rem] border border-slate-100 mb-10">
-                <LocationSelect
-                  label="Division"
-                  list={locations.divisions}
-                  value={driverForm.division_id}
-                  onChange={(v) =>
-                    setDriverForm({ ...driverForm, division_id: v })
-                  }
-                />
-                <LocationSelect
-                  label="District"
-                  list={filteredDistricts}
-                  value={driverForm.district_id}
-                  onChange={(v) =>
-                    setDriverForm({ ...driverForm, district_id: v })
-                  }
-                />
-                <LocationSelect
-                  label="Upazila"
-                  list={filteredUpazilas}
-                  value={driverForm.upazila_id}
-                  onChange={(v) =>
-                    setDriverForm({ ...driverForm, upazila_id: v })
-                  }
-                />
+                <LocationSelect label="Division" list={locations.divisions} value={driverForm.division_id} onChange={(v) => setDriverForm({ ...driverForm, division_id: v })} />
+                <LocationSelect label="District" list={filteredDistricts} value={driverForm.district_id} onChange={(v) => setDriverForm({ ...driverForm, district_id: v })} />
+                <LocationSelect label="Upazila" list={filteredUpazilas} value={driverForm.upazila_id} onChange={(v) => setDriverForm({ ...driverForm, upazila_id: v })} />
               </div>
-
-              <button
-                onClick={handleSaveDriver}
-                disabled={loading}
-                className="w-full py-5 bg-red-600 hover:bg-red-700 text-white rounded-3xl font-black transition-all flex items-center justify-center gap-3 shadow-lg shadow-red-100 active:scale-95 disabled:opacity-50"
-              >
-                {loading ? (
-                  <RefreshCw className="animate-spin h-5 w-5" />
-                ) : (
-                  <Save className="h-5 w-5" />
-                )}{" "}
-                ড্রইভার সেভ করুন
+              <button onClick={handleSaveDriver} disabled={loading} className="w-full py-5 bg-red-600 hover:bg-red-700 text-white rounded-3xl font-black shadow-lg">
+                {loading ? <RefreshCw className="animate-spin h-5 w-5" /> : <Save className="h-5 w-5" />} ড্রাইভার সেভ করুন
               </button>
             </div>
           </div>
         )}
 
         {activeTab === "hospitals" && (
-          <div className="max-w-4xl mx-auto animate-in slide-in-from-bottom-4 duration-500">
-            <div className="bg-white rounded-[3rem] p-10 border-2 border-slate-100 shadow-xl shadow-slate-100/50">
-              <h2 className="text-2xl font-black mb-2 tracking-tight">
-                Register Hospital
-              </h2>
-              <p className="text-slate-400 text-sm font-bold mb-10 uppercase tracking-widest">
-                Regional Healthcare Mapping
-              </p>
-
+          <div className="max-w-5xl mx-auto animate-in slide-in-from-bottom-4 duration-500">
+            {/* Registration Form */}
+            <div className="bg-white rounded-[3rem] p-10 border-2 border-slate-100 shadow-xl mb-10">
+              <h2 className="text-2xl font-black mb-2">Register Hospital</h2>
+              <p className="text-slate-400 text-sm font-bold mb-10 uppercase tracking-widest">Regional Healthcare Mapping</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <AdminInput
-                  label="Hospital Name"
-                  placeholder="City Medical College"
-                  value={hospForm.name}
-                  onChange={(v) => setHospForm({ ...hospForm, name: v })}
-                />
-                <AdminInput
-                  label="Contact Phone"
-                  placeholder="02-XXXXXXX"
-                  value={hospForm.phone}
-                  onChange={(v) => setHospForm({ ...hospForm, phone: v })}
-                />
+                <AdminInput label="Hospital Name" placeholder="City Medical College" value={hospForm.name} onChange={(v) => setHospForm({ ...hospForm, name: v })} />
+                <AdminInput label="Contact Phone" placeholder="02-XXXXXXX" value={hospForm.phone} onChange={(v) => setHospForm({ ...hospForm, phone: v })} />
                 <div className="md:col-span-2">
-                  <AdminInput
-                    label="Street Address"
-                    placeholder="123 Health Road, Rajshahi"
-                    value={hospForm.address}
-                    onChange={(v) => setHospForm({ ...hospForm, address: v })}
-                  />
+                  <AdminInput label="Street Address" placeholder="123 Health Road, Rajshahi" value={hospForm.address} onChange={(v) => setHospForm({ ...hospForm, address: v })} />
                 </div>
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-8 bg-slate-50 rounded-[2rem] border border-slate-100 mb-10">
-                <LocationSelect
-                  label="Division"
-                  list={locations.divisions}
-                  value={hospForm.division_id}
-                  onChange={(v) => setHospForm({ ...hospForm, division_id: v })}
-                />
-                <LocationSelect
-                  label="District"
-                  list={filteredDistricts}
-                  value={hospForm.district_id}
-                  onChange={(v) => setHospForm({ ...hospForm, district_id: v })}
-                />
-                <LocationSelect
-                  label="Upazila"
-                  list={filteredUpazilas}
-                  value={hospForm.upazila_id}
-                  onChange={(v) => setHospForm({ ...hospForm, upazila_id: v })}
-                />
+                <LocationSelect label="Division" list={locations.divisions} value={hospForm.division_id} onChange={(v) => setHospForm({ ...hospForm, division_id: v })} />
+                <LocationSelect label="District" list={filteredDistricts} value={hospForm.district_id} onChange={(v) => setHospForm({ ...hospForm, district_id: v })} />
+                <LocationSelect label="Upazila" list={filteredUpazilas} value={hospForm.upazila_id} onChange={(v) => setHospForm({ ...hospForm, upazila_id: v })} />
               </div>
-
-              <button
-                onClick={handleSaveHospital}
-                disabled={loading}
-                className="w-full py-5 bg-black hover:bg-slate-900 text-white rounded-3xl font-black transition-all flex items-center justify-center gap-3 shadow-lg active:scale-95 disabled:opacity-50"
-              >
-                {loading ? (
-                  <RefreshCw className="animate-spin h-5 w-5" />
-                ) : (
-                  <Plus className="h-5 w-5" />
-                )}{" "}
-                হাসপাতাল যোগ করুন
+              <button onClick={handleSaveHospital} disabled={loading} className="w-full py-5 bg-black hover:bg-slate-900 text-white rounded-3xl font-black flex items-center justify-center gap-3">
+                {loading ? <RefreshCw className="animate-spin h-5 w-5" /> : <Plus className="h-5 w-5" />} হাসপাতাল যোগ করুন
               </button>
+            </div>
+
+            {/* User Login Creation */}
+            <div className="bg-white rounded-[2rem] p-8 border-2 border-slate-100 shadow-sm mb-10">
+              <h3 className="text-lg font-bold mb-4">Create Hospital Login</h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                <select className="p-3 border rounded-xl text-sm" value={hospitalUserForm.hospitalId} onChange={e => setHospitalUserForm(f => ({ ...f, hospitalId: e.target.value }))}>
+                  <option value="">Select Hospital</option>
+                  {dashboardData?.hospitals?.map(h => <option key={h._id} value={h._id}>{h.name}</option>)}
+                </select>
+                <input className="p-3 border rounded-xl text-sm" placeholder="Username" value={hospitalUserForm.username} onChange={e => setHospitalUserForm(f => ({ ...f, username: e.target.value }))} />
+                <input className="p-3 border rounded-xl text-sm" type="password" placeholder="Password" value={hospitalUserForm.password} onChange={e => setHospitalUserForm(f => ({ ...f, password: e.target.value }))} />
+                <button className="bg-red-600 text-white rounded-xl font-bold px-4 hover:bg-red-700" onClick={handleCreateHospitalUser}>Create</button>
+              </div>
+              {hospitalUserMsg && <div className="text-sm text-red-600 font-bold">{hospitalUserMsg}</div>}
+            </div>
+
+            {/* Hospital List */}
+            <div className="bg-white rounded-[2rem] p-8 border-2 border-slate-100 shadow-sm">
+              <h3 className="text-lg font-bold mb-6">Registered Hospitals</h3>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-xs">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="p-3 text-left">Name</th>
+                      <th className="p-3 text-left">Contact</th>
+                      <th className="p-3 text-left">Location</th>
+                      <th className="p-3 text-left">Capacity</th>
+                      <th className="p-3 text-left">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dashboardData?.hospitals?.map(h => (
+                      <tr key={h._id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                        <td className="p-3 font-bold">{h.name}</td>
+                        <td className="p-3">{h.phone}</td>
+                        <td className="p-3 text-slate-500">{h.address}</td>
+                        <td className="p-3">Beds: {h.beds} | ICU: {h.icu}</td>
+                        <td className="p-3">
+                          <button className="text-red-600 hover:text-red-700 font-black flex items-center gap-1" onClick={async () => {
+                            if (!window.confirm("Delete this hospital?")) return;
+                            await fetch(`/api/admin/hospitals?hospitalId=${h._id}`, { method: "DELETE" });
+                            fetchDashboard();
+                          }}>
+                            <Trash2 className="h-3 w-3" /> Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
