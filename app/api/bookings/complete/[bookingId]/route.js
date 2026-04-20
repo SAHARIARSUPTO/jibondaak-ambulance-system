@@ -3,7 +3,7 @@ import { getBookingById, updateBookingStatus } from "@/lib/dbStore";
 
 export async function POST(request, { params }) {
   try {
-    const bookingId = params?.bookingId;
+    const { bookingId } = await params;
     const body = await request.json().catch(() => ({}));
     const userId = body?.userId ? String(body.userId) : "";
 
@@ -24,7 +24,10 @@ export async function POST(request, { params }) {
 
     if (userId && String(booking.userId) !== userId) {
       return NextResponse.json(
-        { success: false, error: "You are not allowed to approve this booking" },
+        {
+          success: false,
+          error: "You are not allowed to approve this booking",
+        },
         { status: 403 },
       );
     }

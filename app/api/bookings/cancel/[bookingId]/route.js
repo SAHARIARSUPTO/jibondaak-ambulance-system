@@ -3,7 +3,7 @@ import { cancelBookingById } from "@/lib/dbStore";
 
 export async function POST(request, { params }) {
   try {
-    const bookingId = params?.bookingId;
+    const { bookingId } = await params;
 
     if (!bookingId) {
       return NextResponse.json(
@@ -20,7 +20,11 @@ export async function POST(request, { params }) {
       );
     }
 
-    return NextResponse.json({ success: true, booking, message: "Booking cancelled" });
+    return NextResponse.json({
+      success: true,
+      booking,
+      message: "Booking cancelled",
+    });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: "Failed to cancel booking" },

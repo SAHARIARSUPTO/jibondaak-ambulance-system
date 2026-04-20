@@ -9,7 +9,7 @@ export default function AboutPage() {
 
   const openPartnerPortal = () => {
     // Replace with your actual registration route or external link
-    window.location.href = "/register-provider";
+    window.location.href = "/";
   };
 
   const scrollToCoreValues = () => {

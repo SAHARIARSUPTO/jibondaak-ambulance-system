@@ -647,7 +647,7 @@ export default function ProviderDashboard() {
     setToast({ message, type });
   };
 
-  const handleAmbulanceAdded = (newAmbulance) => {
+  const handleAmbulanceAdded = async (newAmbulance) => {
     setAmbulances((prev) => [...prev, newAmbulance]);
     setProfileForm({
       type: newAmbulance.type || "non-ac",
@@ -660,6 +660,9 @@ export default function ProviderDashboard() {
       upazilaId: provider?.upazila || "",
     });
     showToast("Ambulance added successfully!", "success");
+    if (provider?._id) {
+      await fetchProviderData(provider._id);
+    }
   };
 
   const sendMessage = async () => {
@@ -1258,33 +1261,51 @@ export default function ProviderDashboard() {
                       </button>
                     </>
                   ) : (
-                    <>
-                      <p>
-                        <span className="text-slate-500">Type:</span>{" "}
-                        {ambulances[0]?.type}
-                      </p>
-                      <p>
-                        <span className="text-slate-500">Vehicle:</span>{" "}
-                        {ambulances[0]?.vehicleNumber}
-                      </p>
-                      <p>
-                        <span className="text-slate-500">License:</span>{" "}
-                        {ambulances[0]?.licenseNumber}
-                      </p>
-                      <p>
-                        <span className="text-slate-500">Driver:</span>{" "}
-                        {ambulances[0]?.driverName}
-                      </p>
-                      <p>
-                        <span className="text-slate-500">Phone:</span>{" "}
-                        {ambulances[0]?.driverPhone}
-                      </p>
-                      <p>
-                        <span className="text-slate-500">Area:</span>{" "}
-                        {ambulances[0]?.locationLabel ||
-                          `Division ${provider?.division || "--"}, Upazila ${provider?.upazila || "--"}`}
-                      </p>
-                    </>
+                    <div className="space-y-4">
+                      {ambulances.map((amb, index) => (
+                        <div
+                          key={amb._id || index}
+                          className="rounded-3xl border border-red-100 bg-[#fffafa] p-4"
+                        >
+                          <div className="flex items-center justify-between mb-3 gap-4">
+                            <div>
+                              <p className="text-sm font-black text-slate-900">
+                                Ambulance #{index + 1}
+                              </p>
+                              <p className="text-[11px] uppercase tracking-[0.3em] text-slate-400">
+                                {amb.type?.toUpperCase() || "NON-AC"}
+                              </p>
+                            </div>
+                            <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-600">
+                              {amb.locationLabel ||
+                                `Division ${provider?.division || "--"}`}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-slate-700">
+                            <div className="space-y-2">
+                              <p>
+                                <span className="text-slate-500">Vehicle:</span>{" "}
+                                {amb.vehicleNumber || "--"}
+                              </p>
+                              <p>
+                                <span className="text-slate-500">Driver:</span>{" "}
+                                {amb.driverName || "--"}
+                              </p>
+                            </div>
+                            <div className="space-y-2">
+                              <p>
+                                <span className="text-slate-500">License:</span>{" "}
+                                {amb.licenseNumber || "--"}
+                              </p>
+                              <p>
+                                <span className="text-slate-500">Phone:</span>{" "}
+                                {amb.driverPhone || "--"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>
