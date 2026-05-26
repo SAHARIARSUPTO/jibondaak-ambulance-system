@@ -743,14 +743,14 @@ export default function DashboardPage() {
                 onClick={() => router.push("/dashboard")}
                 className="text-xs font-bold text-blue-600 hover:underline"
               >
-                ড্যাশবোর্ড
+                Dashboard
               </button>
               {user.role === "provider" && (
                 <button
                   onClick={() => router.push("/provider-dashboard")}
                   className="text-xs font-bold text-red-600"
                 >
-                  চালক প্যানেল
+                  Driver Panel
                 </button>
               )}
             </div>
@@ -777,10 +777,10 @@ export default function DashboardPage() {
                   <div>
                     <p className="text-xs font-bold opacity-80 uppercase tracking-widest">
                       {activeBooking.status === "rejected"
-                        ? "অনুরোধ প্রত্যাখ্যান করা হয়েছে"
+                        ? "Request rejected"
                         : activeBooking.status === "cancelled"
-                          ? "ট্রিপটি বাতিল করা হয়েছে"
-                          : "একটি ট্রিপ সচল আছে"}
+                          ? "Trip cancelled"
+                          : "A trip is active"}
                     </p>
                     <h2 className="text-xl font-black">
                       {activeBooking.driverInfo
@@ -896,10 +896,10 @@ export default function DashboardPage() {
               <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
                 <div>
                   <h2 className="text-2xl font-black tracking-tight">
-                    অ্যাম্বুলেন্স রিকোয়েস্ট
+                    Ambulance request
                   </h2>
                   <p className="text-sm text-slate-400 font-medium">
-                    নিচের তথ্যগুলো সঠিক ভাবে পূরণ করুন
+                    Fill in the details below accurately
                   </p>
                 </div>
                 <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">

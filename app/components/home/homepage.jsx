@@ -38,7 +38,7 @@ const HomePage = () => {
           pool.push({
             name: d.name,
             bnName: d.bn_name || d.name,
-            type: "বিভাগ",
+            type: "Division",
           });
         });
       }
@@ -48,7 +48,7 @@ const HomePage = () => {
           pool.push({
             name: d.name,
             bnName: d.bn_name || d.name,
-            type: "জেলা",
+            type: "District",
           });
         });
       }
@@ -58,7 +58,7 @@ const HomePage = () => {
           pool.push({
             name: u.name,
             bnName: u.bn_name || u.name,
-            type: "উপজেলা",
+            type: "Upazila",
           });
         });
       }
@@ -69,7 +69,7 @@ const HomePage = () => {
             name: p.postOffice,
             bnName: p.postOffice,
             upazila: p.upazila,
-            type: "পোস্ট অফিস/ইউনিয়ন/এলাকা",
+            type: "Post office / Union / Area",
           });
         });
       }
@@ -79,7 +79,7 @@ const HomePage = () => {
           pool.push({
             name: a.name,
             bnName: a.bn_name || a.name,
-            type: "ঢাকা সিটি এলাকা",
+            type: "Dhaka city area",
           });
         });
       }
@@ -140,17 +140,17 @@ const HomePage = () => {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
               </span>
-              ২৪ ঘণ্টা জরুরি অ্যাম্বুলেন্স সেবা
+              24-hour emergency ambulance service
             </div>
 
             <h1 className="text-4xl md:text-7xl font-black text-slate-900 leading-[1.1] mb-6">
-              জীবন বাঁচাতে সময়ের <br />
-              <span className="text-red-600">মূল্য আমরা বুঝি</span>
+              We understand the value of time <br />
+              <span className="text-red-600">when lives are on the line</span>
             </h1>
 
             <p className="text-lg md:text-2xl text-slate-600 mb-10 max-w-3xl mx-auto leading-relaxed">
-              আপনার প্রিয়জনের জরুরি প্রয়োজনে দ্রুত এবং বিশ্বস্ত অ্যাম্বুলেন্স
-              খুঁজে পেতে আমরা আছি সবসময় আপনার পাশে।
+              We are always by your side to help you find a fast and reliable
+              ambulance for your loved ones in an emergency.
             </p>
 
             <div className="max-w-2xl mx-auto mb-8 relative">
@@ -162,7 +162,7 @@ const HomePage = () => {
                     <MapPin className="text-slate-400 h-6 w-6 mr-3" />
                     <input
                       type="text"
-                      placeholder="আপনার বর্তমান অবস্থান বা গ্রাম লিখুন..."
+                      placeholder="Enter your current location or village..."
                       className="flex-1 py-5 text-xl outline-none"
                       value={searchTerm}
                       onFocus={() => {
@@ -180,7 +180,7 @@ const HomePage = () => {
                       type="button"
                       onClick={handleGPS}
                       className="p-2 text-slate-400 hover:text-red-600 transition-colors"
-                      title="আপনার অবস্থান ব্যবহার করুন"
+                      title="Use your location"
                     >
                       <LocateFixed className="h-5 w-5" />
                     </button>
@@ -189,7 +189,7 @@ const HomePage = () => {
                     type="submit"
                     className="bg-red-600 hover:bg-red-700 text-white px-10 py-5 text-xl font-bold transition-colors flex items-center justify-center gap-2"
                   >
-                    <Search className="h-6 w-6" /> খুঁজুন
+                    <Search className="h-6 w-6" /> Search
                   </button>
                 </div>
               </form>
@@ -241,7 +241,7 @@ const HomePage = () => {
                   clipRule="evenodd"
                 />
               </svg>
-              সারাদেশজুড়ে কাভারেজ
+              Nationwide coverage
             </div>
           </div>
         </section>
@@ -251,7 +251,7 @@ const HomePage = () => {
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-5xl font-bold mb-4">
-                আমরা যেভাবে কাজ করি
+                How We Work
               </h2>
               <div className="h-1.5 w-24 bg-red-600 mx-auto rounded-full"></div>
             </div>
@@ -259,32 +259,32 @@ const HomePage = () => {
             <div className="grid md:grid-cols-3 gap-12 text-center">
               <div className="space-y-4 p-6 hover:bg-slate-50 rounded-3xl transition-colors">
                 <div className="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto text-3xl font-bold">
-                  ১
+                    1
                 </div>
-                <h3 className="text-2xl font-bold">সহজ সার্চ</h3>
+                <h3 className="text-2xl font-bold">Easy Search</h3>
                 <p className="text-slate-600 leading-relaxed">
-                  আপনার লোকেশন লিখে সার্চ দিলেই আপনার সবচেয়ে কাছে থাকা
-                  অ্যাম্বুলেন্সগুলোর তালিকা চলে আসবে।
+                  Enter your location and search to instantly see the nearest
+                  ambulances.
                 </p>
               </div>
               <div className="space-y-4 p-6 hover:bg-slate-50 rounded-3xl transition-colors">
                 <div className="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto text-3xl font-bold">
-                  ২
+                    2
                 </div>
-                <h3 className="text-2xl font-bold">সরাসরি যোগাযোগ</h3>
+                <h3 className="text-2xl font-bold">Direct Contact</h3>
                 <p className="text-slate-600 leading-relaxed">
-                  মাঝখানে কোনো দালাল নেই। সরাসরি ড্রাইভারের সাথে কথা বলে ভাড়া
-                  নির্ধারণ করুন ও কনফার্ম করুন।
+                  No middleman. Speak directly with the driver to confirm the
+                  fare.
                 </p>
               </div>
               <div className="space-y-4 p-6 hover:bg-slate-50 rounded-3xl transition-colors">
                 <div className="w-16 h-16 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto text-3xl font-bold">
-                  ৩
+                    3
                 </div>
-                <h3 className="text-2xl font-bold">দ্রুত সেবা</h3>
+                <h3 className="text-2xl font-bold">Fast Service</h3>
                 <p className="text-slate-600 leading-relaxed">
-                  অ্যাম্বুলেন্সটি ম্যাপে ট্র্যাক করুন এবং কয়েক মিনিটের মধ্যেই
-                  সেটি আপনার দরজায় পৌঁছে যাবে।
+                  Track the ambulance on the map and it will reach your door in
+                  minutes.
                 </p>
               </div>
             </div>
@@ -296,22 +296,21 @@ const HomePage = () => {
           <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center gap-12">
             <div className="flex-1 z-10">
               <span className="text-red-500 font-bold tracking-widest uppercase text-sm">
-                অ্যাম্বুলেন্স মালিক ও চালকদের জন্য
+                For ambulance owners and drivers
               </span>
               <h2 className="text-4xl md:text-5xl font-bold mt-4 mb-6 leading-tight">
-                আমাদের সাথে যোগ দিন, <br />
-                অসহায় মানুষের পাশে দাঁড়ান
+                Join us and stand <br />
+                beside people in need
               </h2>
               <p className="text-slate-400 text-lg mb-8 leading-relaxed">
-                আপনার যদি একটি অ্যাম্বুলেন্স থাকে, তবে আজই প্রোভাইডার হিসেবে
-                রেজিস্ট্রেশন করুন। আমরা আপনাকে সরাসরি রোগীদের সাথে সংযোগ করিয়ে
-                দেব।
+                If you own an ambulance, register as a provider today. We will
+                connect you directly with patients.
               </p>
               <ul className="space-y-4 mb-10">
                 {[
-                  "কোনো মাসিক চার্জ নেই",
-                  "সরাসরি পেমেন্ট পান",
-                  "সারাদেশে সেবা দেওয়ার সুযোগ",
+                  "No monthly charges",
+                  "Receive direct payments",
+                  "Serve across the country",
                 ].map((item) => (
                   <li key={item} className="flex items-center gap-3">
                     <div className="bg-green-500 rounded-full p-1">
@@ -334,14 +333,14 @@ const HomePage = () => {
                 ))}
               </ul>
               <button className="bg-white text-slate-900 px-8 py-4 rounded-xl font-bold text-lg hover:bg-red-500 hover:text-white transition-all transform hover:scale-105">
-                ড্রাইভার হিসেবে যোগ দিন
+                Join as Driver
               </button>
             </div>
             <div className="flex-1 relative">
               <div className="bg-linear-to-tr from-red-600 to-orange-400 w-full aspect-square rounded-full opacity-20 blur-3xl absolute -right-20 -top-20"></div>
               <div className="border border-white/10 bg-white/5 p-6 rounded-3xl backdrop-blur-xl relative">
                 <div className="flex justify-between items-center mb-6">
-                  <span className="font-bold">লাইভ ট্র্যাকিং ড্যাশবোর্ড</span>
+                  <span className="font-bold">Live Tracking Dashboard</span>
                   <span className="bg-red-500 px-3 py-1 rounded-full text-xs">
                     LIVE
                   </span>
@@ -358,15 +357,15 @@ const HomePage = () => {
 
         {/* 4. FOOTER / CALL TO ACTION */}
         <footer className="py-12 border-t border-slate-100 bg-slate-50 text-center">
-          <p className="text-slate-500 font-medium mb-4">জরুরি হেল্পলাইন</p>
+          <p className="text-slate-500 font-medium mb-4">Emergency Helpline</p>
           <a
             href="tel:999"
             className="text-5xl font-black text-red-600 hover:text-red-700 transition-colors"
           >
-            ৯৯৯
+            999
           </a>
           <div className="mt-8 text-slate-400 text-sm">
-            © ২০২৪ আপনার লাইফলাইন অ্যাম্বুলেন্স সেবা। সর্বস্বত্ব সংরক্ষিত।
+            © 2024 Your lifeline ambulance service. All rights reserved.
           </div>
         </footer>
       </main>

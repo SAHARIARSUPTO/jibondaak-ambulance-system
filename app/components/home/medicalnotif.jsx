@@ -18,13 +18,13 @@ const MedicalNetworkSection = () => {
         {/* Section Header */}
         <div className="max-w-3xl mb-16">
           <h2 className="text-3xl md:text-5xl font-black text-slate-900 mb-6 leading-[1.15]">
-            অ্যাম্বুলেন্স পৌঁছানোর আগেই <br />
-            <span className="text-red-600">হাসপাতাল থাকবে প্রস্তুত</span>
+            The hospital is ready <br />
+            <span className="text-red-600">before the ambulance arrives</span>
           </h2>
           <p className="text-lg text-slate-600 leading-relaxed">
-            আমরা শুধু রোগী বহন করি না, আমরা একটি ডিজিটাল নেটওয়ার্ক তৈরি করেছি।
-            আপনার বুকিং করার সাথে সাথে গন্তব্য হাসপাতালের ইমারজেন্সি বিভাগ আপনার
-            রোগীর অবস্থা সম্পর্কে আপডেট পেতে থাকে।
+            We do more than transport patients. We have built a digital network.
+            As soon as you make a booking, the destination hospital's emergency
+            department receives updates about the patient's condition.
           </p>
         </div>
 
@@ -41,11 +41,11 @@ const MedicalNetworkSection = () => {
               </div>
               <div className="pt-1">
                 <h3 className="text-xl font-bold text-slate-900 mb-2">
-                  ইনস্ট্যান্ট ট্রায়াজ রিপোর্ট
+                  Instant triage report
                 </h3>
                 <p className="text-slate-500 text-sm leading-relaxed">
-                  অ্যাম্বুলেন্সে ওঠার সাথে সাথে প্যারামেডিকরা ডিজিটাল অ্যাপের
-                  মাধ্যমে রোগীর ভাইটালস (BP, Pulse) আপডেট করেন।
+                  As soon as the patient enters the ambulance, paramedics update
+                  the patient's vitals (BP, pulse) through the digital app.
                 </p>
               </div>
             </div>
@@ -57,12 +57,11 @@ const MedicalNetworkSection = () => {
               </div>
               <div className="pt-1">
                 <h3 className="text-xl font-bold text-slate-900 mb-2">
-                  প্রি-অ্যারাইভাল নোটিফিকেশন
+                  Pre-arrival notification
                 </h3>
                 <p className="text-slate-500 text-sm leading-relaxed">
-                  হাসপাতালের ইমারজেন্সি ড্যাশবোর্ডে "Patient Incoming" এলার্ট
-                  চলে যায়। ডাক্তাররা অ্যাম্বুলেন্সের লাইভ লোকেশন ম্যাপে দেখতে
-                  পান।
+                  A "Patient Incoming" alert is sent to the hospital emergency
+                  dashboard. Doctors can see the ambulance live on the map.
                 </p>
               </div>
             </div>
@@ -74,11 +73,11 @@ const MedicalNetworkSection = () => {
               </div>
               <div className="pt-1">
                 <h3 className="text-xl font-bold text-slate-900 mb-2">
-                  জিরো ওয়েটিং টাইম
+                  Zero waiting time
                 </h3>
                 <p className="text-slate-500 text-sm leading-relaxed">
-                  রোগী পৌঁছানোর আগেই ইমারজেন্সি বেড, অক্সিজেন এবং প্রয়োজনীয়
-                  ইনভেস্টিগেশন টিম প্রস্তুত রাখা হয়।
+                  Before the patient arrives, the emergency bed, oxygen, and
+                  necessary investigation team are already prepared.
                 </p>
               </div>
             </div>
@@ -103,10 +102,10 @@ const MedicalNetworkSection = () => {
                   <div className="p-4 bg-red-50 rounded-xl border border-red-100">
                     <div className="flex justify-between items-start mb-2">
                       <span className="text-xs font-bold text-red-600 uppercase">
-                        Incoming Emergency
+                        Incoming emergency
                       </span>
                       <span className="text-xs font-medium text-slate-500">
-                        ৩.৫ কিমি দূরে
+                        3.5 km away
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
@@ -115,10 +114,10 @@ const MedicalNetworkSection = () => {
                       </div>
                       <div>
                         <p className="text-sm font-black text-slate-900">
-                          অক্সিজেন সাপোর্ট প্রয়োজন
+                          Oxygen support required
                         </p>
                         <p className="text-[10px] text-slate-500">
-                          ড্রাইভার: এমডি. করিম (ভেরিফাইড)
+                          Driver: MD. Karim (verified)
                         </p>
                       </div>
                     </div>
@@ -147,16 +146,16 @@ const MedicalNetworkSection = () => {
         <div className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             {
-              label: "স্মার্ট গেটওয়ে",
+              label: "Smart gateway",
               icon: <ShieldAlert className="w-5 h-5" />,
             },
             {
-              label: "ডিজিটাল রিপোর্ট",
+              label: "Digital report",
               icon: <Activity className="w-5 h-5" />,
             },
-            { label: "লাইভ কানেক্টিভিটি", icon: <Radio className="w-5 h-5" /> },
+            { label: "Live connectivity", icon: <Radio className="w-5 h-5" /> },
             {
-              label: "অগ্রিম প্রস্তুতি",
+              label: "Advance preparation",
               icon: <Hospital className="w-5 h-5" />,
             },
           ].map((item, index) => (

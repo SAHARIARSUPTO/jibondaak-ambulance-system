@@ -15,7 +15,7 @@ const ContactPage = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log("Form Submitted:", formData);
-    alert("আপনার বার্তাটি সফলভাবে পাঠানো হয়েছে। আমরা শীঘ্রই যোগাযোগ করবো।");
+    alert("Your message has been sent successfully. We will contact you soon.");
   };
 
   const handleInputChange = (e) => {
@@ -32,18 +32,18 @@ const ContactPage = () => {
             <div className="flex items-center gap-3 mb-8">
               <span className="h-px w-12 bg-red-600"></span>
               <span className="text-sm font-bold uppercase tracking-[0.2em] text-red-600">
-                যোগাযোগ করুন
+                Contact Us
               </span>
             </div>
 
             <h1 className="text-5xl font-extrabold tracking-tight text-slate-900 sm:text-7xl lg:text-8xl mb-10 leading-[0.95]">
-              আপনার সেবায় <br />
-              আমরা <span className="text-red-600 italic">২৪/৭</span> প্রস্তুত।
+              We are ready <br />
+              to serve you <span className="text-red-600 italic">24/7</span>.
             </h1>
 
             <p className="text-xl md:text-2xl text-slate-500 max-w-2xl leading-relaxed">
-              জরুরি প্রয়োজনে সরাসরি কল করুন। পার্টনারশিপ বা অন্যান্য তথ্যের জন্য
-              নিচের ফর্মটি পূরণ করুন, আমরা ২৪ ঘণ্টার মধ্যে উত্তর দেব।
+              Call directly for emergencies. For partnerships or other inquiries,
+              fill out the form below and we will respond within 24 hours.
             </p>
           </div>
         </div>
@@ -57,26 +57,26 @@ const ContactPage = () => {
             <div className="lg:col-span-5 space-y-12">
               <div className="border-t-4 border-red-600 pt-8">
                 <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">
-                  জরুরি হটলাইন
+                  Emergency Hotline
                 </p>
                 <h2 className="text-4xl font-black text-slate-900 mb-2">৯৯৯</h2>
               </div>
 
               <div className="border-t border-slate-200 pt-8">
                 <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">
-                  হেড অফিস
+                  Head Office
                 </p>
                 <p className="text-xl font-bold text-slate-900 leading-relaxed">
-                  পদ্মা আবাসিক রোড,ভদ্রা মোড় <br /> রাজশাহী, বাংলাদেশ।
+                  Padma Residential Road, Vodra Mor <br /> Rajshahi, Bangladesh.
                 </p>
                 <p className="mt-2 text-slate-500 font-medium text-sm">
-                  রবি - বৃহস্পতি, সকাল ৯:০০ - সন্ধ্যা ৬:০০
+                  Sun - Thu, 9:00 AM - 6:00 PM
                 </p>
               </div>
 
               <div className="border-t border-slate-200 pt-8">
                 <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">
-                  পার্টনারশিপ ও মিডিয়া
+                  Partnerships & Media
                 </p>
                 <p className="text-xl font-bold text-slate-900">
                   partners@jibondaak.com
@@ -88,13 +88,13 @@ const ContactPage = () => {
             {/* Right Side: Contact Form */}
             <div className="lg:col-span-7 bg-[#f8f8f8] p-8 md:p-12 border border-slate-100">
               <h3 className="text-3xl font-black text-slate-900 mb-8">
-                আমাদের বার্তা পাঠান
+                Send Us a Message
               </h3>
               <form onSubmit={handleSubmit} className="grid gap-6">
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-xs font-black uppercase tracking-widest text-slate-400">
-                      আপনার নাম
+                      Your Name
                     </label>
                     <input
                       required
@@ -102,13 +102,13 @@ const ContactPage = () => {
                       name="name"
                       value={formData.name}
                       onChange={handleInputChange}
-                      placeholder="পুরো নাম লিখুন"
+                      placeholder="Enter your full name"
                       className="w-full bg-white border border-slate-200 px-5 py-4 text-slate-900 focus:outline-none focus:border-red-600 transition-colors"
                     />
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-black uppercase tracking-widest text-slate-400">
-                      ইমেইল ঠিকানা
+                      Email Address
                     </label>
                     <input
                       required
@@ -124,7 +124,7 @@ const ContactPage = () => {
 
                 <div className="space-y-2">
                   <label className="text-xs font-black uppercase tracking-widest text-slate-400">
-                    বিষয়
+                    Subject
                   </label>
                   <input
                     required
@@ -132,14 +132,14 @@ const ContactPage = () => {
                     name="subject"
                     value={formData.subject}
                     onChange={handleInputChange}
-                    placeholder="বার্তার বিষয়"
+                    placeholder="Message subject"
                     className="w-full bg-white border border-slate-200 px-5 py-4 text-slate-900 focus:outline-none focus:border-red-600 transition-colors"
                   />
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-xs font-black uppercase tracking-widest text-slate-400">
-                    আপনার বার্তা
+                    Your Message
                   </label>
                   <textarea
                     required
@@ -147,7 +147,7 @@ const ContactPage = () => {
                     rows={5}
                     value={formData.message}
                     onChange={handleInputChange}
-                    placeholder="আমরা আপনাকে কীভাবে সাহায্য করতে পারি?"
+                    placeholder="How can we help you?"
                     className="w-full bg-white border border-slate-200 px-5 py-4 text-slate-900 focus:outline-none focus:border-red-600 transition-colors resize-none"
                   />
                 </div>
@@ -156,7 +156,7 @@ const ContactPage = () => {
                   type="submit"
                   className="w-full bg-black text-white px-10 py-5 text-lg font-bold hover:bg-red-600 transition-all duration-300 uppercase tracking-widest"
                 >
-                  বার্তা পাঠান
+                  Send Message
                 </button>
               </form>
             </div>
@@ -167,7 +167,7 @@ const ContactPage = () => {
       {/* --- FOOTER --- */}
       <footer className="py-12 border-t border-slate-100 text-center">
         <p className="text-slate-400 text-sm">
-          © ২০২৬ জীবনডাক। আধুনিক জরুরি সেবা নেটওয়ার্ক।
+          © 2026 JibonDaak. Modern emergency service network.
         </p>
       </footer>
     </main>

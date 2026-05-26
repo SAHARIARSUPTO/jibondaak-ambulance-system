@@ -46,9 +46,9 @@ const Navbar = () => {
   };
 
   const navItems = [
-    { name: "হোম", href: "/", icon: Home },
-    { name: "আমাদের সম্পর্কে", href: "/about", icon: Info },
-    { name: "যোগাযোগ", href: "/contact", icon: Phone },
+    { name: "Home", href: "/", icon: Home },
+    { name: "About", href: "/about", icon: Info },
+    { name: "Contact", href: "/contact", icon: Phone },
   ];
 
   return (
@@ -90,13 +90,13 @@ const Navbar = () => {
                   href="/login/seeker"
                   className="flex items-center border bg-red-600 border-red-200 text-white px-4 py-2.5 rounded-full text-sm font-semibold shadow-sm hover:bg-red-700 transition-all duration-300 whitespace-nowrap"
                 >
-                  অ্যাম্বুলেন্স দরকার?
+                  Need an ambulance?
                 </Link>
                 <Link
                   href="/login/provider"
                   className="flex items-center border border-gray-200 text-gray-900 px-4 py-2.5 rounded-full text-sm font-semibold shadow-sm hover:bg-gray-50 transition-all duration-300 whitespace-nowrap"
                 >
-                  অ্যাম্বুলেন্স রেজিস্টার
+                  Register Ambulance
                 </Link>
               </>
             )}
@@ -197,14 +197,14 @@ const Navbar = () => {
                   className="block text-center bg-red-600 text-white font-semibold py-3 px-4 rounded-xl transition-colors hover:bg-red-700"
                   onClick={() => setIsOpen(false)}
                 >
-                  অ্যাম্বুলেন্স দরকার?
+                  Need an ambulance?
                 </Link>
                 <Link
                   href="/login/provider"
                   className="block text-center bg-gray-100 text-gray-900 font-semibold py-3 px-4 rounded-xl transition-colors hover:bg-gray-200"
                   onClick={() => setIsOpen(false)}
                 >
-                  অ্যাম্বুলেন্স রেজিস্টার
+                  Register Ambulance
                 </Link>
               </>
             )}
@@ -219,7 +219,7 @@ const Navbar = () => {
                   className="mt-3 flex items-center justify-center space-x-2 w-full py-2.5 bg-white border border-red-100 text-red-600 rounded-xl text-sm font-bold shadow-sm hover:bg-red-50 transition-colors"
                 >
                   <LogOut className="w-4 h-4" />
-                  <span>লগআউট</span>
+                  <span>Log out</span>
                 </button>
               </div>
             )}

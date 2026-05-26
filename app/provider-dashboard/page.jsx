@@ -521,7 +521,7 @@ export default function ProviderDashboard() {
 
   const handleCancelTrip = async (bookingId) => {
     const reason = prompt(
-      "ট্রিপ বাতিল করার কারণ লিখুন (Comment for cancellation):",
+      "Enter the reason for cancelling the trip (Comment for cancellation):",
     );
     if (!reason) return;
 
@@ -1108,12 +1108,12 @@ export default function ProviderDashboard() {
                             onClick={() => updateBookingStatus(b._id, s)}
                             className="px-3 py-1.5 rounded-md border border-red-200 text-red-700 bg-red-50 text-sm"
                           >
-                            {s === "en_route" && "পথে আছি"}
-                            {s === "arrived" && "রোগীর কাছে পৌঁছেছি"}
-                            {s === "trip_started" && "ট্রিপ শুরু হয়েছে"}
-                            {s === "destination_reached" && "গন্তব্যে পৌঁছেছি"}
+                            {s === "en_route" && "On the way"}
+                            {s === "arrived" && "Reached the patient"}
+                            {s === "trip_started" && "Trip started"}
+                            {s === "destination_reached" && "Reached destination"}
                             {s === "awaiting_seeker_approval" &&
-                              "সম্পন্ন (কনফার্মেশন)"}
+                              "Completed (confirmation)"}
                           </button>
                         ))}
                         <button
@@ -1126,7 +1126,7 @@ export default function ProviderDashboard() {
                           onClick={() => handleCancelTrip(b._id)}
                           className="px-3 py-1.5 rounded-md border border-red-600 text-red-600 hover:bg-red-50 text-sm flex items-center gap-1"
                         >
-                          <XCircle className="w-3 h-3" /> বাতিল করুন
+                          <XCircle className="w-3 h-3" /> Cancel
                         </button>
                       </div>
                     </div>

@@ -82,6 +82,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
+        suppressHydrationWarning
         className={`${inter.variable} ${playfair.variable} antialiased bg-white text-gray-900`}
       >
         <ConditionalLayout>{children}</ConditionalLayout>

@@ -104,13 +104,13 @@ export default function RegisterSeekerPage() {
     setLoading(true);
 
     if (!formData.division || !formData.district || !formData.upazila) {
-      setError("আপনার বর্তমান অবস্থান সঠিকভাবে নির্বাচন করুন।");
+      setError("Please select your current location correctly.");
       setLoading(false);
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setError("পাসওয়ার্ড দুটি মিলছে না।");
+      setError("The two passwords do not match.");
       setLoading(false);
       return;
     }
@@ -149,10 +149,10 @@ export default function RegisterSeekerPage() {
         setSuccess(true);
         setTimeout(() => router.push("/dashboard"), 2000);
       } else {
-        setError(data.error || "নিবন্ধন ব্যর্থ হয়েছে।");
+        setError(data.error || "Registration failed.");
       }
     } catch (err) {
-      setError("কিছু সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।");
+      setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -168,17 +168,17 @@ export default function RegisterSeekerPage() {
             </div>
           </div>
           <h2 className="mt-6 text-3xl font-bold tracking-tight text-gray-900">
-            সেবাগ্রহীতা হিসেবে যোগ দিন
+            Join as a Seeker
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            জরুরি প্রয়োজনে দ্রুত অ্যাম্বুলেন্স পেতে একটি অ্যাকাউন্ট তৈরি করুন
+            Create an account to get an ambulance quickly in an emergency.
           </p>
         </div>
 
         {success && (
           <div className="bg-green-50 border-2 border-green-500 text-green-700 p-4 rounded-lg text-center">
-            <p className="font-bold">নিবন্ধন সফল হয়েছে!</p>
-            <p className="text-sm">ড্যাশবোর্ডে রিডাইরেক্ট করা হচ্ছে...</p>
+            <p className="font-bold">Registration successful!</p>
+            <p className="text-sm">Redirecting to dashboard...</p>
           </div>
         )}
 
@@ -195,7 +195,7 @@ export default function RegisterSeekerPage() {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                পুরো নাম
+                Full Name
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -208,14 +208,14 @@ export default function RegisterSeekerPage() {
                   value={formData.name}
                   onChange={handleChange}
                   className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                  placeholder="আপনার নাম লিখুন"
+                  placeholder="Enter your name"
                 />
               </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                ইমেইল অ্যাড্রেস
+                Email Address
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -235,7 +235,7 @@ export default function RegisterSeekerPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                মোবাইল নম্বর
+                Mobile Number
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -248,7 +248,7 @@ export default function RegisterSeekerPage() {
                   value={formData.phone}
                   onChange={handleChange}
                   className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                  placeholder="০১XXXXXXXXX"
+                  placeholder="01XXXXXXXXX"
                 />
               </div>
             </div>
@@ -256,7 +256,7 @@ export default function RegisterSeekerPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  বিভাগ
+                  Division
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -269,10 +269,10 @@ export default function RegisterSeekerPage() {
                     onChange={handleChange}
                     className="relative block w-full pl-10 pr-3 py-3 border border-gray-300 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white"
                   >
-                    <option value="">বিভাগ নির্বাচন করুন</option>
+                      <option value="">Select division</option>
                     {divisions.map((div) => (
                       <option key={div.id} value={div.id}>
-                        {div.bn_name}
+                          {div.name}
                       </option>
                     ))}
                   </select>
@@ -280,7 +280,7 @@ export default function RegisterSeekerPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  জেলা
+                    District
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -294,10 +294,10 @@ export default function RegisterSeekerPage() {
                     onChange={handleChange}
                     className="relative block w-full pl-10 pr-3 py-3 border border-gray-300 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white disabled:bg-gray-50"
                   >
-                    <option value="">জেলা নির্বাচন করুন</option>
+                      <option value="">Select district</option>
                     {districts.map((dis) => (
                       <option key={dis.id} value={dis.id}>
-                        {dis.bn_name}
+                          {dis.name}
                       </option>
                     ))}
                   </select>
@@ -308,7 +308,7 @@ export default function RegisterSeekerPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  উপজেলা
+                  Upazila
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -322,10 +322,10 @@ export default function RegisterSeekerPage() {
                     onChange={handleChange}
                     className="relative block w-full pl-10 pr-3 py-3 border border-gray-300 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white disabled:bg-gray-50"
                   >
-                    <option value="">উপজেলা নির্বাচন করুন</option>
+                      <option value="">Select upazila</option>
                     {upazilas.map((upz) => (
                       <option key={upz.id} value={upz.id}>
-                        {upz.bn_name}
+                          {upz.name}
                       </option>
                     ))}
                   </select>
@@ -336,7 +336,7 @@ export default function RegisterSeekerPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  পাসওয়ার্ড
+                  Password
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -349,13 +349,13 @@ export default function RegisterSeekerPage() {
                     value={formData.password}
                     onChange={handleChange}
                     className="appearance-none relative block w-full pl-10 pr-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                    placeholder="পাসওয়ার্ড"
+                    placeholder="Password"
                   />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  নিশ্চিত করুন
+                  Confirm Password
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
