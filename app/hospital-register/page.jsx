@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { ArrowRight, Building2, Lock, MapPin, Phone, User } from "lucide-react";
 
 export default function HospitalRegisterPage() {
@@ -17,13 +17,65 @@ export default function HospitalRegisterPage() {
     beds: "0",
     icu: "0",
     emergency_services: "24/7 ambulance support",
+    division_id: "",
+    district_id: "",
+    upazila_id: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [allDivisions, setAllDivisions] = useState([]);
+  const [allDistricts, setAllDistricts] = useState([]);
+  const [allUpazilas, setAllUpazilas] = useState([]);
+
+  useEffect(() => {
+    const safeFetch = async (url) => {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) return [];
+        return await res.json();
+      } catch {
+        return [];
+      }
+    };
+
+    Promise.all([
+      safeFetch("/json/bd-divisions.json"),
+      safeFetch("/json/bd-districts.json"),
+      safeFetch("/json/bd-upazilas.json"),
+    ]).then(([divRes, distRes, upzRes]) => {
+      setAllDivisions(divRes?.divisions || divRes || []);
+      setAllDistricts(distRes?.districts || distRes || []);
+      setAllUpazilas(upzRes?.upazilas || upzRes || []);
+    });
+  }, []);
+
+  const filteredDistricts = useMemo(() => {
+    if (!formData.division_id) return [];
+    return allDistricts.filter(
+      (district) => String(district.division_id) === String(formData.division_id),
+    );
+  }, [allDistricts, formData.division_id]);
+
+  const filteredUpazilas = useMemo(() => {
+    if (!formData.district_id) return [];
+    return allUpazilas.filter(
+      (upazila) => String(upazila.district_id) === String(formData.district_id),
+    );
+  }, [allUpazilas, formData.district_id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((current) => ({ ...current, [name]: value }));
+    setFormData((current) => {
+      const next = { ...current, [name]: value };
+      if (name === "division_id") {
+        next.district_id = "";
+        next.upazila_id = "";
+      }
+      if (name === "district_id") {
+        next.upazila_id = "";
+      }
+      return next;
+    });
     setError("");
   };
 
@@ -116,7 +168,7 @@ export default function HospitalRegisterPage() {
                 name="name"
                 value={formData.name}
                 onChange={handleChange}
-                placeholder="Dhaka General Hospital"
+                placeholder="hospital Name "
               />
               <Field
                 icon={Phone}
@@ -133,9 +185,53 @@ export default function HospitalRegisterPage() {
                   name="address"
                   value={formData.address}
                   onChange={handleChange}
-                  placeholder="Road 12, Dhanmondi, Dhaka"
+                  placeholder="Address"
                 />
               </div>
+              <SelectField
+                icon={MapPin}
+                label="Division"
+                name="division_id"
+                value={formData.division_id}
+                onChange={handleChange}
+              >
+                <option value="">Select division</option>
+                {allDivisions.map((division) => (
+                  <option key={division.id} value={division.id}>
+                    {division.bn_name}
+                  </option>
+                ))}
+              </SelectField>
+              <SelectField
+                icon={MapPin}
+                label="District"
+                name="district_id"
+                value={formData.district_id}
+                onChange={handleChange}
+                disabled={!formData.division_id}
+              >
+                <option value="">Select district</option>
+                {filteredDistricts.map((district) => (
+                  <option key={district.id} value={district.id}>
+                    {district.bn_name}
+                  </option>
+                ))}
+              </SelectField>
+              <SelectField
+                icon={MapPin}
+                label="Upazila"
+                name="upazila_id"
+                value={formData.upazila_id}
+                onChange={handleChange}
+                disabled={!formData.district_id}
+              >
+                <option value="">Select upazila</option>
+                {filteredUpazilas.map((upazila) => (
+                  <option key={upazila.id} value={upazila.id}>
+                    {upazila.bn_name}
+                  </option>
+                ))}
+              </SelectField>
               <Field
                 icon={User}
                 label="Username"
@@ -227,6 +323,26 @@ function Field({ icon: Icon, label, name, value, onChange, type = "text", placeh
           placeholder={placeholder}
           className="w-full bg-transparent text-sm outline-none placeholder:text-slate-400"
         />
+      </div>
+    </label>
+  );
+}
+
+function SelectField({ icon: Icon, label, name, value, onChange, disabled = false, children }) {
+  return (
+    <label className="space-y-2">
+      <span className="text-sm font-semibold text-slate-700">{label}</span>
+      <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-red-500 focus-within:bg-white">
+        <Icon className="h-5 w-5 text-slate-400" />
+        <select
+          name={name}
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+          className="w-full bg-transparent text-sm outline-none disabled:cursor-not-allowed disabled:text-slate-400"
+        >
+          {children}
+        </select>
       </div>
     </label>
   );

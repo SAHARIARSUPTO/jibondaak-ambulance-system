@@ -27,7 +27,6 @@ import {
   Zap,
   Wind,
   BedSingle,
-  Send,
   Star,
   BadgeDollarSign,
   MessageCircle,
@@ -134,18 +133,13 @@ export default function DashboardPage() {
       setHospitalLoading(true);
       setDbHospitals([]);
 
-      if (!user?.division) {
+      if (!user) {
         setHospitalLoading(false);
         return;
       }
 
       try {
-        const params = new URLSearchParams();
-        if (user.division) params.append("division_id", user.division);
-        if (user.district) params.append("district_id", user.district);
-        if (user.upazila) params.append("upazila_id", user.upazila);
-
-        const res = await fetch(`/api/admin/hospitals?${params.toString()}`);
+        const res = await fetch("/api/admin/hospitals");
         if (!res.ok) {
           const errorText = await res.text();
           throw new Error(errorText || "Failed to load hospitals");
@@ -157,7 +151,7 @@ export default function DashboardPage() {
           setDbHospitals(hospitals);
           if (hospitals.length === 0) {
             setHospitalError(
-              "No hospitals were found for your selected area. Please adjust the division, district, or upazila and try again.",
+              "No hospitals were found. Please register a hospital and try again.",
             );
           }
         } else {
@@ -171,7 +165,7 @@ export default function DashboardPage() {
       }
     };
     fetchDbHospitals();
-  }, [user?.division, user?.district, user?.upazila]);
+  }, [user?._id, user?.division, user?.district, user?.upazila]);
 
   // Memoized user location names for display
   const userDivisionName = useMemo(() => {
@@ -200,6 +194,61 @@ export default function DashboardPage() {
 
   // Filtered hospitals based on user division
   const filteredHospitals = useMemo(() => dbHospitals, [dbHospitals]);
+  const selectedHospital = useMemo(() => {
+    if (!targetHospitalId) return null;
+    return filteredHospitals.find((hospital) => hospital._id === targetHospitalId) || null;
+  }, [filteredHospitals, targetHospitalId]);
+
+  const driversForSelectedHospital = useMemo(() => {
+    if (!selectedHospital) return availableDrivers;
+
+    const assignedProviderIds = Array.isArray(selectedHospital.assignedProviderIds)
+      ? selectedHospital.assignedProviderIds.map(String)
+      : Array.isArray(selectedHospital.providerIds)
+        ? selectedHospital.providerIds.map(String)
+        : [];
+
+    if (assignedProviderIds.length > 0) {
+      const exactMatches = availableDrivers.filter((driver) => {
+        const driverProviderId = String(driver.providerId || "");
+        const driverId = String(driver.id || driver._id || "");
+        return (
+          assignedProviderIds.includes(driverProviderId) ||
+          assignedProviderIds.includes(driverId)
+        );
+      });
+
+      if (exactMatches.length > 0) {
+        return exactMatches;
+      }
+    }
+
+    const hospitalDivision = String(selectedHospital.division_id || "");
+    const hospitalDistrict = String(selectedHospital.district_id || "");
+    const hospitalUpazila = String(selectedHospital.upazila_id || "");
+
+    const matchedDrivers = availableDrivers.filter((driver) => {
+      const driverDivision = String(driver.division_id || "");
+      const driverDistrict = String(driver.district_id || "");
+      const driverUpazila = String(driver.upazila_id || "");
+
+      if (hospitalUpazila && driverUpazila) {
+        return driverUpazila === hospitalUpazila;
+      }
+
+      if (hospitalDistrict && driverDistrict) {
+        return driverDistrict === hospitalDistrict;
+      }
+
+      if (hospitalDivision && driverDivision) {
+        return driverDivision === hospitalDivision;
+      }
+
+      return true;
+    });
+
+    return matchedDrivers.length > 0 ? matchedDrivers : availableDrivers;
+  }, [availableDrivers, selectedHospital]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -664,9 +713,34 @@ export default function DashboardPage() {
   };
 
   const handleCancelBooking = async () => {
-    alert(
-      "For safety reasons, customers cannot cancel after the booking is active. Please contact the driver.",
+    if (!activeBooking?._id) return;
+
+    const confirmed = window.confirm(
+      "Do you want to cancel this ambulance request?",
     );
+    if (!confirmed) return;
+
+    setLoadingAction(true);
+    try {
+      const res = await fetch(`/api/bookings/cancel/${activeBooking._id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const ct = res.headers.get("content-type");
+      const data = ct && ct.includes("application/json") ? await res.json() : null;
+
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error || "Failed to cancel booking");
+      }
+
+      setActiveBooking(data.booking);
+      setBookingNotice("Your ambulance request has been cancelled.");
+    } catch (error) {
+      alert(error.message || "Unable to cancel the booking.");
+    } finally {
+      setLoadingAction(false);
+    }
   };
 
   const handleApproveCompletion = async () => {
@@ -821,6 +895,17 @@ export default function DashboardPage() {
                   </div>
                 </div>
                 <div className="flex gap-2">
+                  {activeBooking?.status &&
+                    !["completed", "cancelled", "rejected"].includes(
+                      activeBooking.status,
+                    ) && (
+                      <button
+                        onClick={handleCancelBooking}
+                        className="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-xl font-bold text-sm transition-all"
+                      >
+                        Cancel booking
+                      </button>
+                    )}
                   {activeBooking?.status === "awaiting_seeker_approval" && (
                     <button
                       onClick={handleApproveCompletion}
@@ -1128,13 +1213,15 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                {availableDrivers.length > 0 && (
+                {driversForSelectedHospital.length > 0 && (
                   <div className="space-y-3">
                     <p className="text-xs font-bold text-black uppercase">
-                      Nearby drivers ({availableDrivers.length})
+                      {selectedHospital
+                        ? `Providers for ${selectedHospital.name} (${driversForSelectedHospital.length})`
+                        : `Nearby drivers (${driversForSelectedHospital.length})`}
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {availableDrivers.map((driver) => (
+                      {driversForSelectedHospital.map((driver) => (
                         <div
                           key={driver._id || driver.id}
                           className="group relative rounded-3xl border-2 border-slate-100 bg-white p-5 hover:border-blue-500 hover:shadow-xl hover:shadow-blue-50 transition-all duration-300 transform active:scale-[0.98]"
@@ -1181,7 +1268,7 @@ export default function DashboardPage() {
                           </div>
 
                           <button
-                            onClick={() => handleSOSClick(driver)}
+                            onClick={() => handleSOSClick(driver, targetHospitalId || null)}
                             disabled={isSubmitting || !!activeBooking}
                             className="w-full py-3.5 rounded-2xl bg-red-600 text-white text-xs font-black hover:bg-red-700 shadow-lg shadow-red-100 active:translate-y-0.5 transition-all disabled:opacity-50 disabled:shadow-none"
                           >
@@ -1195,9 +1282,9 @@ export default function DashboardPage() {
                   </div>
                 )}
 
-                {availableDrivers.length === 0 && !loadingDrivers && (
+                {driversForSelectedHospital.length === 0 && !loadingDrivers && (
                   <p className="text-xs font-semibold text-black">
-                    Click the button above to view drivers.
+                    Select a hospital and click the button above to view matching providers.
                   </p>
                 )}
               </div>
@@ -1263,6 +1350,11 @@ export default function DashboardPage() {
                         <p className="text-[10px] text-black mb-2">
                           {h.address}
                         </p>
+                        {targetHospitalId === h._id && (
+                          <div className="mb-2 inline-flex items-center rounded-full bg-blue-600 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-white">
+                            Selected hospital
+                          </div>
+                        )}
                         {h.emergency_services && (
                           <div className="flex flex-wrap gap-2 mb-2">
                             <span className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded border border-slate-100 text-[8px] font-bold text-black uppercase">
@@ -1285,23 +1377,35 @@ export default function DashboardPage() {
                           </div>
                           <button
                             onClick={() => {
-                              if (availableDrivers.length === 0) {
-                                alert("Please load nearby drivers first.");
-                                return;
-                              }
-                              handleSOSClick(availableDrivers[0], h._id);
+                              setTargetHospitalId(h._id);
                             }}
                             disabled={
                               isSubmitting ||
                               !!activeBooking ||
-                              availableDrivers.length === 0
+                              filteredHospitals.length === 0
                             }
-                            className="bg-blue-600 text-white p-2.5 rounded-xl hover:bg-blue-700 transition-colors disabled:bg-slate-200"
-                            title="Send request to this hospital"
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-white hover:bg-blue-700 transition-colors disabled:bg-slate-200"
+                            title="Select this hospital"
                           >
-                            <Send className="h-3.5 w-3.5" />
+                            <MapPin className="h-3.5 w-3.5" />
+                            Select
                           </button>
                         </div>
+                        {targetHospitalId === h._id && driversForSelectedHospital.length > 0 && (
+                          <div className="mt-3 space-y-2 rounded-2xl border border-blue-100 bg-blue-50/70 p-3">
+                            <p className="text-[10px] font-black uppercase tracking-wider text-blue-700">
+                              Providers serving this hospital
+                            </p>
+                            <div className="space-y-2">
+                              {driversForSelectedHospital.slice(0, 3).map((driver) => (
+                                <div key={`${h._id}-${driver.id}`} className="flex items-center justify-between rounded-xl bg-white px-3 py-2 text-[11px] font-semibold text-black shadow-sm">
+                                  <span>{driver.name}</span>
+                                  <span className="text-blue-600">BDT {driver.offeredFare}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))
                   )}

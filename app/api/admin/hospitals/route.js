@@ -8,6 +8,22 @@ import {
   isMongoConnectivityError,
 } from "@/lib/dbStore";
 
+const sanitizeHospital = (hospital) => {
+  if (!hospital) return hospital;
+  return {
+    ...hospital,
+    _id: String(hospital._id || ""),
+    userId: hospital.userId ? String(hospital.userId) : "",
+    username: hospital.username ? String(hospital.username) : "",
+    division_id: hospital.division_id ? String(hospital.division_id) : "",
+    district_id: hospital.district_id ? String(hospital.district_id) : "",
+    upazila_id: hospital.upazila_id ? String(hospital.upazila_id) : "",
+    assignedProviderIds: Array.isArray(hospital.assignedProviderIds)
+      ? hospital.assignedProviderIds.map(String)
+      : [],
+  };
+};
+
 // GET: List hospitals by location
 export async function GET(request) {
   try {
@@ -20,7 +36,10 @@ export async function GET(request) {
       district_id,
       upazila_id,
     });
-    return NextResponse.json({ success: true, hospitals });
+    return NextResponse.json({
+      success: true,
+      hospitals: hospitals.map(sanitizeHospital),
+    });
   } catch (error) {
     const isConnError =
       isMongoConnectivityError(error) ||
@@ -45,7 +64,7 @@ export async function POST(request) {
   try {
     const body = await request.json();
     const doc = await createHospital(body);
-    return NextResponse.json({ success: true, hospital: doc });
+    return NextResponse.json({ success: true, hospital: sanitizeHospital(doc) });
   } catch (e) {
     const isConnError =
       isMongoConnectivityError(e) ||
@@ -89,7 +108,7 @@ export async function PATCH(request) {
       );
     }
 
-    return NextResponse.json({ success: true, hospital: doc });
+    return NextResponse.json({ success: true, hospital: sanitizeHospital(doc) });
   } catch (e) {
     const isConnError =
       isMongoConnectivityError(e) ||

@@ -55,6 +55,7 @@ export async function POST(request) {
       division_id: division_id ? String(division_id) : "",
       district_id: district_id ? String(district_id) : "",
       upazila_id: upazila_id ? String(upazila_id) : "",
+      assignedProviderIds: [],
     });
 
     const safeHospital = { ...hospital };
