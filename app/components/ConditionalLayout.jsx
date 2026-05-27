@@ -8,12 +8,13 @@ export default function ConditionalLayout({ children }) {
   const isAuthPage =
     pathname.includes("/login") || pathname.includes("/register");
   const isUserDashboard = pathname.startsWith("/dashboard");
+  const isProviderDashboard = pathname.startsWith("/provider-dashboard");
 
   return (
     <>
-      {!isAuthPage && !isUserDashboard && <Navbar />}
+      {!isAuthPage && !isUserDashboard && !isProviderDashboard && <Navbar />}
       {children}
-      {!isAuthPage && !isUserDashboard && <Footer />}
+      {!isAuthPage && !isUserDashboard && !isProviderDashboard && <Footer />}
     </>
   );
 }
