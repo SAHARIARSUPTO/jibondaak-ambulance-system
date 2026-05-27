@@ -164,12 +164,6 @@ const ContactPage = () => {
         </div>
       </section>
 
-      {/* --- FOOTER --- */}
-      <footer className="py-12 border-t border-slate-100 text-center">
-        <p className="text-slate-400 text-sm">
-          © 2026 JibonDaak. Modern emergency service network.
-        </p>
-      </footer>
     </main>
   );
 };

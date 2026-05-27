@@ -32,5 +32,8 @@ export async function GET(request) {
   }
   // Optionally, fetch live patient forwarding/bookings here
   // For now, just return hospital info
-  return NextResponse.json({ success: true, hospital });
+  const safeHospital = { ...hospital };
+  delete safeHospital.password;
+
+  return NextResponse.json({ success: true, hospital: safeHospital });
 }

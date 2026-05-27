@@ -355,19 +355,6 @@ const HomePage = () => {
           </div>
         </section>
 
-        {/* 4. FOOTER / CALL TO ACTION */}
-        <footer className="py-12 border-t border-slate-100 bg-slate-50 text-center">
-          <p className="text-slate-500 font-medium mb-4">Emergency Helpline</p>
-          <a
-            href="tel:999"
-            className="text-5xl font-black text-red-600 hover:text-red-700 transition-colors"
-          >
-            999
-          </a>
-          <div className="mt-8 text-slate-400 text-sm">
-            © 2024 Your lifeline ambulance service. All rights reserved.
-          </div>
-        </footer>
       </main>
 
       <ExpertiseSection></ExpertiseSection>

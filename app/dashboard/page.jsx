@@ -32,56 +32,54 @@ import {
   BadgeDollarSign,
   MessageCircle,
 } from "lucide-react";
-import Footer from "../components/footer/footer";
-import Navbar from "../components/navbar/navbar";
 
 const DEFAULT_LOCATION = { latitude: 23.8103, longitude: 90.4125 };
 
 const TRACKING_STEPS = [
-  { key: "pending_driver_acceptance", label: "চালকের অনুমোদনের অপেক্ষায়" },
-  { key: "searching", label: "অ্যাম্বুলেন্স খোঁজা হচ্ছে" },
-  { key: "driver_assigned", label: "চালক নির্ধারিত হয়েছে" },
-  { key: "en_route", label: "অ্যাম্বুলেন্স আপনার পথে আছে" },
-  { key: "arrived", label: "অ্যাম্বুলেন্স আপনার কাছে পৌঁছেছে" },
-  { key: "destination_reached", label: "গন্তব্যে পৌঁছেছে" },
-  { key: "awaiting_seeker_approval", label: "আপনার কনফার্মেশনের অপেক্ষায়" },
-  { key: "completed", label: "ট্রিপ সম্পন্ন" },
-  { key: "rejected", label: "অনুরোধ ক্যান্সেল করেছেন" },
-  { key: "cancelled", label: "ট্রিপ বাতিল" },
+  { key: "pending_driver_acceptance", label: "Awaiting driver approval" },
+  { key: "searching", label: "Searching for ambulance" },
+  { key: "driver_assigned", label: "Driver assigned" },
+  { key: "en_route", label: "Ambulance is on the way" },
+  { key: "arrived", label: "Ambulance has arrived" },
+  { key: "destination_reached", label: "Destination reached" },
+  { key: "awaiting_seeker_approval", label: "Awaiting your confirmation" },
+  { key: "completed", label: "Trip completed" },
+  { key: "rejected", label: "Request rejected" },
+  { key: "cancelled", label: "Trip cancelled" },
 ];
 
 const FIRST_AID_TIPS = {
   critical:
-    "শ্বাস-প্রশ্বাস পরীক্ষা করুন। রোগীকে সমতল জায়গায় শুইয়ে দিন। রক্তপাত হলে ক্ষতস্থান চেপে ধরুন।",
+    "Check breathing, lay the patient flat, and apply pressure to any bleeding wound.",
   urgent:
-    "রোগীকে আশ্বস্ত করুন। পর্যাপ্ত বাতাস চলাচলের ব্যবস্থা করুন। কোনো ওষুধ দেওয়ার আগে ডাক্তারের পরামর্শ নিন।",
+    "Keep the patient calm, make sure there is fresh air, and consult a doctor before giving any medicine.",
   stable:
-    "রোগীর অবস্থা পর্যবেক্ষণ করুন এবং অ্যাম্বুলেন্স আসার অপেক্ষা করুন। রোগীকে নড়াচড়া কম করতে বলুন।",
+    "Monitor the patient and wait for the ambulance. Ask them to keep movement to a minimum.",
 };
 
 const formatStatus = (status) => {
-  if (!status) return "কোনো বুকিং নেই";
+  if (!status) return "No active booking";
   const statusMap = {
-    pending_driver_acceptance: "অনুমোদনের অপেক্ষায়",
-    searching: "খোঁজা হচ্ছে",
-    driver_assigned: "চালক নিযুক্ত",
-    en_route: "পথে আছে",
-    arrived: "পৌঁছেছে",
-    destination_reached: "গন্তব্যে পৌঁছেছে",
-    awaiting_seeker_approval: "আপনার অনুমোদনের অপেক্ষায়",
-    completed: "সম্পন্ন",
-    rejected: "অনুরোধ ক্যান্সেল করেছেন",
-    cancelled: "বাতিলকৃত",
+    pending_driver_acceptance: "Awaiting approval",
+    searching: "Searching",
+    driver_assigned: "Driver assigned",
+    en_route: "On the way",
+    arrived: "Arrived",
+    destination_reached: "Destination reached",
+    awaiting_seeker_approval: "Awaiting your approval",
+    completed: "Completed",
+    rejected: "Request rejected",
+    cancelled: "Cancelled",
   };
   return statusMap[status] || status;
 };
 
 const getGreeting = () => {
   const hour = new Date().getHours();
-  if (hour < 6) return "শুভ রাত্রি";
-  if (hour < 12) return "শুভ সকাল";
-  if (hour < 18) return "শুভ বিকাল";
-  return "শুভ সন্ধ্যা";
+  if (hour < 6) return "Good night";
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
 };
 
 export default function DashboardPage() {
@@ -159,7 +157,7 @@ export default function DashboardPage() {
           setDbHospitals(hospitals);
           if (hospitals.length === 0) {
             setHospitalError(
-              "দুঃখিত, আপনার এলাকার হাসপাতাল পাওয়া যায়নি। দয়া করে বিভাগ/জেলা/উপজেলা ঠিক করে আবার চেষ্টা করুন।",
+              "No hospitals were found for your selected area. Please adjust the division, district, or upazila and try again.",
             );
           }
         } else {
@@ -167,9 +165,7 @@ export default function DashboardPage() {
         }
       } catch (err) {
         console.error("Failed to fetch area-wise hospitals:", err);
-        setHospitalError(
-          "হাসপাতাল লোড করতে ব্যর্থ হয়েছে। পরে আবার চেষ্টা করুন।",
-        );
+        setHospitalError("Failed to load hospitals. Please try again later.");
       } finally {
         setHospitalLoading(false);
       }
@@ -395,39 +391,35 @@ export default function DashboardPage() {
         if (nextBooking?.status && nextBooking.status !== lastBookingStatus) {
           if (nextBooking.status === "pending_driver_acceptance") {
             setBookingNotice(
-              "আপনার বুকিংটি গ্রহণের জন্য চালকের প্রতিক্রিয়ার অপেক্ষায় আছে।",
+              "Your booking is waiting for the driver to respond.",
             );
           } else if (nextBooking.status === "searching") {
-            setBookingNotice(
-              "আপনার জন্য একটি উপযুক্ত অ্যাম্বুলেন্স খোঁজা হচ্ছে।",
-            );
+            setBookingNotice("We are searching for a suitable ambulance for you.");
           } else if (nextBooking.status === "driver_assigned") {
             setBookingNotice(
-              "ড্রাইভার আপনার অনুরোধ গ্রহণ করেছেন। অ্যাম্বুলেন্স প্রস্তুত হচ্ছে।",
+              "The driver has accepted your request and the ambulance is being prepared.",
             );
           } else if (nextBooking.status === "en_route") {
-            setBookingNotice("অ্যাম্বুলেন্স এখন আপনার দিকে এগুচ্ছে।");
+            setBookingNotice("The ambulance is now heading toward you.");
           } else if (nextBooking.status === "arrived") {
-            setBookingNotice("অ্যাম্বুলেন্স আপনার জায়গায় পৌঁছেছে।");
+            setBookingNotice("The ambulance has reached your location.");
           } else if (nextBooking.status === "trip_started") {
-            setBookingNotice(
-              "আপনার ট্রিপ শুরু হয়েছে। নিরাপদ যাত্রা কামনা করি।",
-            );
+            setBookingNotice("Your trip has started. Have a safe journey.");
           } else if (nextBooking.status === "destination_reached") {
-            setBookingNotice("আপনার গন্তব্যে পৌঁছেছে। দয়া করে চালককে জানান।");
+            setBookingNotice("You have reached the destination. Please inform the driver.");
           } else if (nextBooking.status === "awaiting_seeker_approval") {
             setBookingNotice(
-              "ড্রাইভার ট্রিপ সম্পন্ন হিসেবে চিহ্নিত করেছে। অনুগ্রহ করে নিশ্চিত করুন।",
+              "The driver has marked the trip as complete. Please confirm.",
             );
           } else if (nextBooking.status === "completed") {
-            setBookingNotice("ট্রিপ সফলভাবে সম্পন্ন হয়েছে। ধন্যবাদ।");
+            setBookingNotice("The trip has been completed successfully. Thank you.");
           } else if (nextBooking.status === "rejected") {
             setBookingNotice(
-              "দুঃখিত, চালক আপনার অনুরোধটি গ্রহণ করতে পারেননি। অনুগ্রহ করে অন্য চালক চেষ্টা করুন।",
+              "Sorry, the driver could not accept your request. Please try another driver.",
             );
           } else if (nextBooking.status === "cancelled") {
             setBookingNotice(
-              `ট্রিপটি বাতিল করা হয়েছে। কারণ: ${nextBooking.cancellationReason || "উল্লেখ নেই"}`,
+              `The trip was cancelled. Reason: ${nextBooking.cancellationReason || "Not provided"}`,
             );
           }
           setLastBookingStatus(nextBooking.status);
@@ -447,16 +439,16 @@ export default function DashboardPage() {
     }
 
     if (!userLocation)
-      return alert("আপনার অবস্থান শনাক্ত করা হচ্ছে, দয়া করে অপেক্ষা করুন...");
+      return alert("We are detecting your location. Please wait...");
 
     if (!patientAge || !symptoms) {
-      return alert("দয়া করে রোগীর তথ্য (বয়স ও সমস্যা) আগে পূরণ করুন।");
+      return alert("Please fill in the patient details first (age and symptoms).");
     }
 
-    if (!selectedRouteId) return alert("দয়া করে একটি রুট নির্বাচন করুন।");
+    if (!selectedRouteId) return alert("Please select a route.");
     if (!user?.division || !user?.district || !user?.upazila) {
       return alert(
-        "দয়া করে আগে আপনার এরিয়া (বিভাগ, জেলা, উপজেলা) নির্বাচন করে সেভ করুন।",
+        "Please select and save your area first (division, district, and upazila).",
       );
     }
     setLoadingDrivers(true);
@@ -482,18 +474,18 @@ export default function DashboardPage() {
 
       const data = await response.json();
       if (!data?.success)
-        throw new Error(data?.error || "ড্রাইভার লোড করা যায়নি");
+        throw new Error(data?.error || "Unable to load drivers");
 
       setAvailableDrivers(data.drivers || []);
 
       if (data.drivers?.length === 0) {
         alert(
-          "দুঃখিত, এই মুহূর্তে এই রুটে কোনো ড্রাইভার পাওয়া যায়নি। অন্য রুট চেষ্টা করুন।",
+          "Sorry, no drivers are available for this route right now. Please try another route.",
         );
       }
     } catch (error) {
       console.error("Driver fetch error:", error);
-      alert("সার্ভার সমস্যা। ড্রাইভার লোড করা যায়নি। আবার চেষ্টা করুন।");
+      alert("Server error. Unable to load drivers. Please try again.");
     } finally {
       setLoadingDrivers(false);
       setLoadingAction(false);
@@ -506,12 +498,12 @@ export default function DashboardPage() {
     eta = null,
   ) => {
     if (!needsAmbulance)
-      return alert("দয়া করে আগে 'অ্যাম্বুলেন্স প্রয়োজন' অপশনটি চালু করুন।");
+      return alert("Please turn on the 'Need ambulance' option first.");
     if (!userLocation)
-      return alert("আপনার অবস্থান শনাক্ত করা হচ্ছে, দয়া করে অপেক্ষা করুন...");
+      return alert("We are detecting your location. Please wait...");
     if (!patientAge || !symptoms)
-      return alert("দয়া করে রোগীর বয়স এবং সমস্যা সংক্ষেপে লিখুন।");
-    if (!selectedDriver) return alert("দয়া করে একটি ড্রাইভার নির্বাচন করুন।");
+      return alert("Please provide the patient age and symptoms briefly.");
+    if (!selectedDriver) return alert("Please select a driver.");
 
     // 1. Robust ID Extraction: Ensure we get a clean 24-character hex string if available
     const getCleanId = (obj) => {
@@ -572,7 +564,7 @@ export default function DashboardPage() {
       setActiveBooking(data.booking);
       setAvailableDrivers([]);
     } catch (e) {
-      alert(e.message || "বুকিং করতে সমস্যা হয়েছে।");
+      alert(e.message || "There was a problem placing the booking.");
     } finally {
       setIsSubmitting(false);
       setLoadingAction(false);
@@ -614,7 +606,7 @@ export default function DashboardPage() {
 
   const saveAreaDetails = async () => {
     if (!user.division || !user.district || !user.upazila) {
-      alert("দয়া করে বিভাগ, জেলা এবং উপজেলা সম্পূর্ণ নির্বাচন করুন।");
+      alert("Please select the division, district, and upazila completely.");
       return;
     }
 
@@ -649,7 +641,7 @@ export default function DashboardPage() {
       localStorage.setItem("user", JSON.stringify(nextUser));
       setIsEditingArea(false);
     } catch (err) {
-      alert("ঠিকানা সেভ করতে সমস্যা হয়েছে: " + err.message);
+      alert("Failed to save address: " + err.message);
     } finally {
       setLoadingAction(false);
     }
@@ -673,7 +665,7 @@ export default function DashboardPage() {
 
   const handleCancelBooking = async () => {
     alert(
-      "নিরাপত্তার স্বার্থে বুকিং সচল হওয়ার পর গ্রাহক বাতিল করতে পারবেন না। দয়া করে চালকের সাথে যোগাযোগ করুন।",
+      "For safety reasons, customers cannot cancel after the booking is active. Please contact the driver.",
     );
   };
 
@@ -707,7 +699,7 @@ export default function DashboardPage() {
   if (!user)
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        লোডিং হচ্ছে...
+        Loading...
       </div>
     );
 
@@ -721,43 +713,77 @@ export default function DashboardPage() {
         <div className="fixed inset-0 z-[100] bg-white/60 backdrop-blur-sm flex items-center justify-center">
           <div className="bg-white p-8 rounded-[2.5rem] shadow-2xl flex flex-col items-center gap-4 border border-slate-100">
             <Loader2 className="h-12 w-12 text-blue-600 animate-spin" />
-            <p className="font-black text-slate-800 animate-pulse">
-              প্রসেস হচ্ছে, দয়া করে অপেক্ষা করুন...
+            <p className="font-black text-black animate-pulse">
+              Processing, please wait...
             </p>
           </div>
         </div>
       )}
 
-      <div className="min-h-screen bg-slate-50 text-slate-900 pb-10">
-        {/* --- RE-DESIGNED HEADER --- */}
-        <header className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-md border-b border-slate-200">
-          <div className="mx-auto max-w-7xl px-4 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-3 bg-slate-50 p-1.5 rounded-2xl border border-slate-100">
-              <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                <User className="h-4 w-4 text-blue-600" />
+      <div className="min-h-screen bg-slate-50 text-black pb-10">
+        <main className="mx-auto max-w-7xl px-4 pt-8 space-y-6">
+          <section className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
+            <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+              <div className="relative p-8 md:p-10 bg-[linear-gradient(135deg,_#0f172a_0%,_#1d4ed8_60%,_#2563eb_100%)] text-white">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(255,255,255,0.16),_transparent_30%),radial-gradient(circle_at_bottom_left,_rgba(255,255,255,0.10),_transparent_24%)]" />
+                <div className="relative flex flex-col gap-5">
+                  <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.35em] text-white/90 backdrop-blur">
+                    User Dashboard
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-white/70">
+                      {greeting}
+                    </p>
+                    <h1 className="mt-3 text-3xl md:text-5xl font-black tracking-tight">
+                      Welcome back, {user.name}
+                    </h1>
+                    <p className="mt-4 max-w-2xl text-sm md:text-base text-blue-50/90 leading-relaxed">
+                      Manage your ambulance request, track active trips, and update your profile from one focused workspace.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-3 text-xs font-bold">
+                    <span className="rounded-full bg-white/10 px-4 py-2 backdrop-blur">Live request tracking</span>
+                    <span className="rounded-full bg-white/10 px-4 py-2 backdrop-blur">Area management</span>
+                    <span className="rounded-full bg-white/10 px-4 py-2 backdrop-blur">Driver chat</span>
+                  </div>
+                </div>
               </div>
-              <span className="text-xs font-bold pr-2">{user.name}</span>
+              <div className="grid gap-4 p-6 md:p-8 bg-slate-50">
+                <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-black mb-2">
+                    Account
+                  </p>
+                  <p className="text-xl font-black text-black">{user.name}</p>
+                  <p className="mt-1 text-sm text-black">{user.phone || "No phone number saved"}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-black mb-2">
+                      Active drivers
+                    </p>
+                    <p className="text-2xl font-black text-black">{availableDrivers.length}</p>
+                  </div>
+                  <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-black mb-2">
+                      Hospitals
+                    </p>
+                    <p className="text-2xl font-black text-black">{hospitalLoading ? "..." : dbHospitals.length}</p>
+                  </div>
+                </div>
+                <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.35em] text-black mb-2">
+                    Current area
+                  </p>
+                  <p className="text-sm font-bold text-black">{userDivisionName || "Division not selected"}</p>
+                  <p className="mt-1 text-sm text-black">
+                    {userDistrictName && `${userDistrictName}, `}
+                    {userUpazilaName || "Upazila not selected"}
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="flex gap-4">
-              <button
-                onClick={() => router.push("/dashboard")}
-                className="text-xs font-bold text-blue-600 hover:underline"
-              >
-                Dashboard
-              </button>
-              {user.role === "provider" && (
-                <button
-                  onClick={() => router.push("/provider-dashboard")}
-                  className="text-xs font-bold text-red-600"
-                >
-                  Driver Panel
-                </button>
-              )}
-            </div>
-          </div>
-        </header>
+          </section>
 
-        <main className="mx-auto max-w-7xl px-4 mt-8 space-y-6">
           {/* Active Trip Banner */}
           {activeBooking && (
             <div className="relative">
@@ -780,7 +806,7 @@ export default function DashboardPage() {
                         ? "Request rejected"
                         : activeBooking.status === "cancelled"
                           ? "Trip cancelled"
-                          : "A trip is active"}
+                          : "Active trip"}
                     </p>
                     <h2 className="text-xl font-black">
                       {activeBooking.driverInfo
@@ -789,7 +815,7 @@ export default function DashboardPage() {
                     </h2>
                     {activeBooking.driverInfo && (
                       <p className="text-sm font-bold mt-1">
-                        ফোন: {activeBooking.driverInfo.phone}
+                        Phone: {activeBooking.driverInfo.phone}
                       </p>
                     )}
                   </div>
@@ -800,16 +826,16 @@ export default function DashboardPage() {
                       onClick={handleApproveCompletion}
                       className="bg-emerald-500 hover:bg-emerald-600 px-6 py-3 rounded-xl font-bold text-sm transition-all"
                     >
-                      ট্রিপ সম্পন্ন নিশ্চিত করুন
+                      Confirm trip completion
                     </button>
                   )}
                   {(activeBooking?.status === "rejected" ||
                     activeBooking?.status === "cancelled") && (
                     <button
                       onClick={handleClearBooking}
-                      className="bg-white text-slate-900 hover:bg-slate-100 px-6 py-3 rounded-xl font-bold text-sm transition-all"
+                      className="bg-white text-black hover:bg-slate-100 px-6 py-3 rounded-xl font-bold text-sm transition-all"
                     >
-                      নতুন করে খুঁজুন
+                      Search again
                     </button>
                   )}
                 </div>
@@ -844,48 +870,48 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
             <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.35em] text-slate-400 font-bold mb-3">
-                হাসপাতাল সংখ্যা
+              <p className="text-xs uppercase tracking-[0.35em] text-black font-bold mb-3">
+                Hospitals
               </p>
-              <p className="text-3xl font-black text-slate-900">
+              <p className="text-3xl font-black text-black">
                 {hospitalLoading ? "..." : dbHospitals.length}
               </p>
-              <p className="text-sm text-slate-500 mt-2">
-                আপনার নির্বাচিত এলাকার হাসপাতাল
+              <p className="text-sm text-black mt-2">
+                Hospitals in your selected area
               </p>
             </div>
             <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.35em] text-slate-400 font-bold mb-3">
-                ড্রাইভার
+              <p className="text-xs uppercase tracking-[0.35em] text-black font-bold mb-3">
+                Drivers
               </p>
-              <p className="text-3xl font-black text-slate-900">
+              <p className="text-3xl font-black text-black">
                 {availableDrivers.length}
               </p>
-              <p className="text-sm text-slate-500 mt-2">নিকটবর্তী চালক</p>
+              <p className="text-sm text-black mt-2">Nearby drivers</p>
             </div>
             <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.35em] text-slate-400 font-bold mb-3">
-                বুকিং স্ট্যাটাস
+              <p className="text-xs uppercase tracking-[0.35em] text-black font-bold mb-3">
+                Booking status
               </p>
-              <p className="text-3xl font-black text-slate-900">
+              <p className="text-3xl font-black text-black">
                 {activeBooking
                   ? formatStatus(activeBooking.status)
-                  : "কোনো বুকিং নেই"}
+                  : "No booking"}
               </p>
-              <p className="text-sm text-slate-500 mt-2">
-                আপনার সাম্প্রতিক অবস্থান
+              <p className="text-sm text-black mt-2">
+                Your latest status
               </p>
             </div>
             <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-              <p className="text-xs uppercase tracking-[0.35em] text-slate-400 font-bold mb-3">
-                লোকেশন
+              <p className="text-xs uppercase tracking-[0.35em] text-black font-bold mb-3">
+                Location
               </p>
-              <p className="text-base font-bold text-slate-900">
-                {userDivisionName || "বিভাগ নেই"}
+              <p className="text-base font-bold text-black">
+                {userDivisionName || "No division selected"}
               </p>
-              <p className="text-sm text-slate-500 mt-1">
+              <p className="text-sm text-black mt-1">
                 {userDistrictName && `${userDistrictName}, `}
-                {userUpazilaName || "উপজেলা নেই"}
+                {userUpazilaName || "No upazila selected"}
               </p>
             </div>
           </div>
@@ -898,22 +924,22 @@ export default function DashboardPage() {
                   <h2 className="text-2xl font-black tracking-tight">
                     Ambulance request
                   </h2>
-                  <p className="text-sm text-slate-400 font-medium">
+                  <p className="text-sm text-black font-medium">
                     Fill in the details below accurately
                   </p>
                 </div>
                 <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
                   <button
                     onClick={() => setNeedsAmbulance(!needsAmbulance)}
-                    className={`text-xs font-bold px-4 py-2 rounded-lg transition-all ${needsAmbulance ? "bg-red-600 text-white" : "text-slate-500"}`}
+                    className={`text-xs font-bold px-4 py-2 rounded-lg transition-all ${needsAmbulance ? "bg-red-600 text-white" : "text-black"}`}
                   >
-                    জরুরি প্রয়োজন
+                    Need ambulance
                   </button>
                   <button
                     onClick={() => setNeedsAmbulance(false)}
-                    className={`text-xs font-bold px-4 py-2 rounded-lg transition-all ${!needsAmbulance ? "bg-emerald-600 text-white" : "text-slate-500"}`}
+                    className={`text-xs font-bold px-4 py-2 rounded-lg transition-all ${!needsAmbulance ? "bg-emerald-600 text-white" : "text-black"}`}
                   >
-                    ঠিক আছি
+                    I am okay
                   </button>
                 </div>
               </div>
@@ -922,12 +948,12 @@ export default function DashboardPage() {
                 className={`space-y-6 transition-opacity ${activeBooking ? "opacity-50 pointer-events-none" : "opacity-100"}`}
               >
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <p className="text-xs font-bold text-slate-500 uppercase mb-3">
-                    Step 1: যাত্রার এরিয়া নির্বাচন করুন
+                  <p className="text-xs font-bold text-black uppercase mb-3">
+                    Step 1: Select your travel area
                   </p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <select
-                      className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm outline-none"
+                      className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm outline-none text-black"
                       value={user.division || ""}
                       onChange={(e) =>
                         setUser({
@@ -938,7 +964,7 @@ export default function DashboardPage() {
                         })
                       }
                     >
-                      <option value="">বিভাগ</option>
+                      <option value="">Division</option>
                       {allDivisions.map((d) => (
                         <option key={d.id} value={d.id}>
                           {d.bn_name}
@@ -947,7 +973,7 @@ export default function DashboardPage() {
                     </select>
                     <select
                       disabled={!user.division}
-                      className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm outline-none disabled:opacity-50"
+                      className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm outline-none text-black disabled:opacity-50"
                       value={user.district || ""}
                       onChange={(e) =>
                         setUser({
@@ -957,7 +983,7 @@ export default function DashboardPage() {
                         })
                       }
                     >
-                      <option value="">জেলা</option>
+                      <option value="">District</option>
                       {districts.map((d) => (
                         <option key={d.id} value={d.id}>
                           {d.bn_name}
@@ -966,13 +992,13 @@ export default function DashboardPage() {
                     </select>
                     <select
                       disabled={!user.district}
-                      className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm outline-none disabled:opacity-50"
+                      className="w-full bg-white border border-slate-200 rounded-xl p-3 text-sm outline-none text-black disabled:opacity-50"
                       value={user.upazila || ""}
                       onChange={(e) =>
                         setUser({ ...user, upazila: e.target.value })
                       }
                     >
-                      <option value="">উপজেলা</option>
+                      <option value="">Upazila</option>
                       {upazilas.map((u) => (
                         <option key={u.id} value={u.id}>
                           {u.bn_name}
@@ -983,52 +1009,52 @@ export default function DashboardPage() {
                   <div className="mt-3">
                     <button
                       onClick={saveAreaDetails}
-                      className="px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-bold"
+                      className="px-4 py-2 rounded-xl bg-black text-white text-sm font-bold"
                     >
-                      এরিয়া সেভ করুন
+                      Save area
                     </button>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
-                      <User className="h-3 w-3" /> রোগীর বয়স
+                    <label className="text-xs font-bold text-black uppercase flex items-center gap-2">
+                      <User className="h-3 w-3" /> Patient age
                     </label>
                     <input
                       type="number"
-                      placeholder="যেমন: ২৫"
-                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 outline-none focus:ring-2 ring-red-100"
+                      placeholder="Example: 25"
+                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 outline-none focus:ring-2 ring-red-100 text-black"
                       value={patientAge}
                       onChange={(e) => setPatientAge(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
-                      <Stethoscope className="h-3 w-3" /> রোগীর অবস্থা
+                    <label className="text-xs font-bold text-black uppercase flex items-center gap-2">
+                      <Stethoscope className="h-3 w-3" /> Patient condition
                     </label>
                     <select
-                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 outline-none appearance-none"
+                      className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 outline-none appearance-none text-black"
                       value={severity}
                       onChange={(e) => setSeverity(e.target.value)}
                     >
-                      <option value="stable">স্থিতিশীল (Stable)</option>
-                      <option value="urgent">জরুরি (Urgent)</option>
-                      <option value="critical">সংকটাপন্ন (Critical)</option>
+                      <option value="stable">Stable</option>
+                      <option value="urgent">Urgent</option>
+                      <option value="critical">Critical</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
-                    <Hospital className="h-3 w-3" /> পছন্দের হাসপাতাল (ঐচ্ছিক)
+                  <label className="text-xs font-bold text-black uppercase flex items-center gap-2">
+                    <Hospital className="h-3 w-3" /> Preferred hospital (optional)
                   </label>
                   <select
-                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 outline-none appearance-none"
+                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 outline-none appearance-none text-black"
                     value={targetHospitalId}
                     onChange={(e) => setTargetHospitalId(e.target.value)}
                   >
-                    <option value="">নিকটস্থ যেকোনো হাসপাতাল</option>
+                    <option value="">Any nearby hospital</option>
                     {filteredHospitals.map((h) => (
                       <option key={h._id} value={h._id}>
                         {h.name}
@@ -1038,29 +1064,29 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="space-y-2 group">
-                  <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
-                    <Route className="h-3 w-3" /> রুট নির্বাচন করুন
+                  <label className="text-xs font-bold text-black uppercase flex items-center gap-2">
+                    <Route className="h-3 w-3" /> Select route
                   </label>
                   <select
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 outline-none appearance-none focus:border-blue-500 focus:bg-white transition-all font-bold text-slate-700"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 outline-none appearance-none focus:border-blue-500 focus:bg-white transition-all font-bold text-black"
                     value={selectedRouteId}
                     onChange={(e) => setSelectedRouteId(e.target.value)}
                   >
-                    <option value="">রুট নির্বাচন করুন</option>
+                    <option value="">Select a route</option>
                     {routes.map((route) => (
                       <option key={route.id} value={route.id}>
-                        {route.name} - ৳{route.baseFare}
+                        {route.name} - BDT {route.baseFare}
                       </option>
                     ))}
                   </select>
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
-                    <FileText className="h-3 w-3" /> প্রধান সমস্যা/লক্ষণসমূহ
+                  <label className="text-xs font-bold text-black uppercase flex items-center gap-2">
+                    <FileText className="h-3 w-3" /> Main symptoms
                   </label>
                   <textarea
-                    placeholder="রোগীর সমস্যা বিস্তারিত লিখুন (যেমন: শ্বাসকষ্ট, বুকে ব্যথা...)"
+                    placeholder="Describe the patient's symptoms in detail (for example: shortness of breath, chest pain...)"
                     className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-4 outline-none min-h-[100px] focus:ring-2 ring-blue-100 focus:bg-white transition-all"
                     value={symptoms}
                     onChange={(e) => setSymptoms(e.target.value)}
@@ -1069,15 +1095,15 @@ export default function DashboardPage() {
 
                 <div className="pt-4 flex flex-col md:flex-row gap-4">
                   <div className="flex-1">
-                    <p className="text-xs font-bold text-slate-400 mb-2">
-                      অ্যাম্বুলেন্সের ধরন নির্বাচন করুন
+                    <p className="text-xs font-bold text-black mb-2">
+                      Select ambulance type
                     </p>
                     <div className="flex gap-2">
                       {["non-ac", "ac", "icu"].map((type) => (
                         <button
                           key={type}
                           onClick={() => setSelectedAmbulanceType(type)}
-                          className={`flex-1 py-3 rounded-xl border-2 text-xs font-bold transition-all ${selectedAmbulanceType === type ? "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-100" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"}`}
+                          className={`flex-1 py-3 rounded-xl border-2 text-xs font-bold transition-all ${selectedAmbulanceType === type ? "bg-blue-600 text-white border-blue-600 shadow-lg shadow-blue-100" : "bg-white border-slate-200 text-black hover:bg-slate-50"}`}
                         >
                           {type.toUpperCase()}
                         </button>
@@ -1092,10 +1118,10 @@ export default function DashboardPage() {
                         {loadingDrivers ? (
                           <>
                             <Activity className="animate-spin h-4 w-4" />{" "}
-                            ড্রাইভার খোঁজা হচ্ছে...
+                            Searching for drivers...
                           </>
                         ) : (
-                          "নিকটবর্তী ড্রাইভার দেখুন"
+                          "View nearby drivers"
                         )}
                       </button>
                     </div>
@@ -1104,8 +1130,8 @@ export default function DashboardPage() {
 
                 {availableDrivers.length > 0 && (
                   <div className="space-y-3">
-                    <p className="text-xs font-bold text-slate-500 uppercase">
-                      নিকটবর্তী ড্রাইভার ({availableDrivers.length})
+                    <p className="text-xs font-bold text-black uppercase">
+                      Nearby drivers ({availableDrivers.length})
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {availableDrivers.map((driver) => (
@@ -1120,13 +1146,13 @@ export default function DashboardPage() {
                               />
                             </div>
                             <div>
-                              <h4 className="text-base font-black text-slate-900 leading-none mb-1">
+                              <h4 className="text-base font-black text-black leading-none mb-1">
                                 {driver.name}
                               </h4>
-                              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">
+                              <p className="text-[10px] text-black font-bold uppercase tracking-tight">
                                 {driver.ambulanceModel} (
                                 {driver.ambulanceType.toUpperCase()}) •{" "}
-                                <span className="text-slate-600">
+                                <span className="text-black">
                                   {driver.ambulanceNumber}
                                 </span>
                               </p>
@@ -1136,19 +1162,19 @@ export default function DashboardPage() {
                           <div className="grid grid-cols-3 gap-2 mb-6">
                             <div className="bg-slate-50 rounded-2xl p-2.5 text-center border border-slate-100/50">
                               <Navigation className="h-3.5 w-3.5 mx-auto mb-1 text-blue-500" />
-                              <p className="text-[10px] font-black text-slate-700">
+                              <p className="text-[10px] font-black text-black">
                                 {driver.distanceKm} KM
                               </p>
                             </div>
                             <div className="bg-slate-50 rounded-2xl p-2.5 text-center border border-slate-100/50">
                               <BadgeDollarSign className="h-3.5 w-3.5 mx-auto mb-1 text-emerald-500" />
-                              <p className="text-[10px] font-black text-slate-700">
-                                ৳{driver.offeredFare}
+                              <p className="text-[10px] font-black text-black">
+                                BDT {driver.offeredFare}
                               </p>
                             </div>
                             <div className="bg-slate-50 rounded-2xl p-2.5 text-center border border-slate-100/50">
                               <Star className="h-3.5 w-3.5 mx-auto mb-1 text-amber-500 fill-amber-500" />
-                              <p className="text-[10px] font-black text-slate-700">
+                              <p className="text-[10px] font-black text-black">
                                 {driver.rating}/5
                               </p>
                             </div>
@@ -1160,8 +1186,8 @@ export default function DashboardPage() {
                             className="w-full py-3.5 rounded-2xl bg-red-600 text-white text-xs font-black hover:bg-red-700 shadow-lg shadow-red-100 active:translate-y-0.5 transition-all disabled:opacity-50 disabled:shadow-none"
                           >
                             {isSubmitting
-                              ? "অনুরোধ পাঠানো হচ্ছে..."
-                              : "বুক করুন"}
+                              ? "Sending request..."
+                              : "Book now"}
                           </button>
                         </div>
                       ))}
@@ -1170,8 +1196,8 @@ export default function DashboardPage() {
                 )}
 
                 {availableDrivers.length === 0 && !loadingDrivers && (
-                  <p className="text-xs font-semibold text-slate-500">
-                    ড্রাইভার দেখতে উপরের বাটনে ক্লিক করুন।
+                  <p className="text-xs font-semibold text-black">
+                    Click the button above to view drivers.
                   </p>
                 )}
               </div>
@@ -1193,10 +1219,10 @@ export default function DashboardPage() {
                     }
                   />
                   <h3 className="font-black text-sm uppercase tracking-wider">
-                    ফার্স্ট এইড টিপস
+                    First aid tips
                   </h3>
                 </div>
-                <p className="text-slate-700 text-sm font-bold leading-relaxed">
+                <p className="text-black text-sm font-bold leading-relaxed">
                   {FIRST_AID_TIPS[severity]}
                 </p>
               </section>
@@ -1204,25 +1230,23 @@ export default function DashboardPage() {
               {/* Hospital List */}
               <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
                 <h3 className="font-black text-lg mb-4 flex items-center gap-2">
-                  <Hospital className="h-5 w-5 text-blue-600" /> নিকটস্থ
-                  হাসপাতালসমূহ
+                  <Hospital className="h-5 w-5 text-blue-600" /> Nearby hospitals
                 </h3>
-                <p className="text-[10px] font-bold text-slate-400 mb-4 uppercase tracking-wider">
-                  আপনি চাইলে নির্দিষ্ট হাসপাতালে সরাসরি রিকোয়েস্ট পাঠাতে পারেন
+                <p className="text-[10px] font-bold text-black mb-4 uppercase tracking-wider">
+                  You can send a request directly to a specific hospital
                 </p>
                 <div className="space-y-3">
                   {hospitalLoading ? (
-                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 text-center text-slate-500">
-                      হাসপাতাল লোড করা হচ্ছে...
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 text-center text-black">
+                      Loading hospitals...
                     </div>
                   ) : hospitalError ? (
                     <div className="rounded-3xl border border-amber-200 bg-amber-50 p-6 text-center text-amber-800">
                       {hospitalError}
                     </div>
                   ) : filteredHospitals.length === 0 ? (
-                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 text-center text-slate-500">
-                      আপনার নির্বাচিত এলাকায় কোনো হাসপাতাল পাওয়া যায়নি। অনুগ্রহ
-                      করে অঞ্চলটি যাচাই করুন।
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 text-center text-black">
+                      No hospital found in your selected area. Please verify the region.
                     </div>
                   ) : (
                     filteredHospitals.map((h) => (
@@ -1236,12 +1260,12 @@ export default function DashboardPage() {
                             <Phone className="h-3 w-3" />
                           </a>
                         </div>
-                        <p className="text-[10px] text-slate-500 mb-2">
+                        <p className="text-[10px] text-black mb-2">
                           {h.address}
                         </p>
                         {h.emergency_services && (
                           <div className="flex flex-wrap gap-2 mb-2">
-                            <span className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded border border-slate-100 text-[8px] font-bold text-slate-500 uppercase">
+                            <span className="flex items-center gap-1 bg-white px-1.5 py-0.5 rounded border border-slate-100 text-[8px] font-bold text-black uppercase">
                               {h.emergency_services}
                             </span>
                           </div>
@@ -1249,11 +1273,11 @@ export default function DashboardPage() {
                         <div className="flex items-center justify-between mt-3">
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                              <span className="flex items-center gap-1 text-[9px] font-bold text-slate-500">
+                              <span className="flex items-center gap-1 text-[9px] font-bold text-black">
                                 <BedSingle className="h-3 w-3 text-emerald-500" />{" "}
-                                বেড: {h.beds || 0}
+                                Beds: {h.beds || 0}
                               </span>
-                              <span className="flex items-center gap-1 text-[9px] font-bold text-slate-500">
+                              <span className="flex items-center gap-1 text-[9px] font-bold text-black">
                                 <Activity className="h-3 w-3 text-red-500" />{" "}
                                 ICU: {h.icu || 0}
                               </span>
@@ -1262,7 +1286,7 @@ export default function DashboardPage() {
                           <button
                             onClick={() => {
                               if (availableDrivers.length === 0) {
-                                alert("দয়া করে আগে নিকটস্থ ড্রাইভার লোড করুন।");
+                                alert("Please load nearby drivers first.");
                                 return;
                               }
                               handleSOSClick(availableDrivers[0], h._id);
@@ -1273,7 +1297,7 @@ export default function DashboardPage() {
                               availableDrivers.length === 0
                             }
                             className="bg-blue-600 text-white p-2.5 rounded-xl hover:bg-blue-700 transition-colors disabled:bg-slate-200"
-                            title="এই হাসপাতালে রিকোয়েস্ট পাঠান"
+                            title="Send request to this hospital"
                           >
                             <Send className="h-3.5 w-3.5" />
                           </button>
@@ -1290,11 +1314,11 @@ export default function DashboardPage() {
             <section className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
               <div className="flex items-center gap-2 mb-4">
                 <MessageCircle className="h-5 w-5 text-blue-600" />
-                <h3 className="font-black text-lg">ড্রাইভারের সাথে চ্যাট</h3>
+                <h3 className="font-black text-lg">Chat with the driver</h3>
               </div>
               <div className="h-48 overflow-y-auto bg-slate-50 border border-slate-100 rounded-2xl p-3 space-y-2">
                 {chatMessages.length === 0 ? (
-                  <p className="text-xs text-slate-500">এখনো কোনো মেসেজ নেই।</p>
+                  <p className="text-xs text-black">No messages yet.</p>
                 ) : (
                   chatMessages.map((msg) => (
                     <div
@@ -1302,7 +1326,7 @@ export default function DashboardPage() {
                       className={`max-w-[80%] px-3 py-2 rounded-xl text-sm ${
                         msg.senderRole === "seeker"
                           ? "ml-auto bg-blue-600 text-white"
-                          : "bg-white border border-slate-200 text-slate-700"
+                          : "bg-white border border-slate-200 text-black"
                       }`}
                     >
                       {msg.text}
@@ -1314,7 +1338,7 @@ export default function DashboardPage() {
                 <input
                   value={chatText}
                   onChange={(e) => setChatText(e.target.value)}
-                  placeholder="মেসেজ লিখুন..."
+                  placeholder="Write a message..."
                   className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none"
                 />
                 <button
@@ -1322,7 +1346,7 @@ export default function DashboardPage() {
                   disabled={isSendingChat || !chatText.trim()}
                   className="px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-bold disabled:bg-slate-300"
                 >
-                  পাঠান
+                  Send
                 </button>
               </div>
             </section>
@@ -1333,13 +1357,13 @@ export default function DashboardPage() {
               <div className="flex items-center gap-2 mb-4">
                 <Navigation className="h-5 w-5 text-blue-600" />
                 <h3 className="font-black text-lg">
-                  অ্যাম্বুলেন্সের লাইভ লোকেশন
+                  Ambulance live location
                 </h3>
               </div>
               <div className="mb-4 p-4 bg-blue-50 rounded-2xl border border-blue-100 flex items-center gap-3">
                 <div className="h-2 w-2 bg-red-500 rounded-full animate-ping" />
                 <p className="text-xs font-bold text-blue-800">
-                  অ্যাম্বুলেন্সটি লাইভ ম্যাপে আপনার অবস্থানের দিকে অগ্রসর হচ্ছে।
+                  The ambulance is moving toward your location on the live map.
                 </p>
               </div>
               <div className="rounded-2xl overflow-hidden border border-slate-200">
@@ -1356,7 +1380,7 @@ export default function DashboardPage() {
                 rel="noreferrer"
                 className="inline-flex mt-3 text-sm font-bold text-blue-600 hover:text-blue-700"
               >
-                গুগল ম্যাপে খুলুন
+                Open in Google Maps
               </a>
             </section>
           )}
@@ -1366,13 +1390,13 @@ export default function DashboardPage() {
             {/* User Profile */}
             <section className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="font-black text-lg">প্রোফাইল তথ্য</h3>
+                <h3 className="font-black text-lg">Profile information</h3>
                 {!isEditingArea ? (
-                  <button
+                    <button
                     onClick={() => setIsEditingArea(true)}
                     className="p-2 hover:bg-slate-50 rounded-full transition-colors"
                   >
-                    <Edit3 className="h-4 w-4 text-slate-400" />
+                    <Edit3 className="h-4 w-4 text-black" />
                   </button>
                 ) : (
                   <div className="flex gap-2">
@@ -1384,7 +1408,7 @@ export default function DashboardPage() {
                     </button>
                     <button
                       onClick={() => setIsEditingArea(false)}
-                      className="bg-slate-100 text-slate-500 p-2 rounded-lg"
+                      className="bg-slate-100 text-black p-2 rounded-lg"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -1394,27 +1418,27 @@ export default function DashboardPage() {
 
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="bg-slate-100 p-2 rounded-lg text-slate-500">
+                  <div className="bg-slate-100 p-2 rounded-lg text-black">
                     <User className="h-4 w-4" />
                   </div>
                   <span className="text-sm font-bold">{user.name}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="bg-slate-100 p-2 rounded-lg text-slate-500">
+                  <div className="bg-slate-100 p-2 rounded-lg text-black">
                     <Phone className="h-4 w-4" />
                   </div>
                   <span className="text-sm font-bold">
-                    {user.phone || "ফোন নম্বর নেই"}
+                    {user.phone || "No phone number"}
                   </span>
                 </div>
                 <div className="flex items-start gap-3">
-                  <div className="bg-slate-100 p-2 rounded-lg text-slate-500 mt-1">
+                  <div className="bg-slate-100 p-2 rounded-lg text-black mt-1">
                     <MapPin className="h-4 w-4" />
                   </div>
                   <span className="text-sm font-bold leading-relaxed">
                     {userUpazilaName && userDistrictName && userDivisionName
                       ? `${userUpazilaName}, ${userDistrictName}, ${userDivisionName}`
-                      : "ঠিকানা সেট করা নেই"}
+                      : "No address set"}
                   </span>
                 </div>
               </div>
@@ -1433,7 +1457,7 @@ export default function DashboardPage() {
                       })
                     }
                   >
-                    <option value="">বিভাগ সিলেক্ট করুন</option>
+                    <option value="">Select division</option>
                     {divisions.map((d) => (
                       <option key={d.id} value={d.id}>
                         {d.bn_name}
@@ -1452,7 +1476,7 @@ export default function DashboardPage() {
                       })
                     }
                   >
-                    <option value="">জেলা সিলেক্ট করুন</option>
+                    <option value="">Select district</option>
                     {districts.map((d) => (
                       <option key={d.id} value={d.id}>
                         {d.bn_name}
@@ -1467,7 +1491,7 @@ export default function DashboardPage() {
                       setUser({ ...user, upazila: e.target.value })
                     }
                   >
-                    <option value="">উপজেলা সিলেক্ট করুন</option>
+                    <option value="">Select upazila</option>
                     {upazilas.map((u) => (
                       <option key={u.id} value={u.id}>
                         {u.bn_name}
@@ -1481,23 +1505,23 @@ export default function DashboardPage() {
             {/* Medical Info */}
             <section className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-slate-100">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-black text-lg">মেডিকেল তথ্য</h3>
+                <h3 className="font-black text-lg">Medical information</h3>
                 <HeartPulse className="text-red-500 h-5 w-5" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-red-50 p-4 rounded-2xl">
                   <p className="text-[10px] font-bold text-red-400 uppercase">
-                    রক্তের গ্রুপ
+                    Blood group
                   </p>
                   <p className="text-xl font-black text-red-700">
                     {user.bloodGroup || "O+"}
                   </p>
                 </div>
                 <div className="bg-slate-50 p-4 rounded-2xl">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase">
-                    অ্যালার্জি
+                  <p className="text-[10px] font-bold text-black uppercase">
+                    Allergies
                   </p>
-                  <p className="text-sm font-bold text-slate-700">নেই</p>
+                  <p className="text-sm font-bold text-black">None</p>
                 </div>
               </div>
             </section>

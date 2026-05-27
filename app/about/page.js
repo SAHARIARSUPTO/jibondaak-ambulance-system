@@ -201,25 +201,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* --- FOOTER (Minimal) --- */}
-      <footer className="py-12 border-t border-slate-100">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-slate-400 text-sm">
-            © 2024 JibonDaak. All rights reserved.
-          </p>
-          <div className="flex gap-8 text-sm font-bold text-slate-900 uppercase tracking-widest">
-            <a href="#" className="hover:text-red-600 transition-colors">
-              Privacy
-            </a>
-            <a href="#" className="hover:text-red-600 transition-colors">
-              Terms
-            </a>
-            <a href="#" className="hover:text-red-600 transition-colors">
-              Contact
-            </a>
-          </div>
-        </div>
-      </footer>
     </main>
   );
 }
