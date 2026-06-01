@@ -3,9 +3,11 @@ import { cancelBookingById } from "@/lib/dbStore";
 
 export async function POST(request, { params }) {
   try {
-    const bookingId = params?.bookingId;
+    const fromParams = params?.bookingId;
+    const fromPath = new URL(request.url).pathname.split("/").pop();
+    const bookingId = String(fromParams || fromPath || "").trim();
 
-    if (!bookingId) {
+    if (!bookingId || bookingId === "undefined" || bookingId === "null") {
       return NextResponse.json(
         { success: false, error: "Invalid booking id" },
         { status: 400 },
@@ -20,7 +22,11 @@ export async function POST(request, { params }) {
       );
     }
 
-    return NextResponse.json({ success: true, booking, message: "Booking cancelled" });
+    return NextResponse.json({
+      success: true,
+      booking,
+      message: "Booking cancelled",
+    });
   } catch (error) {
     return NextResponse.json(
       { success: false, error: "Failed to cancel booking" },

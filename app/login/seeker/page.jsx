@@ -20,12 +20,12 @@ export default function SeekerLogin() {
     setLoading(true);
 
     if (!email.includes("@")) {
-      setError("সঠিক ইমেইল অ্যাড্রেস প্রদান করুন।");
+      setError("Please enter a valid email address.");
       setLoading(false);
       return;
     }
     if (password.length < 6) {
-      setError("পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।");
+      setError("Password must be at least 6 characters long.");
       setLoading(false);
       return;
     }
@@ -47,10 +47,10 @@ export default function SeekerLogin() {
         }
         router.push("/dashboard");
       } else {
-        setError(data.error || "লগইন ব্যর্থ হয়েছে। আবার চেষ্টা করুন।");
+        setError(data.error || "Login failed. Please try again.");
       }
     } catch (error) {
-      setError("কিছু সমস্যা হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।");
+      setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -61,13 +61,13 @@ export default function SeekerLogin() {
       <div className="w-full max-w-md p-6 md:p-8 bg-white shadow-[0_20px_50px_rgba(0,0,0,0.05)] rounded-[2.5rem] border border-gray-100 animate-text-reveal">
         <div className="text-center mb-8">
           <h1 className="text-xs font-bold uppercase tracking-[0.2em] text-red-500 mb-2">
-            সেবাগ্রহীতা লগইন
+            Seeker Login
           </h1>
           <h2 className="text-4xl font-bold text-gray-900 tracking-tighter">
             জীবন<span className="text-red-600">ডাক</span>
           </h2>
           <p className="mt-3 text-gray-500 text-sm">
-            জরুরি অ্যাম্বুলেন্স সেবা বা সহায়তার জন্য লগইন করুন
+            Log in for emergency ambulance service or assistance.
           </p>
         </div>
 
@@ -80,21 +80,21 @@ export default function SeekerLogin() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block mb-2 font-medium text-gray-700">
-              ইমেইল অ্যাড্রেস
+              Email Address
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              placeholder="উদাহরণ: user@email.com"
+              placeholder="Example: user@email.com"
               className="w-full px-4 py-3 bg-gray-50 text-gray-800 border border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-red-500 focus:border-red-500 placeholder-gray-400 transition-all outline-none"
             />
           </div>
 
           <div>
             <label className="block mb-2 font-medium text-gray-700">
-              পাসওয়ার্ড
+              Password
             </label>
             <div className="relative">
               <input
@@ -102,7 +102,7 @@ export default function SeekerLogin() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                placeholder="আপনার পাসওয়ার্ড দিন"
+                placeholder="Enter your password"
                 className="w-full px-4 py-3 bg-gray-50 text-gray-800 border border-transparent rounded-xl focus:bg-white focus:ring-2 focus:ring-red-500 focus:border-red-500 placeholder-gray-400 pr-10 transition-all outline-none"
               />
               <button
@@ -110,7 +110,7 @@ export default function SeekerLogin() {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-400 hover:text-red-600 text-sm"
               >
-                {showPassword ? "লুকান" : "দেখান"}
+                {showPassword ? "Hide" : "Show"}
               </button>
             </div>
           </div>
@@ -123,13 +123,13 @@ export default function SeekerLogin() {
                 onChange={(e) => setRememberMe(e.target.checked)}
                 className="h-4 w-4 text-[#DC2626] focus:ring-[#DC2626] border-red-300 rounded"
               />
-              <span>আমাকে মনে রাখুন</span>
+              <span>Remember me</span>
             </label>
             <a
               href="#"
               className="text-[#DC2626] hover:underline text-sm font-medium"
             >
-              পাসওয়ার্ড ভুলে গেছেন?
+              Forgot your password?
             </a>
           </div>
 
@@ -138,27 +138,27 @@ export default function SeekerLogin() {
             disabled={loading}
             className="w-full bg-red-600 text-white py-4 rounded-2xl hover:bg-red-700 transition-all font-bold text-base shadow-lg shadow-red-100 disabled:bg-gray-200 disabled:cursor-not-allowed active:scale-[0.98]"
           >
-            {loading ? "লগইন হচ্ছে..." : "লগইন করুন"}
+              {loading ? "Logging in..." : "Log In"}
           </button>
         </form>
 
         <div className="mt-6 text-center text-gray-600 text-sm">
-          অ্যাকাউন্ট নেই?{" "}
+            Don't have an account?{" "}
           <Link
             href="/register/seeker"
             className="text-[#DC2626] font-medium hover:underline"
           >
-            নিবন্ধন করুন
+              Register
           </Link>
         </div>
 
         <div className="mt-4 text-center text-xs text-gray-500">
-          আপনি কি অ্যাম্বুলেন্স সেবাদাতা?{" "}
+            Are you an ambulance provider?{" "}
           <Link
             href="/login/provider"
             className="text-gray-900 hover:underline"
           >
-            প্রোভাইডার লগইনে যান
+              Go to provider login
           </Link>
         </div>
       </div>

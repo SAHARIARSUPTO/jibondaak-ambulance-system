@@ -8,13 +8,13 @@ export default function LoginIndexPage() {
       <div className="w-full max-w-5xl">
         <div className="text-center mb-10">
           <p className="text-xs font-bold uppercase tracking-[0.3em] text-red-500 mb-3">
-            জীবনডাক পোর্টাল
+            JibonDaak Portal
           </p>
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight">
-            লগইন<span className="text-red-600"> করুন</span>
+            Log<span className="text-red-600"> in</span>
           </h1>
           <p className="mt-3 text-gray-600">
-            আপনার অ্যাকাউন্টের ধরন বেছে নিন এবং এগিয়ে যান
+            Choose your account type and continue.
           </p>
         </div>
 
@@ -22,28 +22,28 @@ export default function LoginIndexPage() {
           <div className="rounded-3xl border border-gray-100 bg-white p-6 md:p-8 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
             <div className="mb-6">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-                রোগী বা সাধারণ ইউজার
+                Patient or general user
               </p>
               <h2 className="mt-2 text-2xl font-bold text-gray-900">
-                সেবাগ্রহীতা হিসেবে
+                As a seeker
               </h2>
               <p className="mt-2 text-sm text-gray-600">
-                জরুরি অ্যাম্বুলেন্স বুকিং এবং ট্র্যাকিং করার জন্য
+                For emergency ambulance booking and tracking.
               </p>
             </div>
             <Link
               href="/login/seeker"
               className="inline-flex w-full items-center justify-center rounded-2xl bg-red-600 px-6 py-4 text-sm font-bold text-white shadow-lg shadow-red-100 transition hover:bg-red-700"
             >
-              সিকার হিসেবে লগইন
+              Log in as seeker
             </Link>
             <p className="mt-4 text-center text-sm text-gray-500">
-              অ্যাকাউন্ট নেই?{" "}
+              Don't have an account?{" "}
               <Link
                 href="/register/seeker"
                 className="text-red-600 hover:underline"
               >
-                এখনি তৈরি করুন
+                Create one now
               </Link>
             </p>
           </div>
@@ -51,28 +51,28 @@ export default function LoginIndexPage() {
           <div className="rounded-3xl border border-gray-100 bg-white p-6 md:p-8 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
             <div className="mb-6">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
-                অ্যাম্বুলেন্স মালিক বা চালক
+                Ambulance owner or driver
               </p>
               <h2 className="mt-2 text-2xl font-bold text-gray-900">
-                সেবাদাতা হিসেবে
+                As a provider
               </h2>
               <p className="mt-2 text-sm text-gray-600">
-                আপনার ট্রিপ ম্যানেজ এবং আয় ট্র্যাক করার জন্য
+                For managing trips and tracking earnings.
               </p>
             </div>
             <Link
               href="/login/provider"
               className="inline-flex w-full items-center justify-center rounded-2xl bg-gray-900 px-6 py-4 text-sm font-bold text-white shadow-lg shadow-gray-200 transition hover:bg-gray-800"
             >
-              প্রোভাইডার হিসেবে লগইন
+              Log in as provider
             </Link>
             <p className="mt-4 text-center text-sm text-gray-500">
-              পার্টনার হতে চান?{" "}
+              Want to become a partner?{" "}
               <Link
                 href="/register/provider"
                 className="text-gray-900 hover:underline"
               >
-                নিবন্ধন করুন
+                Register
               </Link>
             </p>
           </div>

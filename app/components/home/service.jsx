@@ -14,41 +14,41 @@ import {
 const ExpertiseSection = () => {
   const stats = [
     {
-      label: "সক্রিয় অ্যাম্বুলেন্স",
-      value: "৫০০+",
+      label: "Active ambulances",
+      value: "500+",
       icon: <Activity className="w-5 h-5" />,
     },
     {
-      label: "গড় রেসপন্স টাইম",
-      value: "১২ মিনিট",
+      label: "Average response time",
+      value: "12 minutes",
       icon: <Clock className="w-5 h-5" />,
     },
     {
-      label: "সফল ট্রিপ",
-      value: "১০,০০০+",
+      label: "Successful trips",
+      value: "10,000+",
       icon: <ShieldCheck className="w-5 h-5" />,
     },
   ];
 
   const features = [
     {
-      title: "লাইফ সাপোর্ট সিস্টেম",
+      title: "Life support system",
       description:
-        "আমাদের ICU অ্যাম্বুলেন্সগুলো আধুনিক ভেন্টিলেটর এবং হার্ট মনিটর দ্বারা সুসজ্জিত।",
+        "Our ICU ambulances are equipped with modern ventilators and heart monitors.",
       icon: <Stethoscope className="w-6 h-6" />,
       tag: "Advanced",
     },
     {
-      title: "স্মার্ট লোকেশন ট্র্যাকিং",
+      title: "Smart location tracking",
       description:
-        "রিয়েল-টাইম জিপিএস প্রযুক্তির মাধ্যমে আপনার নিকটস্থ চালককে দ্রুত খুঁজে বের করা হয়।",
+        "Real-time GPS technology helps us quickly find the nearest driver to you.",
       icon: <Map className="w-6 h-6" />,
       tag: "Precision",
     },
     {
-      title: "স্বচ্ছ ভাড়া নীতি",
+      title: "Transparent fare policy",
       description:
-        "কোনো লুকানো খরচ নেই। সরাসরি চালকের সাথে কথা বলে সাশ্রয়ী মূল্যে সেবা নিশ্চিত করুন।",
+        "No hidden costs. Speak directly with the driver and get service at a fair price.",
       icon: <Zap className="w-6 h-6" />,
       tag: "Transparent",
     },
@@ -61,17 +61,18 @@ const ExpertiseSection = () => {
         <div className="grid lg:grid-cols-2 gap-12 items-center mb-20">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold tracking-wider uppercase">
-              <ShieldCheck className="w-4 h-4" /> কেন আমরা সেরা
+              <ShieldCheck className="w-4 h-4" /> Why we are the best
             </div>
             <h2 className="text-4xl md:text-5xl font-black text-slate-900 leading-tight">
-              নির্ভযোগ্যতার সাথে <br />
+              Reliability you can trust <br />
               <span className="text-red-600 underline decoration-red-200 underline-offset-8">
-                আপনার পাশে আছি
+                right by your side
               </span>
             </h2>
             <p className="text-slate-600 text-lg max-w-lg leading-relaxed">
-              জরুরি মুহূর্তে সঠিক সিদ্ধান্ত নেওয়াই জীবন বাঁচানোর প্রথম ধাপ। আমরা
-              দিচ্ছি আধুনিক ও দ্রুততম মেডিকেল ট্রান্সপোর্ট সমাধান।
+              Making the right decision in an emergency is the first step to
+              saving a life. We provide modern and fast medical transport
+              solutions.
             </p>
           </div>
 
@@ -120,7 +121,7 @@ const ExpertiseSection = () => {
               </p>
 
               <div className="flex items-center gap-2 text-red-600 font-bold text-sm">
-                <CheckCircle2 className="w-4 h-4" /> ভেরিফাইড সার্ভিস
+                <CheckCircle2 className="w-4 h-4" /> Verified service
               </div>
             </div>
           ))}
@@ -135,15 +136,15 @@ const ExpertiseSection = () => {
               </div>
               <div>
                 <h4 className="text-white text-2xl font-bold">
-                  সরাসরি সহায়তা প্রয়োজন?
+                  Need direct support?
                 </h4>
                 <p className="text-slate-400">
-                  আমাদের কাস্টমার সাপোর্ট টিম ২৪/৭ আপনার সেবায় নিয়োজিত
+                  Our customer support team is available 24/7 to help you.
                 </p>
               </div>
             </div>
             <button className="bg-white hover:bg-red-600 hover:text-white text-slate-900 px-8 py-4 rounded-xl font-black text-lg transition-all transform active:scale-95 shadow-xl">
-              সাপোর্ট সেন্টারে কথা বলুন
+              Talk to Support Center
             </button>
           </div>
         </div>

@@ -521,7 +521,7 @@ export default function ProviderDashboard() {
 
   const handleCancelTrip = async (bookingId) => {
     const reason = prompt(
-      "ট্রিপ বাতিল করার কারণ লিখুন (Comment for cancellation):",
+      "Enter the reason for cancelling the trip (Comment for cancellation):",
     );
     if (!reason) return;
 
@@ -647,7 +647,7 @@ export default function ProviderDashboard() {
     setToast({ message, type });
   };
 
-  const handleAmbulanceAdded = (newAmbulance) => {
+  const handleAmbulanceAdded = async (newAmbulance) => {
     setAmbulances((prev) => [...prev, newAmbulance]);
     setProfileForm({
       type: newAmbulance.type || "non-ac",
@@ -660,6 +660,9 @@ export default function ProviderDashboard() {
       upazilaId: provider?.upazila || "",
     });
     showToast("Ambulance added successfully!", "success");
+    if (provider?._id) {
+      await fetchProviderData(provider._id);
+    }
   };
 
   const sendMessage = async () => {
@@ -1105,12 +1108,12 @@ export default function ProviderDashboard() {
                             onClick={() => updateBookingStatus(b._id, s)}
                             className="px-3 py-1.5 rounded-md border border-red-200 text-red-700 bg-red-50 text-sm"
                           >
-                            {s === "en_route" && "পথে আছি"}
-                            {s === "arrived" && "রোগীর কাছে পৌঁছেছি"}
-                            {s === "trip_started" && "ট্রিপ শুরু হয়েছে"}
-                            {s === "destination_reached" && "গন্তব্যে পৌঁছেছি"}
+                            {s === "en_route" && "On the way"}
+                            {s === "arrived" && "Reached the patient"}
+                            {s === "trip_started" && "Trip started"}
+                            {s === "destination_reached" && "Reached destination"}
                             {s === "awaiting_seeker_approval" &&
-                              "সম্পন্ন (কনফার্মেশন)"}
+                              "Completed (confirmation)"}
                           </button>
                         ))}
                         <button
@@ -1123,7 +1126,7 @@ export default function ProviderDashboard() {
                           onClick={() => handleCancelTrip(b._id)}
                           className="px-3 py-1.5 rounded-md border border-red-600 text-red-600 hover:bg-red-50 text-sm flex items-center gap-1"
                         >
-                          <XCircle className="w-3 h-3" /> বাতিল করুন
+                          <XCircle className="w-3 h-3" /> Cancel
                         </button>
                       </div>
                     </div>
@@ -1258,33 +1261,51 @@ export default function ProviderDashboard() {
                       </button>
                     </>
                   ) : (
-                    <>
-                      <p>
-                        <span className="text-slate-500">Type:</span>{" "}
-                        {ambulances[0]?.type}
-                      </p>
-                      <p>
-                        <span className="text-slate-500">Vehicle:</span>{" "}
-                        {ambulances[0]?.vehicleNumber}
-                      </p>
-                      <p>
-                        <span className="text-slate-500">License:</span>{" "}
-                        {ambulances[0]?.licenseNumber}
-                      </p>
-                      <p>
-                        <span className="text-slate-500">Driver:</span>{" "}
-                        {ambulances[0]?.driverName}
-                      </p>
-                      <p>
-                        <span className="text-slate-500">Phone:</span>{" "}
-                        {ambulances[0]?.driverPhone}
-                      </p>
-                      <p>
-                        <span className="text-slate-500">Area:</span>{" "}
-                        {ambulances[0]?.locationLabel ||
-                          `Division ${provider?.division || "--"}, Upazila ${provider?.upazila || "--"}`}
-                      </p>
-                    </>
+                    <div className="space-y-4">
+                      {ambulances.map((amb, index) => (
+                        <div
+                          key={amb._id || index}
+                          className="rounded-3xl border border-red-100 bg-[#fffafa] p-4"
+                        >
+                          <div className="flex items-center justify-between mb-3 gap-4">
+                            <div>
+                              <p className="text-sm font-black text-slate-900">
+                                Ambulance #{index + 1}
+                              </p>
+                              <p className="text-[11px] uppercase tracking-[0.3em] text-slate-400">
+                                {amb.type?.toUpperCase() || "NON-AC"}
+                              </p>
+                            </div>
+                            <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold text-slate-600">
+                              {amb.locationLabel ||
+                                `Division ${provider?.division || "--"}`}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-slate-700">
+                            <div className="space-y-2">
+                              <p>
+                                <span className="text-slate-500">Vehicle:</span>{" "}
+                                {amb.vehicleNumber || "--"}
+                              </p>
+                              <p>
+                                <span className="text-slate-500">Driver:</span>{" "}
+                                {amb.driverName || "--"}
+                              </p>
+                            </div>
+                            <div className="space-y-2">
+                              <p>
+                                <span className="text-slate-500">License:</span>{" "}
+                                {amb.licenseNumber || "--"}
+                              </p>
+                              <p>
+                                <span className="text-slate-500">Phone:</span>{" "}
+                                {amb.driverPhone || "--"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>

@@ -41,13 +41,17 @@ export async function POST(req) {
       success: true, 
       drivers: drivers.map(d => ({
         id: d._id.toString(),
+        providerId: d.providerId || null,
         name: d.name,
         ambulanceModel: d.ambulanceModel || "Ambulance",
         ambulanceNumber: d.ambulanceNumber,
         ambulanceType: d.ambulanceType || "ac",
         distanceKm: (Math.random() * 4 + 1).toFixed(1), // Simulated distance for UI
         offeredFare: d.baseFare || 1200,
-        rating: d.rating || 5
+        rating: d.rating || 5,
+        division_id: d.division_id || "",
+        district_id: d.district_id || "",
+        upazila_id: d.upazila_id || ""
       }))
     });
   } catch (error) {

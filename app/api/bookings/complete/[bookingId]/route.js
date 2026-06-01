@@ -3,11 +3,13 @@ import { getBookingById, updateBookingStatus } from "@/lib/dbStore";
 
 export async function POST(request, { params }) {
   try {
-    const bookingId = params?.bookingId;
+    const fromParams = params?.bookingId;
+    const fromPath = new URL(request.url).pathname.split("/").pop();
+    const bookingId = String(fromParams || fromPath || "").trim();
     const body = await request.json().catch(() => ({}));
     const userId = body?.userId ? String(body.userId) : "";
 
-    if (!bookingId) {
+    if (!bookingId || bookingId === "undefined" || bookingId === "null") {
       return NextResponse.json(
         { success: false, error: "Invalid booking id" },
         { status: 400 },
@@ -24,7 +26,10 @@ export async function POST(request, { params }) {
 
     if (userId && String(booking.userId) !== userId) {
       return NextResponse.json(
-        { success: false, error: "You are not allowed to approve this booking" },
+        {
+          success: false,
+          error: "You are not allowed to approve this booking",
+        },
         { status: 403 },
       );
     }

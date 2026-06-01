@@ -3,6 +3,7 @@ import {
   listProviderAmbulances,
   upsertDriverProfile,
   upsertProviderAmbulance,
+  createProviderAmbulance,
 } from "@/lib/dbStore";
 
 export async function GET(request) {
@@ -44,18 +45,7 @@ export async function POST(request) {
       );
     }
 
-    const existing = await listProviderAmbulances(providerId);
-    if (existing.length > 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Only one ambulance profile is allowed per driver account",
-        },
-        { status: 409 },
-      );
-    }
-
-    const ambulance = await upsertProviderAmbulance(providerId, {
+    const ambulance = await createProviderAmbulance(providerId, {
       type: type || "non-ac",
       vehicleNumber,
       licenseNumber: licenseNumber || "",

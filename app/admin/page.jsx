@@ -180,7 +180,7 @@ export default function AdminDashboardPage() {
 
   const handleSaveDriver = async () => {
     if (!driverForm.name || !driverForm.phone || !driverForm.division_id) {
-      alert("দয়া করে নাম, ফোন এবং বিভাগ পূরণ করুন।");
+      alert("Please fill in the name, phone, and division.");
       return;
     }
     setLoading(true);
@@ -194,7 +194,7 @@ export default function AdminDashboardPage() {
       const data = await res.json().catch(() => ({ success: false, error: "Invalid JSON" }));
       if (!data?.success) throw new Error(data?.error || "Unknown error");
 
-      alert("ড্রাইভার সফলভাবে ডাটাবেসে যোগ করা হয়েছে!");
+      alert("Driver added to the database successfully!");
       setDriverForm({
         name: "",
         phone: "",
@@ -207,7 +207,7 @@ export default function AdminDashboardPage() {
       });
       fetchDashboard(); // Refresh metrics after add
     } catch (err) {
-      alert("ত্রুটি: " + err.message);
+      alert("Error: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -215,7 +215,7 @@ export default function AdminDashboardPage() {
 
   const handleSaveHospital = async () => {
     if (!hospForm.name || !hospForm.division_id) {
-      alert("দয়া করে হাসপাতালের নাম এবং বিভাগ পূরণ করুন।");
+      alert("Please fill in the hospital name and division.");
       return;
     }
     setLoading(true);
@@ -229,7 +229,7 @@ export default function AdminDashboardPage() {
       const data = await res.json().catch(() => ({ success: false, error: "Invalid JSON" }));
       if (!data?.success) throw new Error(data?.error || "Unknown error");
 
-      alert("হাসপাতাল সফলভাবে রেজিস্টার করা হয়েছে!");
+      alert("Hospital registered successfully!");
       setHospForm({
         name: "",
         phone: "",
@@ -242,7 +242,7 @@ export default function AdminDashboardPage() {
       });
       fetchDashboard();
     } catch (err) {
-      alert("ত্রুটি: " + err.message);
+      alert("Error: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -382,7 +382,7 @@ export default function AdminDashboardPage() {
   };
 
   if (loading && !dashboardData) {
-    return <div className="min-h-screen flex items-center justify-center">লোডিং হচ্ছে...</div>;
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
   const metrics = dashboardData?.metrics || {};
@@ -497,7 +497,7 @@ export default function AdminDashboardPage() {
                 <LocationSelect label="Upazila" list={filteredUpazilas} value={driverForm.upazila_id} onChange={(v) => setDriverForm({ ...driverForm, upazila_id: v })} />
               </div>
               <button onClick={handleSaveDriver} disabled={loading} className="w-full py-5 bg-red-600 hover:bg-red-700 text-white rounded-3xl font-black shadow-lg">
-                {loading ? <RefreshCw className="animate-spin h-5 w-5" /> : <Save className="h-5 w-5" />} ড্রাইভার সেভ করুন
+                {loading ? <RefreshCw className="animate-spin h-5 w-5" /> : <Save className="h-5 w-5" />} Save Driver
               </button>
             </div>
           </div>
@@ -522,7 +522,7 @@ export default function AdminDashboardPage() {
                 <LocationSelect label="Upazila" list={filteredUpazilas} value={hospForm.upazila_id} onChange={(v) => setHospForm({ ...hospForm, upazila_id: v })} />
               </div>
               <button onClick={handleSaveHospital} disabled={loading} className="w-full py-5 bg-black hover:bg-slate-900 text-white rounded-3xl font-black flex items-center justify-center gap-3">
-                {loading ? <RefreshCw className="animate-spin h-5 w-5" /> : <Plus className="h-5 w-5" />} হাসপাতাল যোগ করুন
+                {loading ? <RefreshCw className="animate-spin h-5 w-5" /> : <Plus className="h-5 w-5" />} Add Hospital
               </button>
             </div>
 
