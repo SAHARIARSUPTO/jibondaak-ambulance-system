@@ -51,6 +51,23 @@ const Navbar = () => {
     { name: "Contact", href: "/contact", icon: Phone },
   ];
 
+  const roleActions = [
+    {
+      name: "Need Ambulance",
+      href: "/login/seeker",
+      icon: Ambulance,
+      className:
+        "bg-red-600 border-red-200 text-white hover:bg-red-700 shadow-sm",
+    },
+    {
+      name: "Join as Provider",
+      href: "/login/provider",
+      icon: HeartHandshake,
+      className:
+        "border border-gray-200 text-gray-900 hover:bg-gray-50 bg-white",
+    },
+  ];
+
   return (
     // NOT sticky
     <nav className="w-full z-30 bg-white/80 backdrop-blur-md border-b border-gray-100 transition-all duration-300 sticky top-0">
@@ -85,20 +102,18 @@ const Navbar = () => {
           <div className="hidden md:flex items-center space-x-4">
             {/* Persistent Action Buttons */}
             {!user?._id && (
-              <>
-                <Link
-                  href="/login/seeker"
-                  className="flex items-center border bg-red-600 border-red-200 text-white px-4 py-2.5 rounded-full text-sm font-semibold shadow-sm hover:bg-red-700 transition-all duration-300 whitespace-nowrap"
-                >
-                  Need an ambulance?
-                </Link>
-                <Link
-                  href="/login/provider"
-                  className="flex items-center border border-gray-200 text-gray-900 px-4 py-2.5 rounded-full text-sm font-semibold shadow-sm hover:bg-gray-50 transition-all duration-300 whitespace-nowrap"
-                >
-                  Register Ambulance
-                </Link>
-              </>
+              <div className="flex items-center gap-3">
+                {roleActions.map((action) => (
+                  <Link
+                    key={action.name}
+                    href={action.href}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 whitespace-nowrap ${action.className}`}
+                  >
+                    <action.icon className="w-4 h-4" />
+                    <span>{action.name}</span>
+                  </Link>
+                ))}
+              </div>
             )}
 
             {user?._id && (
@@ -191,22 +206,22 @@ const Navbar = () => {
 
           <div className="pt-3 border-t border-gray-100 space-y-3">
             {!user && (
-              <>
-                <Link
-                  href="/login/seeker"
-                  className="block text-center bg-red-600 text-white font-semibold py-3 px-4 rounded-xl transition-colors hover:bg-red-700"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Need an ambulance?
-                </Link>
-                <Link
-                  href="/login/provider"
-                  className="block text-center bg-gray-100 text-gray-900 font-semibold py-3 px-4 rounded-xl transition-colors hover:bg-gray-200"
-                  onClick={() => setIsOpen(false)}
-                >
-                  Register Ambulance
-                </Link>
-              </>
+              <div className="space-y-3">
+                <p className="px-1 text-xs font-bold uppercase tracking-[0.2em] text-gray-400">
+                  Quick actions
+                </p>
+                {roleActions.map((action) => (
+                  <Link
+                    key={action.name}
+                    href={action.href}
+                    className={`flex items-center justify-center gap-2 text-center font-semibold py-3 px-4 rounded-xl transition-colors ${action.className}`}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <action.icon className="w-4 h-4" />
+                    <span>{action.name}</span>
+                  </Link>
+                ))}
+              </div>
             )}
             {user && (
               <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
