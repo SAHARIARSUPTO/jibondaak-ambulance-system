@@ -1,4 +1,4 @@
-# 🚑 JibonDaak - Emergency Ambulance Service System
+# 🚑 JibonDaak - Smart Ambulance Booking & Rescue System
 
 **JibonDaak** is a real-time ambulance booking and tracking system that connects patients with ambulance service providers instantly. Built with Next.js and MongoDB, it provides a seamless emergency response platform.
 
