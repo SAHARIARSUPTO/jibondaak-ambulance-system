@@ -50,22 +50,41 @@ export async function POST(request) {
 
     console.log('📋 User details:', { email: user.email, role: user.role });
 
-    // Check user type matches
-    if (userType && user.role !== userType) {
-      console.log('❌ Role mismatch:', { expected: userType, actual: user.role });
-      return NextResponse.json({ 
-        success: false, 
-        error: `This account is not registered as ${userType === 'user' ? 'User' : 'Provider'}` 
-      }, { status: 401 });
-    }
+    // Normalize user role for comparison
+    const userRole = (user.role || 'seeker').toLowerCase();
+    const requestedRole = (role || userType || '').toLowerCase();
 
-    const userRole = user.role || 'seeker';
+    // Role mapping for flexible matching
+    const roleAliases = {
+      'provider': ['provider', 'ambulance_provider', 'driver'],
+      'seeker': ['seeker', 'user', 'patient'],
+      'hospital': ['hospital', 'hospital_admin'],
+    };
 
-    if (role && role !== userRole) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Account role does not match this login portal' 
-      }, { status: 403 });
+    // Check if role matches (with aliases)
+    if (requestedRole) {
+      const allowedRoles = roleAliases[requestedRole] || [requestedRole];
+      const isRoleMatch = allowedRoles.includes(userRole);
+
+      if (!isRoleMatch) {
+        console.log('❌ Role mismatch:', { requested: requestedRole, actual: userRole, allowed: allowedRoles });
+        
+        // Provide helpful error message with correct login link
+        const loginPaths = {
+          'provider': '/login/provider',
+          'seeker': '/login/seeker',
+          'hospital': '/hospital-login',
+        };
+        
+        const correctPath = loginPaths[userRole] || '/login';
+        
+        return NextResponse.json({ 
+          success: false, 
+          error: `This account is registered as ${userRole.toUpperCase()}. Please use the correct login page.`,
+          correctLoginPath: correctPath,
+          userRole: userRole,
+        }, { status: 403 });
+      }
     }
 
     // Remove password from response

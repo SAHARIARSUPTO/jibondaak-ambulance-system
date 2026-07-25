@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import DemoCredentials from "@/components/auth/DemoCredentials";
 
 export default function LoginIndexPage() {
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-white flex items-center justify-center px-4 py-10">
+    <div className="min-h-[calc(100vh-80px)] bg-gradient-to-br from-slate-50 to-white flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-5xl">
         <div className="text-center mb-10">
           <p className="text-xs font-bold uppercase tracking-[0.3em] text-red-500 mb-3">
@@ -18,7 +19,7 @@ export default function LoginIndexPage() {
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-2 mb-8">
           <div className="rounded-3xl border border-gray-100 bg-white p-6 md:p-8 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
             <div className="mb-6">
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gray-400">
@@ -77,6 +78,9 @@ export default function LoginIndexPage() {
             </p>
           </div>
         </div>
+
+        {/* Demo Credentials Section */}
+        <DemoCredentials />
       </div>
     </div>
   );

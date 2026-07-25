@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BedDouble, Building2, Check, LogOut, Search, ShieldAlert } from "lucide-react";
+import { BedDouble, Building2, Check, LogOut, Search, ShieldAlert, Navigation, Clock, MapPin } from "lucide-react";
+import LiveTrackingMap from "@/components/tracking/LiveTrackingMap";
 
 export default function HospitalDashboard() {
   const [hospital, setHospital] = useState(null);
@@ -11,6 +12,8 @@ export default function HospitalDashboard() {
   const [error, setError] = useState("");
   const [providers, setProviders] = useState([]);
   const [savingProviders, setSavingProviders] = useState(false);
+  const [activeBooking, setActiveBooking] = useState(null);
+  const [showTracking, setShowTracking] = useState(false);
   const router = useRouter();
 
   // Editable fields moved up to comply with the Rules of Hooks
@@ -72,6 +75,32 @@ export default function HospitalDashboard() {
 
     loadProviders();
   }, []);
+
+  useEffect(() => {
+    const loadActiveBookings = async () => {
+      try {
+        const userId = localStorage.getItem("hospitalUserId");
+        if (!userId) return;
+        
+        const res = await fetch(`/api/bookings/active?hospitalId=${hospital?._id}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.success && data.booking) {
+          setActiveBooking(data.booking);
+          setShowTracking(true);
+        }
+      } catch {
+        setActiveBooking(null);
+      }
+    };
+
+    if (hospital) {
+      loadActiveBookings();
+      // Poll for active bookings every 30 seconds
+      const interval = setInterval(loadActiveBookings, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [hospital]);
 
   const filteredProviders = useMemo(() => {
     const query = providerQuery.trim().toLowerCase();
@@ -259,6 +288,66 @@ export default function HospitalDashboard() {
             value={hospital.emergency_services || "Not specified"}
           />
         </div>
+
+        {/* Live Tracking Section */}
+        {showTracking && activeBooking && (
+          <div className="mt-6 rounded-[2rem] border border-red-100 bg-white p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-lg font-bold text-black flex items-center gap-2">
+                  <Navigation className="h-5 w-5 text-red-600" />
+                  Live Ambulance Tracking
+                </h2>
+                <p className="mt-1 text-sm text-black">
+                  Track the ambulance in real-time as it approaches your facility
+                </p>
+              </div>
+              <button
+                onClick={() => setShowTracking(false)}
+                className="text-sm font-bold text-slate-500 hover:text-slate-700"
+              >
+                Close
+              </button>
+            </div>
+            
+            {/* Booking Info */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="bg-slate-50 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="h-4 w-4 text-orange-600" />
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Booking ID</span>
+                </div>
+                <p className="text-sm font-black text-slate-900">{activeBooking._id?.slice(-8)}</p>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <MapPin className="h-4 w-4 text-blue-600" />
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Status</span>
+                </div>
+                <p className="text-sm font-black text-slate-900 capitalize">{activeBooking.status}</p>
+              </div>
+              <div className="bg-slate-50 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Navigation className="h-4 w-4 text-red-600" />
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">ETA</span>
+                </div>
+                <p className="text-sm font-black text-slate-900">
+                  {activeBooking.estimatedArrival 
+                    ? new Date(activeBooking.estimatedArrival).toLocaleTimeString()
+                    : "Calculating..."}
+                </p>
+              </div>
+            </div>
+
+            {/* Live Map */}
+            <LiveTrackingMap
+              bookingId={activeBooking._id}
+              hospitalId={hospital._id}
+              userId={localStorage.getItem("hospitalUserId")}
+              userType="hospital"
+            />
+          </div>
+        )}
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm">
