@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { io } from "socket.io-client";
 import {
   Ambulance,
   Loader2,
@@ -164,6 +165,39 @@ export default function ProviderDashboard() {
       .catch(() => {});
   }, [provider?._id]);
 
+  // Socket.io connection for real-time trip requests
+  useEffect(() => {
+    if (!provider?._id) return;
+
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
+    const socket = io(socketUrl, {
+      auth: {
+        userId: provider._id,
+        userType: "provider",
+      },
+    });
+
+    socket.on("connect", () => {
+      console.log("Socket connected for provider dashboard");
+    });
+
+    socket.on("provider:new_trip_request", (data) => {
+      console.log("New trip request received:", data);
+      // Refresh incoming requests when new trip arrives
+      fetchIncomingRequests();
+      // Show notification
+      setShowNotification(true);
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("Socket connection error:", err);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [provider?._id]);
+
   useEffect(() => {
     if (!selectedBookingId) {
       setMessages([]);
@@ -212,6 +246,9 @@ export default function ProviderDashboard() {
       // Fetch active bookings
       fetchActiveBookings(providerId);
       fetchProviderBookings(providerId);
+      
+      // Fetch pending requests on mount (initial load)
+      fetchIncomingRequests();
     } catch (error) {
       console.error("Error fetching provider data:", error);
     } finally {

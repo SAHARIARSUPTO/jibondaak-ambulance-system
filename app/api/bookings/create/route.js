@@ -152,6 +152,40 @@ export async function POST(request) {
         driverId: driver.id,
         isOnline: providerOnline,
       });
+
+      // Emit Socket.io event to provider's room for real-time notification
+      // This requires the socket server to be running
+      try {
+        const socketUrl = process.env.SOCKET_URL || 'http://localhost:3001';
+        const ioClient = require('socket.io-client')(socketUrl);
+        
+        // Connect and emit to provider's room
+        ioClient.on('connect', () => {
+          const roomName = `provider_${driver.providerId}`;
+          ioClient.emit('provider:new_trip_request', {
+            bookingId: booking._id,
+            providerId: driver.providerId,
+            driverId: driver.id,
+            booking: {
+              _id: booking._id,
+              userId: booking.userId,
+              userName: booking.userName,
+              userPhone: booking.userPhone,
+              userLocation: booking.userLocation,
+              ambulanceType: booking.ambulanceType,
+              routeName: booking.routeName,
+              offeredFare: booking.offeredFare,
+              patientInfo: booking.patientInfo,
+              status: booking.status,
+              createdAt: booking.createdAt,
+            },
+          });
+          ioClient.disconnect();
+        });
+      } catch (socketError) {
+        console.error('Socket.io notification failed (non-critical):', socketError);
+        // Continue without failing the booking creation
+      }
     }
 
     return NextResponse.json({ success: true, booking });

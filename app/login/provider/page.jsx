@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import DemoCredentialsInline from "@/components/auth/DemoCredentialsInline";
 
 export default function ProviderLogin() {
   const router = useRouter();
@@ -13,6 +14,11 @@ export default function ProviderLogin() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const role = "provider";
+
+  const handleFillCredentials = (email, password) => {
+    setEmail(email);
+    setPassword(password);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -47,7 +53,22 @@ export default function ProviderLogin() {
         }
         router.push("/driver-dashboard");
       } else {
-        setError(data.error || "Login failed. Please try again.");
+        // Handle 403 role mismatch errors with helpful message
+        if (data.correctLoginPath) {
+          setError(
+            <div className="space-y-2">
+              <p>{data.error}</p>
+              <Link
+                href={data.correctLoginPath}
+                className="inline-block text-gray-900 hover:underline font-bold"
+              >
+                Go to correct login page →
+              </Link>
+            </div>
+          );
+        } else {
+          setError(data.error || "Login failed. Please try again.");
+        }
       }
     } catch (error) {
       setError("Something went wrong. Please try again.");
@@ -76,6 +97,8 @@ export default function ProviderLogin() {
             {error}
           </div>
         )}
+
+        <DemoCredentialsInline onFillCredentials={handleFillCredentials} />
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
