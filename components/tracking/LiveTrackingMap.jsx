@@ -7,89 +7,97 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Navigation, MapPin, Clock, AlertCircle, Loader2 } from "lucide-react";
 
-// Fix default marker icon issue in Leaflet with React
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-});
+// Custom icons - initialized lazily to avoid SSR issues
+let ambulanceIcon = null;
+let hospitalIcon = null;
+let pickupIcon = null;
 
-// Custom ambulance icon
-const ambulanceIcon = L.divIcon({
-  className: "custom-ambulance-icon",
-  html: `
-    <div style="
-      background: #dc2626;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 3px solid white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    ">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-        <rect x="2" y="7" width="20" height="14" rx="2" />
-        <path d="M16 21V7a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v14" />
-      </svg>
-    </div>
-  `,
-  iconSize: [40, 40],
-  iconAnchor: [20, 20],
-});
+// Initialize Leaflet icons only on client side
+if (typeof window !== 'undefined') {
+  // Fix default marker icon issue in Leaflet with React
+  delete L.Icon.Default.prototype._getIconUrl;
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+    iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+    shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+  });
 
-// Custom hospital icon
-const hospitalIcon = L.divIcon({
-  className: "custom-hospital-icon",
-  html: `
-    <div style="
-      background: #2563eb;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 3px solid white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    ">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-        <path d="M3 21h18" />
-        <path d="M5 21V7l8-4 8 4v14" />
-        <path d="M8 9a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2H8V9z" />
-      </svg>
-    </div>
-  `,
-  iconSize: [40, 40],
-  iconAnchor: [20, 20],
-});
+  // Custom ambulance icon
+  ambulanceIcon = L.divIcon({
+    className: "custom-ambulance-icon",
+    html: `
+      <div style="
+        background: #dc2626;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      ">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+          <rect x="2" y="7" width="20" height="14" rx="2" />
+          <path d="M16 21V7a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v14" />
+        </svg>
+      </div>
+    `,
+    iconSize: [40, 40],
+    iconAnchor: [20, 20],
+  });
 
-// Custom pickup icon
-const pickupIcon = L.divIcon({
-  className: "custom-pickup-icon",
-  html: `
-    <div style="
-      background: #16a34a;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 3px solid white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    ">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-        <circle cx="12" cy="12" r="10" />
-        <path d="M12 6v6l4 2" />
-      </svg>
-    </div>
-  `,
-  iconSize: [36, 36],
-  iconAnchor: [18, 18],
-});
+  // Custom hospital icon
+  hospitalIcon = L.divIcon({
+    className: "custom-hospital-icon",
+    html: `
+      <div style="
+        background: #2563eb;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      ">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+          <path d="M3 21h18" />
+          <path d="M5 21V7l8-4 8 4v14" />
+          <path d="M8 9a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2H8V9z" />
+        </svg>
+      </div>
+    `,
+    iconSize: [40, 40],
+    iconAnchor: [20, 20],
+  });
+
+  // Custom pickup icon
+  pickupIcon = L.divIcon({
+    className: "custom-pickup-icon",
+    html: `
+      <div style="
+        background: #16a34a;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 3px solid white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      ">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 6v6l4 2" />
+        </svg>
+      </div>
+    `,
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+  });
+}
 
 // Component to auto-fit map bounds
 function MapBounds({ positions }) {
@@ -361,7 +369,7 @@ export default function LiveTrackingMap({ bookingId, hospitalId, userId, userTyp
           <AlertCircle className="w-8 h-8 text-red-600 mx-auto mb-2" />
           <p className="text-sm font-bold text-red-600">{error || "Connection failed"}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => typeof window !== 'undefined' && window.location.reload()}
             className="mt-4 px-4 py-2 bg-red-600 text-white rounded-xl text-sm font-bold hover:bg-red-700"
           >
             Retry

@@ -4,7 +4,19 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BedDouble, Building2, Check, LogOut, Search, ShieldAlert, Navigation, Clock, MapPin } from "lucide-react";
-import LiveTrackingMap from "@/components/tracking/LiveTrackingMap";
+import dynamic from "next/dynamic";
+
+const LiveTrackingMap = dynamic(() => import("@/components/tracking/LiveTrackingMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex items-center justify-center min-h-[400px] bg-slate-50 rounded-2xl">
+      <div className="text-center">
+        <div className="w-8 h-8 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+        <p className="text-sm font-bold text-slate-600">Loading map...</p>
+      </div>
+    </div>
+  ),
+});
 
 export default function HospitalDashboard() {
   const [hospital, setHospital] = useState(null);
@@ -14,6 +26,7 @@ export default function HospitalDashboard() {
   const [savingProviders, setSavingProviders] = useState(false);
   const [activeBooking, setActiveBooking] = useState(null);
   const [showTracking, setShowTracking] = useState(false);
+  const [hospitalUserId, setHospitalUserId] = useState(null);
   const router = useRouter();
 
   // Editable fields moved up to comply with the Rules of Hooks
@@ -29,6 +42,7 @@ export default function HospitalDashboard() {
 
   useEffect(() => {
     const userId = localStorage.getItem("hospitalUserId");
+    setHospitalUserId(userId);
     if (!userId) {
       router.push("/hospital-login");
       return;
@@ -343,7 +357,7 @@ export default function HospitalDashboard() {
             <LiveTrackingMap
               bookingId={activeBooking._id}
               hospitalId={hospital._id}
-              userId={localStorage.getItem("hospitalUserId")}
+              userId={hospitalUserId}
               userType="hospital"
             />
           </div>
