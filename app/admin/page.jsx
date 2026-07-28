@@ -468,15 +468,15 @@ export default function AdminDashboardPage() {
                   <Users className="h-5 w-5 text-blue-600" /> User Directory
                 </h2>
                 <div className="space-y-3">
-                  {dashboardData?.users.map((user) => (
-                    <div key={user.id} className="bg-slate-50 border border-slate-100 rounded-3xl p-5 flex items-center justify-between">
+                  {dashboardData?.users.map((user, index) => (
+                    <div key={user.id || user._id || user.uid || index} className="bg-slate-50 border border-slate-100 rounded-3xl p-5 flex items-center justify-between">
                       <div>
                         <p className="font-black text-slate-900">{user.name}</p>
                         <p className="text-xs text-slate-400 font-bold">{user.email} • {user.role}</p>
                       </div>
                       <button
-                        disabled={busyUserIds.has(user.id)}
-                        onClick={() => toggleUserActive(user.id, user.isActive)}
+                        disabled={busyUserIds.has(user.id || user._id || user.uid || index)}
+                        onClick={() => toggleUserActive(user.id || user._id || user.uid || index, user.isActive)}
                         className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border-2 transition-all ${user.isActive ? "border-emerald-100 text-emerald-600 bg-emerald-50" : "border-red-100 text-red-600 bg-red-50"}`}
                       >
                         {user.isActive ? "Active" : "Suspended"}
