@@ -24,6 +24,8 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("overview"); // overview, drivers, hospitals
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   // Hospital user creation
   const [hospitalUserForm, setHospitalUserForm] = useState({ hospitalId: "", username: "", password: "" });
   const [hospitalUserMsg, setHospitalUserMsg] = useState("");
@@ -63,11 +65,6 @@ export default function AdminDashboardPage() {
   const [busyAmbulances, setBusyAmbulances] = useState(() => new Set());
   const [busyProviders, setBusyProviders] = useState(() => new Set());
 
-  useEffect(() => {
-    fetchDashboard();
-    fetchLocationData();
-  }, []);
-
   const fetchLocationData = async () => {
     try {
       const safeLoad = async (url) => {
@@ -95,43 +92,6 @@ export default function AdminDashboardPage() {
     }
   };
 
-  // Cascade filters
-  useEffect(() => {
-    if (locations.districts.length) {
-      const d = locations.districts.filter(
-        (x) =>
-          x.division_id ===
-          (activeTab === "drivers"
-            ? driverForm.division_id
-            : hospForm.division_id),
-      );
-      setFilteredDistricts(d);
-    }
-  }, [
-    driverForm.division_id,
-    hospForm.division_id,
-    locations.districts,
-    activeTab,
-  ]);
-
-  useEffect(() => {
-    if (locations.upazilas.length) {
-      const u = locations.upazilas.filter(
-        (x) =>
-          x.district_id ===
-          (activeTab === "drivers"
-            ? driverForm.district_id
-            : hospForm.district_id),
-      );
-      setFilteredUpazilas(u);
-    }
-  }, [
-    driverForm.district_id,
-    hospForm.district_id,
-    locations.upazilas,
-    activeTab,
-  ]);
-
   const fetchDashboard = async () => {
     setLoading(true);
     setError("");
@@ -152,6 +112,72 @@ export default function AdminDashboardPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // Check for admin authentication
+    if (typeof window !== 'undefined') {
+      const adminUser = localStorage.getItem("adminUser");
+      if (!adminUser) {
+        router.push("/login/admin");
+        return;
+      }
+      setIsAuthenticated(true);
+    }
+  }, [router]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchDashboard();
+      fetchLocationData();
+    }
+  }, [isAuthenticated]);
+
+  // Cascade filters
+  useEffect(() => {
+    if (isAuthenticated && locations.districts.length) {
+      const d = locations.districts.filter(
+        (x) =>
+          x.division_id ===
+          (activeTab === "drivers"
+            ? driverForm.division_id
+            : hospForm.division_id),
+      );
+      setFilteredDistricts(d);
+    }
+  }, [
+    isAuthenticated,
+    driverForm.division_id,
+    hospForm.division_id,
+    locations.districts,
+    activeTab,
+  ]);
+
+  useEffect(() => {
+    if (isAuthenticated && locations.upazilas.length) {
+      const u = locations.upazilas.filter(
+        (x) =>
+          x.district_id ===
+          (activeTab === "drivers"
+            ? driverForm.district_id
+            : hospForm.district_id),
+      );
+      setFilteredUpazilas(u);
+    }
+  }, [
+    isAuthenticated,
+    driverForm.district_id,
+    hospForm.district_id,
+    locations.upazilas,
+    activeTab,
+  ]);
+
+  const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem("adminUser");
+    }
+    router.push("/login/admin");
+  };
+
   // Hospital user creation handler
   const handleCreateHospitalUser = async () => {
     setHospitalUserMsg("");
@@ -381,6 +407,10 @@ export default function AdminDashboardPage() {
     }
   };
 
+  if (!isAuthenticated) {
+    return <div className="min-h-screen flex items-center justify-center">Redirecting...</div>;
+  }
+
   if (loading && !dashboardData) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
@@ -396,7 +426,7 @@ export default function AdminDashboardPage() {
             <ShieldCheck className="h-6 w-6 text-red-600" />
             <span className="text-xl font-bold">Admin Console</span>
           </div>
-          <div className="flex gap-4">
+          <div className="flex items-center gap-4">
             <button onClick={() => setActiveTab("overview")} className={`text-xs font-bold ${activeTab === "overview" ? "text-red-600" : "text-slate-500"}`}>
               Overview
             </button>
@@ -405,6 +435,12 @@ export default function AdminDashboardPage() {
             </button>
             <button onClick={() => setActiveTab("hospitals")} className={`text-xs font-bold ${activeTab === "hospitals" ? "text-red-600" : "text-slate-500"}`}>
               Hospitals
+            </button>
+            <button
+              onClick={handleLogout}
+              className="text-xs font-bold text-slate-500 hover:text-red-600 transition-colors"
+            >
+              Logout
             </button>
           </div>
         </div>

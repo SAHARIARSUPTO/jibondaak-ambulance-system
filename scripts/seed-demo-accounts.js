@@ -11,6 +11,13 @@ const DB_NAME = 'jibondaak';
 
 const demoAccounts = [
   {
+    email: 'admin@jibondaak.com',
+    password: 'admin123',
+    role: 'admin',
+    name: 'Admin User',
+    phone: '01600000000',
+  },
+  {
     email: 'provider@demo.com',
     password: 'demo123',
     role: 'PROVIDER',
