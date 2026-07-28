@@ -148,7 +148,8 @@ export default function LiveTrackingMap({ bookingId, hospitalId, userId, userTyp
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       timeout: 10000,
-      transports: ["websocket", "polling"],
+      transports: ["polling"],
+      withCredentials: true,
     });
 
     // Store socket in ref to prevent re-connections
