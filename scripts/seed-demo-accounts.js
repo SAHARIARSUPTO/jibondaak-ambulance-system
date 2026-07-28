@@ -9,6 +9,11 @@ const bcrypt = require('bcryptjs');
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017';
 const DB_NAME = 'jibondaak';
 
+// Helper function to generate hospital ID
+function makeId(prefix) {
+  return `${prefix}${Date.now().toString(36)}${Math.random().toString(36).substr(2, 9)}`;
+}
+
 const demoAccounts = [
   {
     email: 'admin@jibondaak.com',
@@ -65,6 +70,7 @@ async function seedDemoAccounts() {
 
     const db = client.db(DB_NAME);
     const usersCollection = db.collection('users');
+    const hospitalsCollection = db.collection('hospitals');
 
     for (const account of demoAccounts) {
       const { email, password, ...userData } = account;
@@ -104,12 +110,68 @@ async function seedDemoAccounts() {
         });
         console.log(`✅ Created ${email} with role: ${account.role}`);
       }
+
+      // Special handling for HOSPITAL role - also create in hospitals collection
+      if (account.role === 'HOSPITAL') {
+        const username = email.split('@')[0]; // Use email prefix as username
+        const existingHospital = await hospitalsCollection.findOne({ 
+          username: username 
+        });
+
+        if (existingHospital) {
+          console.log(`⚠️  Hospital ${username} already exists, updating...`);
+          await hospitalsCollection.updateOne(
+            { username: username },
+            { 
+              $set: {
+                name: account.name,
+                phone: account.phone,
+                address: account.address,
+                beds: account.beds,
+                icu: account.icu,
+                emergency_services: account.emergency_services,
+                division_id: account.division_id,
+                district_id: account.district_id,
+                upazila_id: account.upazila_id,
+                password: password, // Store plain text for hospital login (as per existing system)
+                updatedAt: new Date(),
+              }
+            }
+          );
+          console.log(`✅ Updated hospital ${username}`);
+        } else {
+          await hospitalsCollection.insertOne({
+            _id: makeId('hosp'),
+            userId: username,
+            username: username,
+            name: account.name,
+            phone: account.phone,
+            address: account.address,
+            beds: account.beds,
+            icu: account.icu,
+            emergency_services: account.emergency_services,
+            division_id: account.division_id,
+            district_id: account.district_id,
+            upazila_id: account.upazila_id,
+            password: password, // Store plain text for hospital login (as per existing system)
+            assignedProviderIds: [],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          });
+          console.log(`✅ Created hospital ${username}`);
+        }
+      }
     }
 
     console.log('\n🎉 Demo accounts seeded successfully!');
     console.log('\n📋 Demo Credentials:');
     demoAccounts.forEach(acc => {
-      console.log(`  ${acc.role}: ${acc.email} | ${acc.password}`);
+      if (acc.role === 'HOSPITAL') {
+        const username = acc.email.split('@')[0];
+        console.log(`  ${acc.role}: username: ${username} | password: ${acc.password}`);
+      } else {
+        console.log(`  ${acc.role}: ${acc.email} | ${acc.password}`);
+      }
     });
 
   } catch (error) {

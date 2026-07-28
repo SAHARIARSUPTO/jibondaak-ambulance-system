@@ -19,6 +19,8 @@ import {
   Edit3,
   XCircle,
 } from "lucide-react";
+import Link from "next/link";
+import Navbar from "../components/navbar/navbar";
 import Toast from "../components/Toast";
 import AddAmbulanceModal from "../components/provider/AddAmbulanceModal";
 import RequestNotification from "../components/provider/RequestNotification";
@@ -171,6 +173,13 @@ export default function ProviderDashboard() {
 
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
     const socket = io(socketUrl, {
+      transports: ['polling'],
+      withCredentials: true,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 10000,
       auth: {
         userId: provider._id,
         userType: "provider",
@@ -178,7 +187,7 @@ export default function ProviderDashboard() {
     });
 
     socket.on("connect", () => {
-      console.log("Socket connected for provider dashboard");
+      console.log("Socket connected for provider dashboard using transport:", socket.io.engine.transport.name);
     });
 
     socket.on("provider:new_trip_request", (data) => {
@@ -191,6 +200,15 @@ export default function ProviderDashboard() {
 
     socket.on("connect_error", (err) => {
       console.error("Socket connection error:", err);
+      console.error("Error details:", err.message, err.description, err.context);
+    });
+
+    socket.on("disconnect", (reason) => {
+      console.log("Socket disconnected:", reason);
+    });
+
+    socket.io.on("transport", (transport) => {
+      console.log("Transport changed to:", transport.name);
     });
 
     return () => {
@@ -839,14 +857,14 @@ export default function ProviderDashboard() {
       )}
 
       <div>
-        {/* Header */}
+        {/* Shared Navbar */}
+        <Navbar />
+
+        {/* Dashboard Header */}
         <header className="bg-white border-b border-red-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-20">
               <div className="flex items-center gap-4">
-                <div className="bg-gradient-to-br from-red-600 to-red-500 p-3 rounded-xl shadow-lg border border-blue-400/30">
-                  <Ambulance className="w-8 h-8 text-slate-900" />
-                </div>
                 <div>
                   <h1 className="text-2xl font-bold text-slate-900">
                     Driver Dashboard

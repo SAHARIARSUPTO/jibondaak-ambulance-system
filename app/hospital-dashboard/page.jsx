@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BedDouble, Building2, Check, LogOut, Search, ShieldAlert, Navigation, Clock, MapPin } from "lucide-react";
+import { BedDouble, Building2, Check, LogOut, Search, ShieldAlert, Navigation, Clock, MapPin, Ambulance } from "lucide-react";
+import Navbar from "../components/navbar/navbar";
 import dynamic from "next/dynamic";
 
 const LiveTrackingMap = dynamic(() => import("@/components/tracking/LiveTrackingMap"), {
@@ -269,9 +270,12 @@ export default function HospitalDashboard() {
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(248,113,113,0.12),_transparent_30%),linear-gradient(180deg,#fff7f7_0%,#ffffff_45%,#fffafa_100%)] p-4 sm:p-8">
+      {/* Shared Navbar */}
+      <Navbar />
+
       <div className="mx-auto max-w-5xl">
         <div className="mb-6 flex flex-col gap-4 rounded-[2rem] border border-red-100 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-          <div>
+          <div className="flex-1">
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-black">
               Hospital Dashboard
             </p>

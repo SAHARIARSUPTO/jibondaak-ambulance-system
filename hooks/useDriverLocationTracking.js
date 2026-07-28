@@ -22,6 +22,13 @@ export function useDriverLocationTracking({ bookingId, providerId, driverId, ena
 
     const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001";
     const newSocket = io(socketUrl, {
+      transports: ['polling'],
+      withCredentials: true,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 10000,
       auth: {
         userId: providerId,
         userType: "provider",
