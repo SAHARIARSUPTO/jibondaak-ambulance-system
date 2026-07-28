@@ -87,31 +87,6 @@ export default function HospitalLoginPage() {
                 </div>
               )}
 
-              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200">
-                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Demo Credentials</p>
-                <div className="flex items-center justify-between bg-white rounded-xl px-3 py-2 border border-slate-200">
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">Username</p>
-                    <p className="text-sm font-bold text-slate-900">hospital</p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setUsername("hospital");
-                      setPassword("demo123");
-                    }}
-                    className="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 px-3 py-1.5 rounded-lg transition-colors"
-                  >
-                    Fill
-                  </button>
-                </div>
-                <div className="mt-2 flex items-center justify-between bg-white rounded-xl px-3 py-2 border border-slate-200">
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase">Password</p>
-                    <p className="text-sm font-bold text-slate-900">demo123</p>
-                  </div>
-                </div>
-              </div>
-
               <label className="space-y-2">
                 <span className="text-sm font-semibold text-slate-700">Username</span>
                 <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 focus-within:border-red-500 focus-within:bg-white">
