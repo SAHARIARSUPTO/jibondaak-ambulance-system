@@ -24,8 +24,6 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("overview"); // overview, drivers, hospitals
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
   // Hospital user creation
   const [hospitalUserForm, setHospitalUserForm] = useState({ hospitalId: "", username: "", password: "" });
   const [hospitalUserMsg, setHospitalUserMsg] = useState("");
@@ -65,6 +63,11 @@ export default function AdminDashboardPage() {
   const [busyAmbulances, setBusyAmbulances] = useState(() => new Set());
   const [busyProviders, setBusyProviders] = useState(() => new Set());
 
+  useEffect(() => {
+    fetchDashboard();
+    fetchLocationData();
+  }, []);
+
   const fetchLocationData = async () => {
     try {
       const safeLoad = async (url) => {
@@ -92,6 +95,43 @@ export default function AdminDashboardPage() {
     }
   };
 
+  // Cascade filters
+  useEffect(() => {
+    if (locations.districts.length) {
+      const d = locations.districts.filter(
+        (x) =>
+          x.division_id ===
+          (activeTab === "drivers"
+            ? driverForm.division_id
+            : hospForm.division_id),
+      );
+      setFilteredDistricts(d);
+    }
+  }, [
+    driverForm.division_id,
+    hospForm.division_id,
+    locations.districts,
+    activeTab,
+  ]);
+
+  useEffect(() => {
+    if (locations.upazilas.length) {
+      const u = locations.upazilas.filter(
+        (x) =>
+          x.district_id ===
+          (activeTab === "drivers"
+            ? driverForm.district_id
+            : hospForm.district_id),
+      );
+      setFilteredUpazilas(u);
+    }
+  }, [
+    driverForm.district_id,
+    hospForm.district_id,
+    locations.upazilas,
+    activeTab,
+  ]);
+
   const fetchDashboard = async () => {
     setLoading(true);
     setError("");
@@ -112,72 +152,6 @@ export default function AdminDashboardPage() {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    // Check for admin authentication
-    if (typeof window !== 'undefined') {
-      const adminUser = localStorage.getItem("adminUser");
-      if (!adminUser) {
-        router.push("/login/admin");
-        return;
-      }
-      setIsAuthenticated(true);
-    }
-  }, [router]);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchDashboard();
-      fetchLocationData();
-    }
-  }, [isAuthenticated]);
-
-  // Cascade filters
-  useEffect(() => {
-    if (isAuthenticated && locations.districts.length) {
-      const d = locations.districts.filter(
-        (x) =>
-          x.division_id ===
-          (activeTab === "drivers"
-            ? driverForm.division_id
-            : hospForm.division_id),
-      );
-      setFilteredDistricts(d);
-    }
-  }, [
-    isAuthenticated,
-    driverForm.division_id,
-    hospForm.division_id,
-    locations.districts,
-    activeTab,
-  ]);
-
-  useEffect(() => {
-    if (isAuthenticated && locations.upazilas.length) {
-      const u = locations.upazilas.filter(
-        (x) =>
-          x.district_id ===
-          (activeTab === "drivers"
-            ? driverForm.district_id
-            : hospForm.district_id),
-      );
-      setFilteredUpazilas(u);
-    }
-  }, [
-    isAuthenticated,
-    driverForm.district_id,
-    hospForm.district_id,
-    locations.upazilas,
-    activeTab,
-  ]);
-
-  const handleLogout = () => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem("adminUser");
-    }
-    router.push("/login/admin");
-  };
-
   // Hospital user creation handler
   const handleCreateHospitalUser = async () => {
     setHospitalUserMsg("");
@@ -407,10 +381,6 @@ export default function AdminDashboardPage() {
     }
   };
 
-  if (!isAuthenticated) {
-    return <div className="min-h-screen flex items-center justify-center">Redirecting...</div>;
-  }
-
   if (loading && !dashboardData) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
@@ -426,7 +396,7 @@ export default function AdminDashboardPage() {
             <ShieldCheck className="h-6 w-6 text-red-600" />
             <span className="text-xl font-bold">Admin Console</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex gap-4">
             <button onClick={() => setActiveTab("overview")} className={`text-xs font-bold ${activeTab === "overview" ? "text-red-600" : "text-slate-500"}`}>
               Overview
             </button>
@@ -435,12 +405,6 @@ export default function AdminDashboardPage() {
             </button>
             <button onClick={() => setActiveTab("hospitals")} className={`text-xs font-bold ${activeTab === "hospitals" ? "text-red-600" : "text-slate-500"}`}>
               Hospitals
-            </button>
-            <button
-              onClick={handleLogout}
-              className="text-xs font-bold text-slate-500 hover:text-red-600 transition-colors"
-            >
-              Logout
             </button>
           </div>
         </div>
@@ -468,15 +432,15 @@ export default function AdminDashboardPage() {
                   <Users className="h-5 w-5 text-blue-600" /> User Directory
                 </h2>
                 <div className="space-y-3">
-                  {dashboardData?.users.map((user, index) => (
-                    <div key={user.id || user._id || user.uid || index} className="bg-slate-50 border border-slate-100 rounded-3xl p-5 flex items-center justify-between">
+                  {dashboardData?.users.map((user) => (
+                    <div key={user.id} className="bg-slate-50 border border-slate-100 rounded-3xl p-5 flex items-center justify-between">
                       <div>
                         <p className="font-black text-slate-900">{user.name}</p>
                         <p className="text-xs text-slate-400 font-bold">{user.email} • {user.role}</p>
                       </div>
                       <button
-                        disabled={busyUserIds.has(user.id || user._id || user.uid || index)}
-                        onClick={() => toggleUserActive(user.id || user._id || user.uid || index, user.isActive)}
+                        disabled={busyUserIds.has(user.id)}
+                        onClick={() => toggleUserActive(user.id, user.isActive)}
                         className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border-2 transition-all ${user.isActive ? "border-emerald-100 text-emerald-600 bg-emerald-50" : "border-red-100 text-red-600 bg-red-50"}`}
                       >
                         {user.isActive ? "Active" : "Suspended"}

@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import Navbar from "../components/navbar/navbar";
 import {
   MapPin,
   Loader2,
@@ -797,9 +795,6 @@ export default function DashboardPage() {
       )}
 
       <div className="min-h-screen bg-slate-50 text-black pb-10">
-        {/* Shared Navbar */}
-        <Navbar />
-
         <main className="mx-auto max-w-7xl px-4 pt-8 space-y-6">
           <section className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
             <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
